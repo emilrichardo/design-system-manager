@@ -115,23 +115,23 @@ description: "Task list for feature 001-ds-init — Inicialización de un Design
 **Purpose**: Resolver la **raíz anfitriona** y clasificar el estado previo. Seguridad de rutas
 (ADR-0002).
 
-- [ ] T017 [US1] Definir el puerto `HostRootResolver` en `src/application/ports.ts` (entrada: cwd; salida: `HostRoot` o error `host`)
+- [X] T017 [US1] Definir el puerto `HostRootResolver` en `src/application/ports.ts` (entrada: cwd; salida: `HostRoot` o error `host`)
   - Deps: T015
   - Done: interfaz sin dependencia de Node; testeable con fakes.
   - Test: cubierto por T019/T060.
-- [ ] T018 [US1] Implementar **resolución de raíz anfitriona** en `src/infrastructure/host-root/resolve-host-root.ts`: realpath de cwd, ascenso al `package.json` más cercano, tope en raíz Git, monorepo = más cercano, sin Git = dir del package.json (ADR-0002, FR-001c–001g)
+- [X] T018 [US1] Implementar **resolución de raíz anfitriona** en `src/infrastructure/host-root/resolve-host-root.ts`: realpath de cwd, ascenso al `package.json` más cercano, tope en raíz Git, monorepo = más cercano, sin Git = dir del package.json (ADR-0002, FR-001c–001g)
   - Deps: T017
   - Done: devuelve `rootDir/packageJsonPath/gitRootDir/isMonorepoChild`; nunca asciende sobre la raíz Git.
   - Test: `tests/unit/resolve-host-root.test.ts` (raíz, subcarpeta, monorepo, sin Git).
-- [ ] T019 [P][US2][US5] Implementar utilidad de **seguridad de rutas** en `src/infrastructure/host-root/path-guard.ts`: normalización por `realpath`, contención (`startsWith(rootDir+sep)`), rechazo de `..`/escapes/symlinks externos/otros workspaces (FR-001h, FR-025)
+- [X] T019 [P][US2][US5] Implementar utilidad de **seguridad de rutas** en `src/infrastructure/host-root/path-guard.ts`: normalización por `realpath`, contención (`startsWith(rootDir+sep)`), rechazo de `..`/escapes/symlinks externos/otros workspaces (FR-001h, FR-025)
   - Deps: T018
   - Done: acepta rutas dentro; rechaza escapes, symlink externo y rutas absolutas externas.
   - Test: `tests/unit/path-guard.test.ts` (contención, `..`, symlink externo, otro workspace).
-- [ ] T020 [US1] Implementar verificación de **`package.json` obligatorio** dentro del límite en `src/infrastructure/host-root/require-package-json.ts` (FR-001a/001b, ADR-0001) → error `host` si ausente
+- [X] T020 [US1] Implementar verificación de **`package.json` obligatorio** dentro del límite en `src/infrastructure/host-root/require-package-json.ts` (FR-001a/001b, ADR-0001) → error `host` si ausente
   - Deps: T018
   - Done: ausencia ⇒ resultado/`Issue` `host` sin escribir; nunca crea ni modifica `package.json`.
   - Test: `tests/integration/no-package-json.test.ts` (exit 5; cero escrituras).
-- [ ] T021 [US3][US2][US5] Implementar **inspección de presencia de archivos** (sin validar contenido) en `src/infrastructure/host-root/inspect-presence.ts`: detecta y reporta presencia/ausencia de config/manifest/tokens en las rutas administradas, devolviendo un estado preliminar `none` / `potentially-partial` / `potentially-complete` (data-model §estados). NO valida DTCG ni schemas.
+- [X] T021 [US3][US2][US5] Implementar **inspección de presencia de archivos** (sin validar contenido) en `src/infrastructure/host-root/inspect-presence.ts`: detecta y reporta presencia/ausencia de config/manifest/tokens en las rutas administradas, devolviendo un estado preliminar `none` / `potentially-partial` / `potentially-complete` (data-model §estados). NO valida DTCG ni schemas.
   - Deps: T013, T019, T020
   - Done: distingue `none` de estructura potencialmente parcial vs potencialmente completa; lista presentes y obligatorios ausentes; no lee validez de contenido; no escribe.
   - Test: `tests/unit/inspect-presence.test.ts` (none, potentially-partial, potentially-complete).

@@ -21,6 +21,7 @@ const RULES = [
       { re: /from\s+["']commander["']/, msg: "domain no debe importar commander" },
       { re: /from\s+["']@clack\/prompts["']/, msg: "domain no debe importar @clack/prompts" },
       { re: /from\s+["'](node:)?fs(\/promises)?["']/, msg: "domain no debe importar filesystem" },
+      { re: /from\s+["'](node:)?path["']/, msg: "domain no debe importar node:path" },
     ],
   },
   {
@@ -29,6 +30,9 @@ const RULES = [
       { re: /\bconsole\.\w+/, msg: "console.* no permitido en application" },
       { re: /from\s+["']commander["']/, msg: "application no debe importar commander" },
       { re: /from\s+["']@clack\/prompts["']/, msg: "application no debe importar @clack/prompts" },
+      { re: /from\s+["'](node:)?fs(\/promises)?["']/, msg: "application no debe importar filesystem" },
+      { re: /from\s+["'](node:)?path["']/, msg: "application no debe importar node:path" },
+      { re: /from\s+["'][^"']*infrastructure/, msg: "application no debe importar infraestructura concreta" },
     ],
   },
 ];

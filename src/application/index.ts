@@ -1,3 +1,3 @@
-// Capa de aplicación (casos de uso + puertos). Se poblará en las Fases 4–6.
-// No debe depender de Commander ni @clack/prompts (ver scripts/arch-guard.mjs).
-export {};
+// Capa de aplicación (puertos + casos de uso). Fase 3: puertos de resolución/inspección.
+// No debe depender de Commander, @clack/prompts, Node ni infraestructura concreta.
+export * from "./ports.js";
