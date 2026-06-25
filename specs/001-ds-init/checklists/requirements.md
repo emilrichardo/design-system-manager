@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,11 +31,10 @@
 
 ## Notes
 
-- 3 marcadores [NEEDS CLARIFICATION] permanecen **de forma deliberada**, por instrucción
-  explícita del usuario de señalarlos en la especificación para resolverlos con
-  `/speckit-clarify` (no bloquear el flujo en `/speckit-specify`):
-  1. Proyecto sin npm / sin `package.json`: ¿bloquear o advertir-y-continuar?
-  2. Límite del repositorio autorizado y ejecución desde subcarpeta.
-  3. Regla exacta de slug válido y valor por defecto de la versión inicial.
-- El resto del checklist pasa. Los marcadores no afectan a las secciones obligatorias, que están
-  completas; acotan decisiones de alcance/seguridad a resolver antes de `/speckit-plan`.
+- Los 3 marcadores [NEEDS CLARIFICATION] fueron **resueltos** en la sesión de clarificación del
+  2026-06-25 (ver `## Clarifications` en spec.md):
+  1. `package.json` obligatorio; sin él, la operación se detiene sin escribir.
+  2. Raíz anfitriona = `package.json` más cercano acotado por raíz Git; workspace más cercano en
+     monorepo; rechazo de escapes/symlinks.
+  3. Slug `^[a-z0-9]+(?:-[a-z0-9]+)*$`; versión inicial por defecto `0.1.0` (SemVer).
+- Todos los ítems del checklist pasan (16/16). La especificación está lista para `/speckit-plan`.

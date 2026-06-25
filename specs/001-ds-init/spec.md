@@ -24,6 +24,26 @@ Esta especificación describe **qué** necesita el usuario y **cómo** se verifi
 implementación. La estructura exacta de directorios y los nombres definitivos de archivos se
 deciden en `/speckit-plan` y se registran mediante ADR (Constitución, Governance).
 
+## Clarifications
+
+### Session 2026-06-25
+
+- Q: ¿Comportamiento cuando el proyecto no tiene `package.json` / no es proyecto npm? → A:
+  `package.json` es **obligatorio**; si no se encuentra uno válido dentro del límite autorizado,
+  la operación se detiene sin escribir nada y muestra un error pidiendo inicializar npm e
+  instalar el gestor. La ausencia de `package.json` NO es un proyecto vacío válido.
+- Q: ¿Cómo se determina la "raíz anfitriona" y cómo se comporta desde una subcarpeta o monorepo?
+  → A: Se resuelve ascendiendo desde el directorio real de ejecución hasta el `package.json` más
+  cercano, sin superar la raíz Git más cercana (cuando exista); ese directorio es la raíz
+  anfitriona y el único límite de escritura autorizado. En monorepos se elige el `package.json`
+  más cercano (un solo workspace, no la raíz global). Una config Neuraz válida previa tiene
+  prioridad si está dentro de la misma raíz.
+- Q: ¿Regla exacta de slug válido y versión inicial por defecto? → A: Slug obligatorio, validado
+  con `^[a-z0-9]+(?:-[a-z0-9]+)*$` (minúsculas ASCII, dígitos y guiones simples; sin guiones
+  inicial/final ni consecutivos; sin espacios, barras, puntos ni `.`/`..`); se autopropone desde
+  el nombre pero un slug manual inválido se rechaza sin corregir en silencio. Versión inicial por
+  defecto `0.1.0`, debe cumplir SemVer.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Inicializar un proyecto vacío de Design System (Priority: P1)
@@ -49,8 +69,8 @@ Design System resultante.
    únicamente los datos mínimos (nombre, slug, descripción opcional, versión inicial con valor
    por defecto, confirmación de ubicación).
 3. **Given** los datos provistos y validados, **When** el sistema va a escribir, **Then**
-   muestra un resumen del plan (Design System, ubicación, archivos nuevos, conflictos) antes de
-   crear nada.
+   muestra un resumen del plan (Design System, raíz anfitriona/ubicación resuelta, archivos
+   nuevos, conflictos) antes de crear nada.
 4. **Given** el plan confirmado por el usuario, **When** el sistema escribe, **Then** crea una
    fuente DTCG mínima válida y una configuración reconocible por futuras herramientas.
 5. **Given** los archivos creados, **When** el sistema valida la estructura resultante, **Then**
@@ -173,13 +193,12 @@ archivos previos del usuario permanecen intactos y la operación puede reintenta
 
 ### Edge Cases
 
-La especificación define el comportamiento esperado para cada caso; los marcados con
-[NEEDS CLARIFICATION] se resolverán en `/speckit-clarify`.
+La especificación define el comportamiento esperado para cada caso.
 
-- **Ejecución fuera de un proyecto npm / sin `package.json`**: el sistema advierte que no se
-  detecta un proyecto npm. [NEEDS CLARIFICATION: ¿debe bloquear la operación, o advertir y
-  permitir continuar creando el Design System de todos modos? Afecta el alcance — proyectos sin
-  framework elegido y repos no-npm como themes WordPress puros.]
+- **Ejecución fuera de un proyecto npm / sin `package.json`**: el sistema **se detiene sin
+  escribir ningún archivo** y muestra un error indicando que primero debe inicializarse el
+  proyecto npm e instalarse el gestor (FR-001a, FR-001b). La ausencia de `package.json` no se
+  considera un proyecto vacío válido para esta funcionalidad.
 - **Repositorio con archivos que coinciden parcialmente** (algunas rutas objetivo existen y otras
   no): se trata como conflicto (US2); se enumeran las rutas en conflicto y no se sobrescribe
   ninguna; el usuario debe resolver antes de continuar. No se realiza una creación parcial.
@@ -189,9 +208,10 @@ La especificación define el comportamiento esperado para cada caso; los marcado
 - **Tokens existentes sin configuración del gestor**: se detecta como estado parcial; se informa
   que existen tokens pero no configuración; se enumeran y no se sobrescriben; se indica la acción
   necesaria para integrarlos. No se asume su validez.
-- **Slug inválido** (caracteres no permitidos, espacios, mayúsculas no admitidas): se rechaza
-  antes de escribir, con un mensaje que describe el formato válido y permite reintentar.
-  [NEEDS CLARIFICATION: regla exacta de slug válido — p. ej. `^[a-z0-9]+(-[a-z0-9]+)*$` u otra.]
+- **Slug inválido** (caracteres no permitidos, espacios, mayúsculas, guiones inicial/final o
+  consecutivos, barras, puntos, `.`/`..`): se rechaza antes de escribir, con un mensaje que
+  describe el formato válido (`^[a-z0-9]+(?:-[a-z0-9]+)*$`) y permite reintentar. Un slug escrito
+  manualmente NO se corrige en silencio (FR-008a).
 - **Nombre vacío**: se rechaza antes de escribir; el nombre es obligatorio; se solicita de nuevo.
 - **Ubicación sin permisos de escritura**: se detecta antes o durante la validación previa; la
   operación falla limpiamente (US5) informando la causa; no deja archivos parciales.
@@ -205,10 +225,17 @@ La especificación define el comportamiento esperado para cada caso; los marcado
 - **Archivos DTCG existentes con errores**: se detectan como inválidos durante la inspección; se
   informa que existen tokens con errores; no se sobrescriben silenciosamente; se indica la acción
   necesaria. La inicialización no "arregla" automáticamente esos archivos.
-- **Ejecución desde una subcarpeta en lugar de la raíz**: [NEEDS CLARIFICATION: ¿el sistema debe
-  ascender hasta detectar la raíz del proyecto (p. ej. por `package.json` o raíz de Git) y operar
-  allí, o debe exigir ejecución desde la raíz y abortar con instrucciones? Afecta dónde se crean
-  los archivos y la definición de "repositorio autorizado".]
+- **Ejecución desde una subcarpeta en lugar de la raíz**: el sistema asciende desde el directorio
+  real de ejecución hasta el `package.json` más cercano (sin superar la raíz Git más cercana) y
+  opera sobre esa raíz anfitriona resuelta (FR-001c…FR-001f). La ubicación elegida se muestra
+  antes de confirmar.
+- **Monorepo con varios `package.json`**: se utiliza el `package.json` más cercano al directorio
+  de ejecución; la raíz anfitriona es ese workspace, **no** la raíz global del monorepo. La
+  primera versión no administra varios workspaces simultáneamente (FR-001g).
+- **Ruta/symlink/config que escapa de la raíz anfitriona**: tras normalizar y resolver la ruta
+  real, cualquier ruta que conduzca fuera de la raíz anfitriona (incluidos symlinks hacia el
+  exterior, directorios superiores u otro workspace) se rechaza y la operación falla **antes** de
+  escribir cualquier archivo (FR-025, FR-001h).
 
 ## Requirements *(mandatory)*
 
@@ -216,8 +243,30 @@ La especificación define el comportamiento esperado para cada caso; los marcado
 
 Inspección y detección de estado
 
-- **FR-001**: El sistema MUST ejecutarse sobre el proyecto anfitrión actual y operar dentro del
-  repositorio autorizado, sin escribir fuera de él.
+- **FR-001**: El sistema MUST ejecutarse sobre el proyecto anfitrión actual y operar dentro de la
+  raíz anfitriona resuelta (ver FR-001c…FR-001f), sin escribir fuera de ella.
+- **FR-001a**: El sistema MUST requerir un `package.json` válido dentro del límite autorizado. Si
+  no existe, MUST detenerse sin escribir ningún archivo y mostrar un error indicando que primero
+  debe inicializarse el proyecto npm e instalarse el gestor. La ausencia de `package.json` NO se
+  considera un proyecto vacío válido.
+- **FR-001b**: El sistema MUST NOT crear un `package.json`, ejecutar `npm init`, agregar
+  dependencias ni modificar scripts de `package.json` (concuerda con FR-028, FR-029).
+- **FR-001c**: El sistema MUST resolver la raíz anfitriona así: (1) tomar el directorio real de
+  ejecución; (2) ascender hasta el `package.json` más cercano; (3) identificar la raíz Git más
+  cercana cuando exista; (4) el `package.json` debe estar dentro de esa raíz Git; (5) la búsqueda
+  nunca asciende por encima de la raíz Git; (6) sin repositorio Git, la raíz anfitriona es el
+  directorio que contiene el `package.json` más cercano.
+- **FR-001d**: Si existe una configuración Neuraz previa válida dentro de la misma raíz anfitriona,
+  esa configuración MUST tener prioridad para identificar el Design System.
+- **FR-001e**: En un monorepo con varios `package.json`, el sistema MUST usar el más cercano al
+  directorio de ejecución; la raíz anfitriona es ese workspace, no la raíz global.
+- **FR-001f**: El sistema MUST mostrar la raíz anfitriona/ubicación elegida al usuario antes de
+  confirmar la escritura.
+- **FR-001g**: Esta primera versión MUST NOT administrar varios workspaces simultáneamente.
+- **FR-001h**: Antes de escribir, el sistema MUST normalizar y resolver todas las rutas por su
+  ruta real, y MUST rechazar cualquier ruta, enlace simbólico o configuración que conduzca fuera
+  de la raíz anfitriona (directorios superiores, otro workspace o rutas absolutas externas),
+  fallando antes de escribir cualquier archivo.
 - **FR-002**: El sistema MUST administrar exactamente un (1) Design System por proyecto.
 - **FR-003**: El sistema MUST inspeccionar el directorio actual antes de cualquier escritura.
 - **FR-004**: El sistema MUST comprobar si ya existe una inicialización/configuración previa y
@@ -232,10 +281,17 @@ Entrada de datos mínima
   confirmación de la ubicación propuesta.
 - **FR-007**: El sistema MUST NOT realizar en esta funcionalidad un cuestionario completo de
   identidad visual ni solicitar datos no esenciales.
-- **FR-008**: El sistema MUST validar los datos de entrada (nombre no vacío, slug con formato
-  válido, versión con formato válido) ANTES de escribir cualquier archivo.
-- **FR-009**: El sistema MUST proponer una versión inicial por defecto razonable cuando el usuario
-  no la indique.
+- **FR-008**: El sistema MUST validar los datos de entrada ANTES de escribir cualquier archivo:
+  nombre no vacío; slug que cumple `^[a-z0-9]+(?:-[a-z0-9]+)*$` (minúsculas ASCII, dígitos y
+  guiones simples; sin guion inicial/final ni consecutivos; sin espacios, barras, puntos ni
+  `.`/`..`); y versión que cumple SemVer. Datos inválidos impiden continuar hasta corregirse.
+- **FR-008a**: El sistema MUST autoproponer el slug a partir del nombre (minúsculas →
+  transliterar/eliminar diacríticos → separadores y espacios a un único guion → eliminar
+  caracteres no permitidos → recortar guiones inicial/final), permitir editarlo antes de
+  confirmar y, si el resultado queda vacío, solicitar edición manual. El sistema MUST NOT corregir
+  en silencio un slug escrito manualmente: si es inválido, explica el problema y pide corrección.
+- **FR-009**: El sistema MUST proponer la versión inicial por defecto `0.1.0` (SemVer válido)
+  cuando el usuario no indique otra; el usuario PUEDE ingresar otra versión SemVer válida.
 
 Plan, confirmación y escritura
 
@@ -336,12 +392,12 @@ Restricciones de seguridad (comportamiento prohibido)
 ## Assumptions
 
 - El usuario ya instaló el gestor como dependencia de desarrollo en el proyecto anfitrión; esta
-  funcionalidad no cubre la instalación del paquete.
-- "Repositorio autorizado" se asume como el árbol de directorios del proyecto anfitrión donde se
-  invoca la operación; su límite preciso (raíz de Git vs. raíz de `package.json` vs. directorio
-  actual) se resolverá en `/speckit-clarify` (ver edge cases).
-- La versión inicial por defecto sigue una convención de versionado semántico (p. ej. `0.1.0` o
-  `0.0.1`); el valor exacto por defecto se decide en `/speckit-plan`.
+  funcionalidad no cubre la instalación del paquete y exige un `package.json` preexistente (FR-001a).
+- "Raíz anfitriona" (límite autorizado de escritura) queda definida por FR-001c…FR-001h: el
+  directorio del `package.json` más cercano al punto de ejecución, sin superar la raíz Git más
+  cercana cuando exista.
+- La versión inicial por defecto es `0.1.0` (SemVer); el usuario puede indicar otra versión SemVer
+  válida (FR-009).
 - Existe un modo no interactivo previsto para pruebas automatizadas (SC-007): cuando no hay
   interacción disponible, los datos se aportan por parámetros y la confirmación se otorga
   explícitamente mediante una opción equivalente; los detalles de invocación se definen en
@@ -369,10 +425,19 @@ propias del producto; publicación npm; sincronización con CMS; múltiples Desi
 datos; cuentas de usuario; servicios cloud; migraciones avanzadas; integración automática con el
 framework anfitrión.
 
-## Open Questions (para `/speckit-clarify`)
+## Open Questions
 
-1. **Proyecto sin npm / sin `package.json`**: ¿bloquear o advertir-y-continuar? (afecta alcance).
-2. **Límite del "repositorio autorizado" y ejecución desde subcarpeta**: ¿ascender a la raíz
-   (Git/`package.json`) o exigir ejecución desde la raíz? (afecta seguridad y ubicación).
-3. **Regla exacta de slug válido** (patrón permitido) y, relacionado, el valor por defecto de la
-   versión inicial.
+Ninguna. Las tres ambigüedades materiales fueron resueltas en la sesión de clarificación del
+2026-06-25 (ver sección _Clarifications_).
+
+## Decisiones a registrar como ADR (en `/speckit-plan`)
+
+Las siguientes decisiones de producto, ya fijadas en esta especificación, deben formalizarse como
+ADR durante la planificación (Constitución, Governance):
+
+- **ADR — Requisito de `package.json`**: la inicialización exige un proyecto npm y nunca lo crea.
+- **ADR — Algoritmo de resolución de raíz anfitriona y límite de escritura**: ascenso al
+  `package.json` más cercano acotado por la raíz Git; selección de workspace en monorepo;
+  normalización por ruta real y rechazo de escapes/symlinks.
+- **ADR — Reglas de identidad**: patrón de slug `^[a-z0-9]+(?:-[a-z0-9]+)*$`, algoritmo de
+  autoproposición desde el nombre y versión inicial por defecto `0.1.0` (SemVer).
