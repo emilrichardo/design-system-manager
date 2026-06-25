@@ -144,43 +144,43 @@ description: "Task list for feature 001-ds-init — Inicialización de un Design
 
 **Purpose**: Construir en memoria config/manifiesto/tokens y validarlos en 3 capas (research §7).
 
-- [ ] T022 [P][US1] Crear JSON Schema 2020-12 de **config** en `src/schemas/neuraz-ds.config.schema.json` (contracts/neuraz-ds.config.schema.md)
+- [X] T022 [P][US1] Crear JSON Schema 2020-12 de **config** en `src/schemas/neuraz-ds.config.schema.json` (contracts/neuraz-ds.config.schema.md)
   - Deps: T005
   - Done: valida `configSchemaVersion`, `designSystemDir`, `formatVersion`.
   - Test: `tests/unit/config-schema.test.ts`.
-- [ ] T023 [P][US1] Crear JSON Schema 2020-12 de **manifiesto** en `src/schemas/design-system.manifest.schema.json` (contracts/design-system.manifest.schema.md)
+- [X] T023 [P][US1] Crear JSON Schema 2020-12 de **manifiesto** en `src/schemas/design-system.manifest.schema.json` (contracts/design-system.manifest.schema.md)
   - Deps: T005
   - Done: valida identidad + `manifestSchemaVersion` + `version` SemVer.
   - Test: `tests/unit/manifest-schema.test.ts`.
-- [ ] T024 [P][US1] Crear JSON Schema 2020-12 del **documento DTCG** mínimo en `src/schemas/dtcg-tokens.schema.json` (subconjunto soportado: grupos, `$type`,`$value`,`$description`, aliases)
+- [X] T024 [P][US1] Crear JSON Schema 2020-12 del **documento DTCG** mínimo en `src/schemas/dtcg-tokens.schema.json` (subconjunto soportado: grupos, `$type`,`$value`,`$description`, aliases)
   - Deps: T005
   - Done: acepta el documento de ADR-0004; rechaza `$type` no soportado o estructura inválida.
   - Test: `tests/unit/dtcg-schema.test.ts`.
-- [ ] T025 [P][US1] Implementar **builder de config** en `src/domain/builders/build-config.ts` (`designSystemDir: "design-system"`, `formatVersion: "2025.10"`)
+- [X] T025 [P][US1] Implementar **builder de config** en `src/domain/builders/build-config.ts` (`designSystemDir: "design-system"`, `formatVersion: "2025.10"`)
   - Deps: T012
   - Done: produce objeto que valida contra T022; sin duplicar identidad del manifiesto.
   - Test: `tests/unit/build-config.test.ts`.
-- [ ] T026 [P][US1] Implementar **builder de manifiesto** en `src/domain/builders/build-manifest.ts` (identidad + `tokensDir: "tokens"`, sin valores visuales)
+- [X] T026 [P][US1] Implementar **builder de manifiesto** en `src/domain/builders/build-manifest.ts` (identidad + `tokensDir: "tokens"`, sin valores visuales)
   - Deps: T012
   - Done: produce objeto que valida contra T023.
   - Test: `tests/unit/build-manifest.test.ts`.
-- [ ] T027 [P][US1] Implementar **builder de tokens DTCG mínimos** en `src/domain/builders/build-tokens.ts` con grupo `color`, `$type`, base `blue-500`, alias `brand.primary = {color.base.blue-500}` (contracts/dtcg-tokens.contract.md)
+- [X] T027 [P][US1] Implementar **builder de tokens DTCG mínimos** en `src/domain/builders/build-tokens.ts` con grupo `color`, `$type`, base `blue-500`, alias `brand.primary = {color.base.blue-500}` (contracts/dtcg-tokens.contract.md)
   - Deps: T005
   - Done: produce el documento exacto de ADR-0004 con un alias válido.
   - Test: `tests/unit/build-tokens.test.ts`.
-- [ ] T028 [US1] Implementar **validador DTCG (ajv 2020-12)** en `src/infrastructure/validation/dtcg-validator.ts` incluyendo comprobación de **referencias** (alias existente, sin ciclos) acotada al archivo generado
+- [X] T028 [US1] Implementar **validador DTCG (ajv 2020-12)** en `src/infrastructure/validation/dtcg-validator.ts` incluyendo comprobación de **referencias** (alias existente, sin ciclos) acotada al archivo generado
   - Deps: T024
   - Done: valida el documento mínimo; detecta referencia inexistente y ciclo como error crítico.
   - Test: `tests/unit/dtcg-validator.test.ts` (válido, ref inexistente, ciclo).
-- [ ] T029 [US1] Implementar **validadores zod** de entrada/dominio (identidad, config, manifiesto) en `src/infrastructure/validation/schema-validators.ts`
+- [X] T029 [US1] Implementar **validadores zod** de entrada/dominio (identidad, config, manifiesto) en `src/infrastructure/validation/schema-validators.ts`
   - Deps: T012, T022, T023
   - Done: tipos derivados; errores mapeados a `Issue` categoría `validation`.
   - Test: `tests/unit/schema-validators.test.ts`.
-- [ ] T030 [US1][US5] Implementar **orquestador de validación previa** (3 capas: entrada → dominio → documentos a escribir) en `src/application/validate-plan.ts`
+- [X] T030 [US1][US5] Implementar **orquestador de validación previa** (3 capas: entrada → dominio → documentos a escribir) en `src/application/validate-plan.ts`
   - Deps: T028, T029, T014
   - Done: devuelve `ValidationResult`; errores críticos impiden continuar (antes de escribir).
   - Test: `tests/unit/validate-plan.test.ts`.
-- [ ] T030b [US3][US2][US5] Implementar **clasificación final de estado previo** en `src/infrastructure/host-root/classify-state.ts`: a partir del estado preliminar de T021, usa los validadores para distinguir `complete-valid` / `complete-invalid` / `partial` (data-model §estados)
+- [X] T030b [US3][US2][US5] Implementar **clasificación final de estado previo** en `src/infrastructure/host-root/classify-state.ts`: a partir del estado preliminar de T021, usa los validadores para distinguir `complete-valid` / `complete-invalid` / `partial` (data-model §estados)
   - Deps: T013, T019, T020, T028, T029, T021
   - Done: `potentially-complete` + documentos válidos → `complete-valid`; `potentially-complete` + documentos inválidos → `complete-invalid`; `potentially-partial` → `partial` (lista presentes y obligatorios ausentes); `none` → `none`. No escribe; `complete-invalid` no se confunde con `partial`.
   - Test: `tests/unit/classify-state.test.ts` (los 4 estados, incl. complete-valid vs complete-invalid) + integración T052/T053/T054.

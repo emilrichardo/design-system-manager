@@ -6,3 +6,6 @@ export type { VerifyResult } from "./host-root/require-package-json.js";
 export { assertWithinRoot } from "./host-root/path-guard.js";
 export type { Containment, ContainmentReason } from "./host-root/path-guard.js";
 export { inspectPresence } from "./host-root/inspect-presence.js";
+export { classifyState } from "./host-root/classify-state.js";
+export { documentValidators } from "./validation/schema-validators.js";
+export { validateDtcgDocument } from "./validation/dtcg-validator.js";

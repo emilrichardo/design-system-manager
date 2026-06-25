@@ -1,5 +1,16 @@
 // Puertos (contratos) de la capa de aplicación. Tipos puros: sin Node, sin filesystem,
 // sin Commander/Clack, sin texto de terminal. La infraestructura los implementa.
+import type { Issue } from "../domain/issue.js";
+
+// ── Validadores de documentos (T029/T028) inyectados en el orquestador (T030) ────────
+
+/** Puerto: valida los documentos del Design System. Devuelve Issues (vacío = válido). */
+export interface DocumentValidators {
+  validateConfig(data: unknown): readonly Issue[];
+  validateManifest(data: unknown): readonly Issue[];
+  validateDtcg(data: unknown): readonly Issue[];
+}
+
 
 // ── Resolución de la raíz anfitriona (T017 / ADR-0002) ───────────────────────────────
 
