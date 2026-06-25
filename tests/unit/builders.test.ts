@@ -37,10 +37,14 @@ describe("builders (T025–T027)", () => {
     expect(buildManifest(identity())).not.toHaveProperty("description");
   });
 
-  it("buildTokens produce el documento exacto de ADR-0004 con un alias", () => {
+  it("buildTokens produce un objeto de color DTCG 2025.10 y un alias", () => {
     const t = buildTokens() as any;
     expect(t.color.$type).toBe("color");
-    expect(t.color.base["blue-500"].$value).toBe("#3b82f6");
+    const base = t.color.base["blue-500"].$value;
+    expect(base.colorSpace).toBe("srgb");
+    expect(base.components).toEqual([0.231372549, 0.509803922, 0.964705882]);
+    expect(base.alpha).toBe(1);
+    expect(base.hex).toBe("#3b82f6");
     expect(t.color.brand.primary.$value).toBe("{color.base.blue-500}");
     expect(buildTokens()).toEqual(buildTokens()); // determinista
   });

@@ -9,8 +9,8 @@ const validateStructure = compileSchema(dtcgSchema);
 const ALIAS_RE = /^\{([^{}]+)\}$/;
 
 interface Collected {
-  /** path → $value (solo nodos token). */
-  readonly tokens: Map<string, string>;
+  /** path → $value (solo nodos token; el valor puede ser objeto de color o string de alias). */
+  readonly tokens: Map<string, unknown>;
   /** paths de grupos (objetos sin $value). */
   readonly groups: Set<string>;
 }
@@ -25,7 +25,7 @@ function collect(
     if (child === null || typeof child !== "object") continue;
     const obj = child as Record<string, unknown>;
     const path = [...prefix, key];
-    if (typeof obj.$value === "string") {
+    if ("$value" in obj) {
       acc.tokens.set(path.join("."), obj.$value);
     } else {
       acc.groups.add(path.join("."));
@@ -47,7 +47,24 @@ export function validateDtcgDocument(doc: unknown): Issue[] {
   const edges = new Map<string, string>();
 
   for (const [path, value] of acc.tokens) {
-    if (!value.includes("{") && !value.includes("}")) continue; // valor concreto, no alias
+    // Valor concreto de color: objeto sRGB (ya validado por el schema). No es referencia.
+    if (typeof value === "object" && value !== null) continue;
+
+    if (typeof value !== "string") {
+      issues.push({ code: "dtcg-color-value-invalid", message: `El valor del token "${path}" debe ser un objeto de color sRGB o un alias.`, path });
+      continue;
+    }
+
+    // Un valor concreto de color DEBE ser objeto: una cadena solo es válida como alias `{...}`.
+    if (!value.includes("{") && !value.includes("}")) {
+      issues.push({
+        code: "dtcg-color-value-invalid",
+        message: `Valor de color concreto inválido en "${path}": debe ser un objeto sRGB, no la cadena "${value}".`,
+        path,
+      });
+      continue;
+    }
+
     const m = ALIAS_RE.exec(value);
     if (m === null) {
       issues.push({ code: "dtcg-alias-malformed", message: `Alias malformado en "${path}": ${value}`, path });

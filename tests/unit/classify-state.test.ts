@@ -67,6 +67,14 @@ describe("classifyState (T030b)", () => {
     expect(classifyState(base).kind).toBe("complete-invalid");
   });
 
+  it("estructura completa + color hex directo (no conforme DTCG) → complete-invalid", async () => {
+    const base = await tmp();
+    await writeComplete(base, {
+      tokens: { color: { $type: "color", base: { x: { $value: "#3b82f6", $description: "hex directo" } } } },
+    });
+    expect(classifyState(base).kind).toBe("complete-invalid");
+  });
+
   it("estructura completa + DTCG con alias inexistente → complete-invalid", async () => {
     const base = await tmp();
     await writeComplete(base, { tokens: { color: { $type: "color", a: { $value: "{color.missing}", $description: "x" } } } });

@@ -40,3 +40,16 @@ export const tokensDirectCycle = {
 export const tokensUnsupportedType = {
   weird: { $type: "rocket", a: { $value: "x", $description: "y" } },
 };
+
+// Color concreto: objeto sRGB válido (DTCG 2025.10) y variantes inválidas.
+const srgb = (components: number[], extra: Record<string, unknown> = {}) => ({
+  color: { $type: "color", base: { x: { $value: { colorSpace: "srgb", components, ...extra }, $description: "x" } } },
+});
+export const tokensValidColorObject = srgb([0.23, 0.5, 0.96], { alpha: 1, hex: "#3b82f6" });
+export const tokensConcreteHexString = {
+  color: { $type: "color", base: { x: { $value: "#3b82f6", $description: "hex directo no conforme" } } },
+};
+export const tokensBadComponentRange = srgb([1.5, 0.5, 0.96]);
+export const tokensWrongComponentCount = srgb([0.23, 0.5]);
+export const tokensBadAlpha = srgb([0.23, 0.5, 0.96], { alpha: 2 });
+export const tokensBadHex = srgb([0.23, 0.5, 0.96], { hex: "blue" });

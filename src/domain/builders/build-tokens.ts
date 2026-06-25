@@ -12,12 +12,20 @@ export function buildTokens(): DtcgDocument {
       $type: "color",
       base: {
         "blue-500": {
-          $value: "#3b82f6",
+          // DTCG 2025.10 Color Module: valor concreto como objeto sRGB.
+          // components = canales RGB de #3b82f6 (59,130,246) normalizados en [0,1].
+          $value: {
+            colorSpace: "srgb",
+            components: [0.231372549, 0.509803922, 0.964705882],
+            alpha: 1,
+            hex: "#3b82f6",
+          },
           $description: "Color base de ejemplo (azul 500). Reemplazar por la paleta real del proyecto.",
         },
       },
       brand: {
         primary: {
+          // Alias/referencia: string canónico (sigue la validación de formato/existencia/ciclos).
           $value: "{color.base.blue-500}",
           $description: "Color de marca primario, definido como alias del color base.",
         },

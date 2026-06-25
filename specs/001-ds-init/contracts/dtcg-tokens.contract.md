@@ -23,7 +23,12 @@ alias, sin introducir ambigüedad ni inventar una paleta.
     "$type": "color",
     "base": {
       "blue-500": {
-        "$value": "#3b82f6",
+        "$value": {
+          "colorSpace": "srgb",
+          "components": [0.231372549, 0.509803922, 0.964705882],
+          "alpha": 1,
+          "hex": "#3b82f6"
+        },
         "$description": "Color base de ejemplo (azul 500). Reemplazar por la paleta real del proyecto."
       }
     },
@@ -41,10 +46,10 @@ alias, sin introducir ambigüedad ni inventar una paleta.
 
 - `$type: "color"` se hereda por los tokens del grupo `color` (incluye subgrupos `base` y `brand`).
 - El alias usa la sintaxis de referencia `{ruta.al.token}` del estándar.
-- **Representación del color**: se usa la forma hex string por máxima compatibilidad de
-  herramientas actuales. La eventual migración a la forma de objeto de color
-  (`{ "colorSpace": "...", "components": [...] }`) de 2025.10 es una decisión de la fase de
-  validación/generación (ADR-0004 / próxima spec), no de `init`.
+- **Representación del color (DTCG 2025.10 Color Module)**: un valor concreto de color es un
+  **objeto** con `colorSpace` (`srgb`), `components` (3 números en `[0,1]`), `alpha` opcional en
+  `[0,1]` y `hex` opcional (`#RRGGBB`) como fallback. Un **string hexadecimal plano NO** es un
+  valor de color concreto válido; las cadenas solo se admiten como alias `{...}`.
 - Las extensiones propias, si llegaran a necesitarse, irán bajo `$extensions` (Constitución III).
 
 ## Validación
