@@ -223,23 +223,23 @@ description: "Task list for feature 001-ds-init — Inicialización de un Design
 **Purpose**: Orquestar `resolve→inspect→plan→validate→confirm→stage→commit→verify→report` sin
 acoplar terminal. ⚠️ Sin `console.log`, sin `@clack`, sin `process.exit`, sin escribir directo.
 
-- [ ] T036 [US1] Definir puertos restantes `Prompter` y `Reporter` en `src/application/ports.ts` (datos semánticos, no texto preformateado)
+- [X] T036 [US1] Definir puertos restantes `Prompter` y `Reporter` en `src/application/ports.ts` (datos semánticos, no texto preformateado)
   - Deps: T015
   - Done: `Prompter` pide identidad/confirmación; `Reporter` recibe eventos semánticos (info/warn/conflict/error/success).
   - Test: cubierto por T060.
-- [ ] T037 [US1][US2][US3][US5] Implementar el caso de uso `initializeDesignSystem` en `src/application/initialize-design-system.ts` orquestando las 9 fases mediante puertos (usa T021 para `inspect` y T030b para la clasificación final); **sin escritura persistente antes de `confirm`**
+- [X] T037 [US1][US2][US3][US5] Implementar el caso de uso `initializeDesignSystem` en `src/application/initialize-design-system.ts` orquestando las 9 fases mediante puertos (usa T021 para `inspect` y T030b para la clasificación final); **sin escritura persistente antes de `confirm`**
   - Deps: T017, T021, T030, T030b, T031, T033, T034, T036, **T040** (sus pruebas usan los adapters en memoria; implementar T040 antes que las pruebas de T037)
   - Done: cada fase identificable; devuelve `InitializationResult`; sin I/O directo ni terminal.
   - Test: `tests/unit/initialize-design-system.test.ts` (con adapters en memoria de T040).
-- [ ] T038 [US1] Implementar el **mapeo estado→resultado** dentro del caso de uso: `none`→flujo creación; `complete-valid`→`unchanged`; `partial`→`conflict`; `complete-invalid`→`failed/validation` (data-model)
+- [X] T038 [US1] Implementar el **mapeo estado→resultado** dentro del caso de uso: `none`→flujo creación; `complete-valid`→`unchanged`; `partial`→`conflict`; `complete-invalid`→`failed/validation` (data-model)
   - Deps: T030b, T037
   - Done: cada estado produce el `status` correcto; `partial` lista presentes/ausentes; no escribe.
   - Test: `tests/unit/state-to-result.test.ts` (4 estados).
-- [ ] T039 [US3] Garantizar **idempotencia**: segunda ejecución sobre `complete-valid` no modifica nada
+- [X] T039 [US3] Garantizar **idempotencia**: segunda ejecución sobre `complete-valid` no modifica nada
   - Deps: T038
   - Done: 2ª corrida → `unchanged`, cero escrituras.
   - Test: `tests/integration/idempotent-second-run.test.ts`.
-- [ ] T040 [P][US1][US4] Crear **adapters en memoria** (`InMemoryFileSystem`, `ScriptedPrompter`, `RecordingReporter`, `FakeHostRootResolver`) en `tests/helpers/in-memory-adapters.ts`
+- [X] T040 [P][US1][US4] Crear **adapters en memoria** (`InMemoryFileSystem`, `ScriptedPrompter`, `RecordingReporter`, `FakeHostRootResolver`) en `tests/helpers/in-memory-adapters.ts`
   - Deps: T031, T036
   - Done: permiten ejecutar el caso de uso **sin terminal ni FS real**. **Debe completarse antes que las pruebas de T037/T038** (son consumidores directos).
   - Test: usados por T037/T038; `tests/unit/use-case-headless.test.ts` prueba ejecución sin terminal.

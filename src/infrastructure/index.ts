@@ -15,3 +15,9 @@ export { nodeFileSystem } from "./fs/node-file-system.js";
 export { detectConflicts } from "./fs/detect-conflicts.js";
 export { verifyPersisted } from "./fs/verify-persisted.js";
 export { commitTransaction } from "./fs/transactional-writer.js";
+export {
+  hostRootResolver,
+  stateClassifier,
+  documentPreparer,
+  transactionalWriter,
+} from "./initialize-adapters.js";

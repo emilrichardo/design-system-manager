@@ -1,6 +1,9 @@
 // Puertos (contratos) de la capa de aplicación. Tipos puros: sin Node, sin filesystem,
 // sin Commander/Clack, sin texto de terminal. La infraestructura los implementa.
 import type { Issue } from "../domain/issue.js";
+import type { PreviousState } from "../domain/state/previous-state.js";
+import type { DesignSystemIdentity } from "../domain/identity/design-system-identity.js";
+import type { InitializationResult } from "../domain/result/initialization-result.js";
 
 // ── Validadores de documentos (T029/T028) inyectados en el orquestador (T030) ────────
 
@@ -55,6 +58,95 @@ export type TransactionResult =
       readonly errors: readonly Issue[];
       readonly rollbackErrors?: readonly Issue[];
     };
+
+// ── Puertos de colaboración del caso de uso (T036) ───────────────────────────────────
+
+/** Resuelve la raíz anfitriona (implementado por resolveHostRoot). */
+export interface HostRootResolver {
+  resolve(executionDir: string): HostRootResolution;
+}
+
+/** Clasifica el estado previo definitivo (implementado por classifyState). */
+export interface StateClassifier {
+  classify(rootDir: string): PreviousState | Promise<PreviousState>;
+}
+
+/** Prepara los documentos serializados en memoria (implementado por prepareFiles). */
+export interface DocumentPreparer {
+  prepare(identity: DesignSystemIdentity): readonly PreparedFile[];
+}
+
+/** Ejecuta la escritura transaccional (implementado por commitTransaction). */
+export interface TransactionalWriter {
+  commit(rootDir: string, prepared: readonly PreparedFile[]): Promise<TransactionResult>;
+}
+
+// ── Interacción (T036) — abstracta, reutilizable por CLI/TUI/viewer/Studio/MCP ────────
+
+/** Identidad resumida (datos semánticos, sin texto preformateado). */
+export interface SummaryIdentity {
+  readonly name: string;
+  readonly slug: string;
+  readonly description?: string;
+  readonly version: string;
+}
+
+/** Resumen estructurado del plan, mostrable antes de confirmar. */
+export interface InitializationSummary {
+  readonly hostRoot: HostRoot;
+  readonly identity: SummaryIdentity;
+  readonly files: readonly string[];
+  readonly conflicts: readonly string[];
+}
+
+export type PromptOutcome<T> =
+  | { readonly kind: "answered"; readonly value: T }
+  | { readonly kind: "cancelled" };
+
+export interface IdentityPromptInput {
+  /** Versión por defecto (0.1.0). */
+  readonly defaultVersion: string;
+  /** Sugerencia de slug derivada por el dominio (cadena vacía si no derivable). */
+  readonly suggestSlug: (name: string) => string;
+}
+
+export interface IdentityAnswers {
+  readonly name: string;
+  readonly slug: string;
+  readonly description?: string;
+  readonly version: string;
+}
+
+/** Puerto de interacción. NO contiene reglas de slug/SemVer (las valida el dominio). */
+export interface Prompter {
+  requestIdentity(input: IdentityPromptInput): Promise<PromptOutcome<IdentityAnswers>>;
+  confirm(summary: InitializationSummary): Promise<PromptOutcome<boolean>>;
+}
+
+/** Puerto de presentación. Recibe datos semánticos; no altera el resultado del dominio. */
+export interface Reporter {
+  hostResolved(host: HostRoot): void | Promise<void>;
+  previousStateDetected(state: PreviousState): void | Promise<void>;
+  planPrepared(summary: InitializationSummary): void | Promise<void>;
+  completed(result: InitializationResult): void | Promise<void>;
+}
+
+// ── Entrada y dependencias del caso de uso ───────────────────────────────────────────
+
+export interface InitializeInput {
+  /** Directorio de ejecución (lo provee la CLI; el núcleo no usa process.cwd()). */
+  readonly executionDir: string;
+}
+
+export interface InitializeDependencies {
+  readonly resolver: HostRootResolver;
+  readonly classifier: StateClassifier;
+  readonly prompter: Prompter;
+  readonly reporter: Reporter;
+  readonly preparer: DocumentPreparer;
+  readonly validators: DocumentValidators;
+  readonly writer: TransactionalWriter;
+}
 
 
 // ── Resolución de la raíz anfitriona (T017 / ADR-0002) ───────────────────────────────
