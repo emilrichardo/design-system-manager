@@ -32,31 +32,31 @@ description: "Task list for feature 001-ds-init — Inicialización de un Design
 
 **Purpose**: Estructura del paquete npm, TypeScript estricto + ESM, herramientas de prueba/calidad.
 
-- [ ] T001 Crear `package.json` del paquete (`name: @neuraz/design-system-manager`, `type: module`, `bin: { "neuraz-ds": "dist/cli/index.js" }`, `engines.node: ">=22"`, scripts `build/test/typecheck/lint`) según ADR-0005 y plan.md
+- [X] T001 Crear `package.json` del paquete (`name: @neuraz/design-system-manager`, `type: module`, `bin: { "neuraz-ds": "dist/cli/index.js" }`, `engines.node: ">=22"`, scripts `build/test/typecheck/lint`) según ADR-0005 y plan.md
   - Deps: —
   - Done: `package.json` válido; `npm run` lista los scripts; sin dependencias instaladas aún.
   - Test: `tests/unit/package-manifest.test.ts` valida campos clave (`bin`, `type`, `engines`).
-- [ ] T002 [P] Configurar `tsconfig.json` estricto (`strict: true`, `module/moduleResolution: NodeNext`, `target` acorde a Node 22, `outDir: dist`)
+- [X] T002 [P] Configurar `tsconfig.json` estricto (`strict: true`, `module/moduleResolution: NodeNext`, `target` acorde a Node 22, `outDir: dist`)
   - Deps: T001
   - Done: `npm run typecheck` pasa en un proyecto vacío.
   - Test: typecheck en CI local sin errores.
-- [ ] T003 [P] Configurar Vitest (`vitest.config.ts`) con entornos node y rutas `tests/**`
+- [X] T003 [P] Configurar Vitest (`vitest.config.ts`) con entornos node y rutas `tests/**`
   - Deps: T001
   - Done: `npm test` ejecuta una prueba trivial verde.
   - Test: `tests/unit/smoke.test.ts`.
-- [ ] T004 [P] Configurar linter/formatter y regla que prohíbe `console.*` en `src/domain/**` y `src/application/**`
+- [X] T004 [P] Configurar linter/formatter y regla que prohíbe `console.*` en `src/domain/**` y `src/application/**`
   - Deps: T001
   - Done: el lint falla si se añade `console.log` en domain/application.
   - Test: `tests/unit/lint-no-console.test.ts` (o regla lint verificada en T070).
-- [ ] T005 Crear el árbol de directorios `src/{domain,application,infrastructure,schemas,cli}` y `tests/{unit,integration,cli}` con `index.ts` barrel mínimos
+- [X] T005 Crear el árbol de directorios `src/{domain,application,infrastructure,schemas,cli}` y `tests/{unit,integration,cli}` con `index.ts` barrel mínimos
   - Deps: T002
   - Done: imports entre capas resuelven; `typecheck` pasa.
   - Test: compilación.
-- [ ] T006 [P] Crear helper de pruebas para directorios temporales aislados en `tests/helpers/tmp-project.ts` (crea `package.json`, opcional `.git`, limpia al final)
+- [X] T006 [P] Crear helper de pruebas para directorios temporales aislados en `tests/helpers/tmp-project.ts` (crea `package.json`, opcional `.git`, limpia al final)
   - Deps: T003, T005
   - Done: helper crea/borra un proyecto npm temporal; reutilizable por integración.
   - Test: `tests/unit/tmp-project.test.ts`.
-- [ ] T007 [P] Declarar (sin instalar) las dependencias previstas en `package.json`: prod `commander`, `@clack/prompts`, `zod`, `ajv`, `semver`; dev `typescript`, `vitest`, `@types/node` (ADR-0005)
+- [X] T007 [P] Declarar (sin instalar) las dependencias previstas en `package.json`: prod `commander`, `@clack/prompts`, `zod`, `ajv`, `semver`; dev `typescript`, `vitest`, `@types/node` (ADR-0005)
   - Deps: T001
   - Done: `dependencies`/`devDependencies` reflejan ADR-0005; sin `node_modules` en el repo.
   - Test: `tests/unit/package-manifest.test.ts` verifica presencia de cada dep declarada.
