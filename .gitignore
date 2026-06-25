@@ -1,0 +1,5 @@
+# macOS
+.DS_Store
+
+# Agent folders may store credentials/auth artifacts
+.claude/settings.local.json
