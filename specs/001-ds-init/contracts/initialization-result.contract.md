@@ -19,18 +19,28 @@ type InitializationResult =
 
 ## Mapeo status → exit code (CLI)
 
-| status | exit code | Significado |
-|---|---|---|
-| `created` | 0 | Éxito: archivos creados. |
-| `unchanged` | 2 | Sin cambios (idempotente / ya inicializado). |
-| `cancelled` | 1 | Cancelado por el usuario, sin escribir. |
-| `conflict` | 4 | Conflicto de archivos; nada escrito. |
-| `failed` (host inválido) | 5 | Falta `package.json` / raíz inválida. |
-| `failed` (validación) | 3 | Entrada/dominio/DTCG inválidos. |
-| `failed` (filesystem) | 6 | Error de E/S durante la escritura (con rollback). |
+| status | `Issue.code` (si aplica) | exit code | Significado |
+|---|---|---|---|
+| `created` | — | 0 | Éxito: archivos creados. |
+| `unchanged` | — | 2 | Sin cambios: estado previo `complete-valid` (idempotente / ya inicializado y válido). |
+| `cancelled` | — | 1 | Cancelado por el usuario, sin escribir. |
+| `conflict` | — | 4 | Conflicto de archivos o estado previo `partial`; nada escrito. |
+| `failed` | `host` | 5 | Proyecto anfitrión inválido: falta `package.json` / raíz no resoluble. |
+| `failed` | `validation` | 3 | Entrada/dominio/DTCG inválidos, incluido estado previo `complete-invalid`. |
+| `failed` | `filesystem` | 6 | Error de E/S durante `stage`/`commit` (con rollback). |
+| `failed` | `post-verify` | 7 | La validación posterior a `commit` falló (caso límite; dispara limpieza). |
 
-> Nota: `failed` lleva `errors[]` con un `code` que distingue host/validación/FS para que el CLI
-> seleccione el exit code adecuado. Ver `exit-codes.md`.
+> `failed` lleva `errors[]`; el primer `Issue.code` (`host` / `validation` / `filesystem` /
+> `post-verify`) determina el exit code. Ver `exit-codes.md` (fuente normativa de los códigos).
+
+### Mapeo estado previo → resultado (ver `data-model.md`)
+
+| previousState | status | exit |
+|---|---|---|
+| `none` | `created` / `cancelled` / `conflict` | 0 / 1 / 4 |
+| `complete-valid` | `unchanged` | 2 |
+| `partial` | `conflict` | 4 |
+| `complete-invalid` | `failed` (`validation`) | 3 |
 
 ## Garantías
 

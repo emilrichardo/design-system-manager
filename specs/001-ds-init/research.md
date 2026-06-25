@@ -112,16 +112,21 @@ sigue el formato Decision / Rationale / Alternatives. Las versiones exactas se f
 
 ## 10. Estrategia de escritura segura (transaccional)
 
-- **Decision**: Modelo **stage → validate → confirm → commit → verify**:
-  1. Construir todo el contenido **en memoria** y un plan de archivos.
-  2. Validar entrada y plan (incluida validez DTCG del contenido a escribir) **antes** de tocar el
-     disco.
-  3. Detectar conflictos comparando rutas objetivo con el FS real (sin sobrescribir).
-  4. Escribir solo tras confirmación, en un **directorio temporal de staging dentro de la raíz
-     anfitriona**; luego mover/renombrar atómicamente a las rutas finales.
-  5. Ante cualquier fallo, **rollback**: eliminar el staging y no dejar archivos parciales.
-  6. **Validación posterior** releyendo los archivos escritos.
-  7. Reporte final estructurado.
+- **Decision**: Modelo de fases canónico
+  **resolve → inspect → plan → validate → confirm → stage → commit → verify → report**:
+  1. **resolve**: resolver la raíz anfitriona y verificar `package.json`.
+  2. **inspect**: clasificar el estado previo (`none`/`complete-valid`/`partial`/`complete-invalid`).
+  3. **plan**: construir el contenido **en memoria** y el plan de archivos; detectar conflictos
+     comparando rutas objetivo con el FS real (sin sobrescribir).
+  4. **validate**: validar entrada y plan (incluida validez DTCG del contenido a escribir) **antes**
+     de tocar el disco.
+  5. **confirm**: pedir confirmación. **Ninguna escritura persistente antes de este punto.**
+  6. **stage**: escribir en un **directorio temporal de staging dentro de la raíz anfitriona**.
+  7. **commit**: mover/renombrar atómicamente a las rutas finales.
+  8. **verify**: releer y validar los archivos persistidos. Ante cualquier fallo en stage/commit/
+     verify, **rollback/limpieza**: no dejar archivos parciales ni una inicialización falsamente
+     completa.
+  9. **report**: reporte final estructurado.
 - **Rationale**: Garantiza atomicidad (FR-022, US5) sin dependencias; el rename dentro del mismo
   filesystem es atómico en POSIX/Windows. Staging dentro de la raíz evita cruzar dispositivos.
 - **Alternatives considered**: Escritura directa archivo por archivo (riesgo de estado parcial);

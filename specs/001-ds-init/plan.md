@@ -148,23 +148,53 @@ extraer en el futuro `@neuraz/ds-core` (domain+application) como paquete indepen
 reescritura: bastaría mover `domain/` + `application/` y publicar, dejando `cli/`,
 `infrastructure/` y futuros `studio/`/`mcp/` como consumidores. Ver ADR-004 y ADR-005.
 
-## Flujo del comando `init` (10 pasos)
+## Flujo del comando `init` — nomenclatura canónica de fases
 
 ```text
-1. Resolver raíz anfitriona (infra: host-root)         → falla → exit 5 (host inválido)
-2. Verificar package.json en el límite                 → ausente → exit 5
-3. Detectar inicialización previa (config/manifiesto)  → completa → status "unchanged" (exit 2)
-4. Solicitar datos mínimos (prompts) [interactivo]     → cancelar → status "cancelled" (exit 1)
-5. Validar nombre/slug/versión (domain + zod)          → inválido → exit 3
-6. Construir InitializationPlan + detectar conflictos  → conflicto → status "conflict" (exit 4)
-7. Mostrar plan + ubicación; pedir confirmación        → no → status "cancelled" (exit 1)
-8. Escritura transaccional (staging temp → commit)     → fallo → rollback → exit 6/7
-9. Validación posterior (relee y valida DTCG/manifest/config)
-10. Reporte final (archivos creados, fuente canónica, siguiente paso) → exit 0
+resolve → inspect → plan → validate → confirm → stage → commit → verify → report
 ```
 
-La escritura segura se detalla en [research.md](research.md) (§ Escritura segura) y el modelo de
-resultado en [contracts/initialization-result.contract.md](contracts/initialization-result.contract.md).
+| Fase | Qué hace | Resultado posible |
+|---|---|---|
+| **resolve** | Resolver la **raíz anfitriona** (host-root) y verificar `package.json` en el límite. | host inválido → `failed`/`host` (exit 5) |
+| **inspect** | Clasificar el estado previo: `none` / `complete-valid` / `partial` / `complete-invalid`. | `complete-valid` → `unchanged` (exit 2); `partial` → `conflict` (exit 4); `complete-invalid` → `failed`/`validation` (exit 3) |
+| **plan** | Solicitar datos mínimos (prompts), construir el contenido **en memoria** y el `InitializationPlan`, detectar conflictos de rutas. | conflicto de rutas → `conflict` (exit 4) |
+| **validate** | Validar entradas (nombre/slug/versión) **y** el plan preparado (incl. validez DTCG del contenido a escribir), antes de tocar el disco. | inválido → `failed`/`validation` (exit 3) |
+| **confirm** | Mostrar plan + raíz anfitriona resuelta; pedir confirmación. **Sin escritura persistente antes de aquí.** | cancelar → `cancelled` (exit 1) |
+| **stage** | Escribir los archivos en un directorio temporal de staging **dentro** de la raíz anfitriona. | error de E/S → rollback → `failed`/`filesystem` (exit 6) |
+| **commit** | Promoción atómica (rename) del staging a las rutas finales. | error de E/S → rollback → `failed`/`filesystem` (exit 6) |
+| **verify** | Releer y validar el resultado persistido (DTCG/manifest/config). | fallo → limpieza → `failed`/`post-verify` (exit 7) |
+| **report** | Reporte final (archivos creados, fuente canónica, siguiente paso). | éxito → `created` (exit 0) |
+
+Aclaraciones de etiquetado (sin cambiar la estrategia transaccional): `validate` cubre entradas y
+plan preparado; la construcción de datos en memoria ocurre en `plan`; no hay escritura persistente
+antes de `confirm`; `stage` prepara temporales; `commit` promueve atómicamente; `verify` valida lo
+persistido. Detalle en [research.md](research.md) (§10) y modelo de resultado en
+[contracts/initialization-result.contract.md](contracts/initialization-result.contract.md).
+
+## Estrategia de pruebas (resumen)
+
+Pruebas automatizadas (vitest) en directorios temporales aislados. Deben existir pruebas **distintas
+y explícitas** para cada estado y caso crítico:
+
+| # | Caso | Verificación esperada |
+|---|---|---|
+| 1 | Estado `none` | Flujo completo crea archivos; `created` (exit 0). |
+| 2 | Estado `complete-valid` | No escribe nada; `unchanged` (exit 2); informa ubicación. |
+| 3 | Estado `partial` | `conflict` (exit 4); **enumera archivos encontrados y faltantes**; **no crea ni modifica** archivos. |
+| 4 | Estado `complete-invalid` | `failed`/`validation` (exit 3); informa errores; no modifica archivos. |
+| 5 | Ausencia de `package.json` | `failed`/`host` (exit 5); cero escrituras. |
+| 6 | Conflicto de rutas sin escritura | `conflict` (exit 4); nada escrito. |
+| 7 | Validación fallida sin escritura | `failed`/`validation` (exit 3); nada escrito. |
+| 8 | Idempotencia (2ª ejecución) | Segunda corrida sobre `complete-valid` → `unchanged`. |
+| 9 | Cancelación en `confirm` | `cancelled` (exit 1); cero escrituras. |
+| 10 | Rollback ante error de filesystem | `failed`/`filesystem` (exit 6); sin archivos parciales. |
+
+Complementan: unitarias de dominio (derivación/validación de slug, SemVer, manifiesto, config,
+tokens DTCG mínimos), resolución de raíz aislada, seguridad de rutas (contención, rechazo de
+escapes y symlinks externos), escritura transaccional, y pruebas de CLI por subproceso
+(verificación semántica de archivos + exit codes, no solo snapshots). Mapeo a escenarios en
+[quickstart.md](quickstart.md).
 
 ## Complexity Tracking
 

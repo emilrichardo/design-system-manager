@@ -69,7 +69,7 @@ Plan calculado antes de escribir.
 | `hostRoot` | HostRoot | Raíz resuelta y mostrada al usuario. |
 | `filesToCreate` | { path; contents }[] | Archivos nuevos (rutas relativas a `rootDir`). |
 | `conflicts` | string[] | Rutas objetivo ya ocupadas (no se sobrescriben). |
-| `previousState` | enum | `none` \| `complete` \| `partial`. |
+| `previousState` | enum | `none` \| `complete-valid` \| `partial` \| `complete-invalid`. |
 
 ### ValidationResult (dominio)
 | Campo | Tipo | Descripción |
@@ -94,10 +94,20 @@ Resultado estructurado independiente de la terminal. Ver
 
 ## Estados de inicialización previa (FR-004)
 
-- **none**: ni config ni manifiesto presentes → flujo de creación.
-- **complete**: config + manifiesto válidos y coherentes → `unchanged` (idempotencia, US3).
-- **partial**: existe parte (config sin manifiesto, tokens sin config, manifiesto inválido,
-  DTCG con errores) → se informa estado y acción necesaria; no se sobrescribe sin autorización.
+`init` clasifica el estado del proyecto en **cuatro** categorías mutuamente excluyentes. Cada una
+determina un `InitializationResult.status` y un único código de salida (ver
+`contracts/initialization-result.contract.md` y `contracts/exit-codes.md`). **`001-ds-init` no
+repara, adopta, migra ni recupera** estructuras parciales o inválidas (fuera de alcance).
+
+| Estado | Definición | Comportamiento | `status` | Exit |
+|---|---|---|---|---|
+| `none` | No existe configuración Neuraz válida ni archivos reconocibles del DS administrado. | Continúa: inspección → plan → (sin escribir antes de confirmar). | `created` (o `cancelled`/`conflict` según el flujo) | 0 / 1 / 4 |
+| `complete-valid` | Existe configuración reconocible y **todos** los archivos obligatorios están presentes y validan. | No escribe ni modifica nada; informa la ubicación del DS detectado. | `unchanged` | 2 |
+| `partial` | Existen uno o más artefactos en rutas/nombres administrados, pero **no** conforman una inicialización completa y válida (p. ej. config sin manifiesto; manifiesto sin config; carpeta de tokens sin config; algunos de los archivos que `init` crearía; config que referencia archivos ausentes). | Se trata como **conflicto**: no completa, no repara, no sobrescribe, no escribe; enumera archivos encontrados y obligatorios ausentes; explica que el usuario debe resolverlos (o usar una futura función de reparación). | `conflict` | 4 |
+| `complete-invalid` | La configuración y la estructura obligatoria existen, pero uno o más documentos canónicos son inválidos (manifiesto con schema inválido, versión no SemVer, tokens que no validan como DTCG, referencias inválidas). | No modifica archivos; informa los errores de validación. **No** se clasifica como `partial` ni como conflicto de archivos. | `failed` (categoría `validation`) | 3 |
+
+> `none` es el único estado que puede terminar escribiendo; el resultado final depende del flujo
+> (creación exitosa, cancelación o conflicto de rutas detectado durante el `plan`).
 
 ## Relaciones
 

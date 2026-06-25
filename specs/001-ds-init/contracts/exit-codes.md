@@ -16,8 +16,20 @@ indica que no se completó la creación. Antes de la confirmación nunca se escr
 
 ## Reglas
 
-- Códigos 1, 2, 4, 5 garantizan **cero escrituras**.
+- Códigos 1, 2, 3, 4, 5 garantizan **cero escrituras**.
 - Código 6 garantiza **rollback** del staging (sin archivos parciales).
+- Código 7 (validación posterior a `commit`) dispara limpieza de lo escrito.
 - El CLI no debe usar `0` para ningún caso de error.
 - La distinción `INVALID_HOST` (5) vs `INVALID_INPUT` (3) vs `VALIDATION_FAILED` (7) permite a CI
   diagnosticar la causa sin parsear texto.
+
+## Relación con el estado previo (ver `data-model.md`)
+
+| previousState | Código |
+|---|---|
+| `none` → creación exitosa | 0 |
+| `none` → cancelado | 1 |
+| `none` → conflicto de rutas | 4 |
+| `complete-valid` | 2 (`UNCHANGED`) |
+| `partial` | 4 (`CONFLICT`) |
+| `complete-invalid` | 3 (`INVALID_INPUT`, categoría validación) |

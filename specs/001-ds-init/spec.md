@@ -24,6 +24,18 @@ Esta especificación describe **qué** necesita el usuario y **cómo** se verifi
 implementación. La estructura exacta de directorios y los nombres definitivos de archivos se
 deciden en `/speckit-plan` y se registran mediante ADR (Constitución, Governance).
 
+## Glosario
+
+- **Raíz anfitriona** (término canónico): directorio del paquete npm anfitrión resuelto por el
+  inicializador, usado como **límite autorizado de escritura** para todas las lecturas y escrituras
+  de `001-ds-init`. Nombre técnico interno de tipo/entidad: `HostRoot` / `host root`.
+- **Límite autorizado de escritura**: restricción de seguridad basada en la raíz anfitriona;
+  ninguna lectura/escritura puede resolver (por ruta real) fuera de ella.
+- No se usa "repositorio autorizado" como sinónimo: en un monorepo la raíz anfitriona puede ser un
+  **workspace**, no la raíz global del repositorio Git.
+- **Estados de inicialización**: `none`, `complete-valid`, `partial`, `complete-invalid` (ver
+  FR-004 y `data-model.md`).
+
 ## Clarifications
 
 ### Session 2026-06-25
@@ -202,12 +214,11 @@ La especificación define el comportamiento esperado para cada caso.
 - **Repositorio con archivos que coinciden parcialmente** (algunas rutas objetivo existen y otras
   no): se trata como conflicto (US2); se enumeran las rutas en conflicto y no se sobrescribe
   ninguna; el usuario debe resolver antes de continuar. No se realiza una creación parcial.
-- **Configuración existente pero incompleta** (manifiesto/config presentes pero inválidos o a
-  medias): se detecta como estado inconsistente; se informa el estado y los campos faltantes; no
-  se sobrescribe sin autorización explícita; la operación no declara éxito.
-- **Tokens existentes sin configuración del gestor**: se detecta como estado parcial; se informa
-  que existen tokens pero no configuración; se enumeran y no se sobrescriben; se indica la acción
-  necesaria para integrarlos. No se asume su validez.
+- **Configuración existente pero incompleta** (p. ej. config sin manifiesto, o config que
+  referencia archivos ausentes): estado **`partial`** → se trata como **conflicto** (`conflict`,
+  exit 4); se enumeran archivos encontrados y obligatorios ausentes; no se escribe ni repara.
+- **Tokens existentes sin configuración del gestor**: estado **`partial`** → **conflicto**
+  (`conflict`, exit 4); se enumeran y no se sobrescriben; se indica que el usuario debe resolverlos.
 - **Slug inválido** (caracteres no permitidos, espacios, mayúsculas, guiones inicial/final o
   consecutivos, barras, puntos, `.`/`..`): se rechaza antes de escribir, con un mensaje que
   describe el formato válido (`^[a-z0-9]+(?:-[a-z0-9]+)*$`) y permite reintentar. Un slug escrito
@@ -215,16 +226,17 @@ La especificación define el comportamiento esperado para cada caso.
 - **Nombre vacío**: se rechaza antes de escribir; el nombre es obligatorio; se solicita de nuevo.
 - **Ubicación sin permisos de escritura**: se detecta antes o durante la validación previa; la
   operación falla limpiamente (US5) informando la causa; no deja archivos parciales.
-- **Enlaces simbólicos que conduzcan fuera del repositorio**: el sistema no escribe a través de
-  symlinks que apunten fuera del repositorio autorizado; se trata como condición de seguridad y
-  se rechaza la escritura por esa ruta (Requisitos de seguridad).
+- **Enlaces simbólicos que conduzcan fuera de la raíz anfitriona**: el sistema no escribe a través
+  de symlinks que apunten fuera del **límite autorizado de escritura**; se trata como condición de
+  seguridad y se rechaza la escritura por esa ruta (Requisitos de seguridad).
 - **Operación interrumpida** (cancelación del usuario, cierre del proceso): no quedan archivos
-  parciales; el repositorio queda como antes de iniciar (atomicidad, US5).
-- **Design System ya inicializado**: se detecta y se informa el estado; no se duplica ni se
-  corrompe; puede finalizar sin cambios (US3).
-- **Archivos DTCG existentes con errores**: se detectan como inválidos durante la inspección; se
-  informa que existen tokens con errores; no se sobrescriben silenciosamente; se indica la acción
-  necesaria. La inicialización no "arregla" automáticamente esos archivos.
+  parciales; la raíz anfitriona queda como antes de iniciar (atomicidad, US5).
+- **Design System ya inicializado y válido**: estado **`complete-valid`** → no se duplica ni se
+  modifica nada; resultado `unchanged` (exit 2); se informa la ubicación detectada (US3).
+- **DS completo pero con documentos inválidos** (manifiesto con schema inválido, versión no
+  SemVer, DTCG que no valida, referencias inválidas): estado **`complete-invalid`** → no modifica
+  archivos; informa los errores; resultado `failed` categoría `validation` (exit 3). NO se trata
+  como `partial` ni como conflicto de archivos. La inicialización no "arregla" automáticamente.
 - **Ejecución desde una subcarpeta en lugar de la raíz**: el sistema asciende desde el directorio
   real de ejecución hasta el `package.json` más cercano (sin superar la raíz Git más cercana) y
   opera sobre esa raíz anfitriona resuelta (FR-001c…FR-001f). La ubicación elegida se muestra
@@ -269,8 +281,22 @@ Inspección y detección de estado
   fallando antes de escribir cualquier archivo.
 - **FR-002**: El sistema MUST administrar exactamente un (1) Design System por proyecto.
 - **FR-003**: El sistema MUST inspeccionar el directorio actual antes de cualquier escritura.
-- **FR-004**: El sistema MUST comprobar si ya existe una inicialización/configuración previa y
-  clasificar el estado como: inexistente, completo, o incompleto/parcial.
+- **FR-004**: El sistema MUST comprobar si ya existe una inicialización previa y clasificar el
+  estado en exactamente una de cuatro categorías, cada una con un resultado y código de salida
+  definidos (ver `data-model.md` y `contracts/`):
+  - **`none`**: ni configuración Neuraz válida ni archivos reconocibles del DS → `init` continúa
+    (inspección → plan → confirmación → escritura).
+  - **`complete-valid`**: configuración reconocible y todos los archivos obligatorios presentes y
+    válidos → no se escribe nada; resultado `unchanged`; se informa la ubicación del DS detectado.
+  - **`partial`**: existen artefactos en rutas/nombres administrados que NO conforman una
+    inicialización completa y válida → se trata como **conflicto**: no completa, no repara, no
+    sobrescribe, no escribe; enumera archivos encontrados y obligatorios ausentes; resultado
+    `conflict`.
+  - **`complete-invalid`**: la configuración y la estructura obligatoria existen pero uno o más
+    documentos canónicos son inválidos (schema, SemVer, DTCG, referencias) → no modifica archivos;
+    informa errores; resultado `failed` categoría `validation`. NO se clasifica como `partial`.
+  - La reparación/adopción/migración/recuperación automática queda **fuera del alcance** de
+    `001-ds-init`.
 - **FR-005**: El sistema MUST identificar todos los conflictos (rutas objetivo ya ocupadas) antes
   de escribir y enumerarlos al usuario.
 
@@ -333,8 +359,8 @@ Idempotencia, atomicidad y portabilidad
 
 Restricciones de seguridad (comportamiento prohibido)
 
-- **FR-025**: El sistema MUST NOT escribir fuera del proyecto anfitrión / repositorio autorizado,
-  incluyendo a través de enlaces simbólicos que apunten fuera de él.
+- **FR-025**: El sistema MUST NOT escribir fuera de la **raíz anfitriona** (límite autorizado de
+  escritura), incluyendo a través de enlaces simbólicos que apunten fuera de ella.
 - **FR-026**: El sistema MUST NOT sobrescribir ni eliminar archivos existentes sin consentimiento
   explícito del usuario.
 - **FR-027**: El sistema MUST NOT ejecutar código proveniente de los archivos del Design System.

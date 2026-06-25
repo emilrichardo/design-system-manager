@@ -38,21 +38,39 @@ Verificaciones (semánticas, no snapshots):
 - `design-system.json` valida; `slug` cumple la regex; `version = 0.1.0`.
 - `base.tokens.json` valida como DTCG y el alias `{color.base.blue-500}` resuelve.
 
-## Escenarios de seguridad / borde
+## Escenarios — resultado semántico y código de salida (uno por escenario)
 
-| Escenario | Acción | Resultado esperado | Exit |
+Cada escenario tiene **exactamente un** código de salida según el contrato vigente
+([contracts/exit-codes.md](contracts/exit-codes.md), fuente normativa) y su `status`
+([contracts/initialization-result.contract.md](contracts/initialization-result.contract.md)).
+
+| Escenario | Condición que lo produce | `status` | Exit |
 |---|---|---|---|
-| Sin `package.json` | `init` en dir sin npm | error claro, **nada escrito** | 5 |
-| Desde subcarpeta | `init` desde `apps/web/src` | raíz = dir del `package.json` más cercano | 0 |
-| Monorepo | varios `package.json` | usa el más cercano (no la raíz global) | 0 |
-| Ya inicializado | `init` por 2ª vez | `unchanged`, sin cambios | 2 |
-| Conflicto parcial | existe `neuraz-ds.config.json` | enumera conflictos, **nada escrito** | 4 |
-| DTCG inválido previo | `base.tokens.json` con error | informa, no sobrescribe | 4/2 |
-| Slug inválido manual | slug `MPF UI` | rechaza, pide corrección | 3 |
-| Nombre vacío | name `""` | rechaza | 3 |
-| Sin permisos de escritura | dir RO | falla limpio, sin parciales | 6 |
-| Symlink hacia afuera | ruta objetivo es symlink externo | rechaza antes de escribir | 5/3 |
-| Cancelar en confirmación | responder "no" | `cancelled`, sin cambios | 1 |
+| Inicialización exitosa | Estado `none`, datos válidos, confirmación dada | `created` | 0 |
+| Cancelación | El usuario responde "no" en `confirm` (o cancela un prompt) | `cancelled` | 1 |
+| DS ya inicializado y válido | Estado `complete-valid` (config + obligatorios presentes y válidos) | `unchanged` | 2 |
+| Slug inválido | Entrada de slug no cumple la regex (validación de entrada) | `failed`/`validation` | 3 |
+| Nombre vacío | Entrada de nombre vacía (validación de entrada) | `failed`/`validation` | 3 |
+| DS completo pero inválido | Estado `complete-invalid` (manifiesto/SemVer/DTCG/refs inválidos) | `failed`/`validation` | 3 |
+| Archivos parciales | Estado `partial` (p. ej. existe `neuraz-ds.config.json` sin manifiesto) | `conflict` | 4 |
+| Conflicto de rutas | Una ruta objetivo ya está ocupada (detectado en `plan`) | `conflict` | 4 |
+| Ausencia de `package.json` | `resolve` no halla `package.json` en el límite | `failed`/`host` | 5 |
+| Symlink/ruta que escapa | Ruta objetivo resuelve (realpath) fuera de la raíz anfitriona | `failed`/`host` | 5 |
+| Error de escritura | Fallo de E/S en `stage`/`commit` (p. ej. dir sin permisos) → rollback | `failed`/`filesystem` | 6 |
+| Verificación posterior falla | `verify` detecta que lo persistido no valida → limpieza | `failed`/`post-verify` | 7 |
+
+> Resolución correcta de raíz (sin error): ejecutar desde una subcarpeta usa el `package.json` más
+> cercano; en monorepo usa el más cercano (no la raíz global). Ambos terminan en `created` (0) si
+> el resto del flujo es exitoso.
+
+### Notas de desambiguación
+
+- **Entrada inválida** (slug/nombre/versión) y **DS completo-inválido** comparten exit `3`
+  (categoría `validation`), pero difieren en origen: la primera ocurre en `validate` de entradas;
+  la segunda en `inspect` de un DS preexistente. Ninguna escribe.
+- **Ausencia de `package.json`** y **escape de ruta/symlink externo** comparten exit `5`
+  (`host`/límite autorizado), por ser ambos fallos de resolución/seguridad del anfitrión, antes de
+  cualquier escritura.
 
 ## Portabilidad (US4)
 
