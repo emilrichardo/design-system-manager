@@ -193,23 +193,23 @@ description: "Task list for feature 001-ds-init — Inicialización de un Design
 
 **Purpose**: stage → commit → verify con rollback. Nunca estado parcial (US5, FR-022).
 
-- [ ] T031 [US1] Definir el puerto `FileSystem` en `src/application/ports.ts` (read, exists, mkdtemp dentro de root, write, rename, rm, realpath)
+- [X] T031 [US1] Definir el puerto `FileSystem` en `src/application/ports.ts` (read, exists, mkdtemp dentro de root, write, rename, rm, realpath)
   - Deps: T015
   - Done: interfaz mínima; implementable con `node:fs` y con fake en memoria.
   - Test: cubierto por T033/T060.
-- [ ] T032 [P][US2] Implementar **detección de conflictos** en `src/infrastructure/fs/detect-conflicts.ts` comparando rutas objetivo con el FS real (sin sobrescribir)
+- [X] T032 [P][US2] Implementar **detección de conflictos** en `src/infrastructure/fs/detect-conflicts.ts` comparando rutas objetivo con el FS real (sin sobrescribir)
   - Deps: T031, T019
   - Done: enumera rutas ocupadas; nunca escribe.
   - Test: `tests/unit/detect-conflicts.test.ts`.
-- [ ] T033 [US1][US5] Implementar **escritura transaccional** en `src/infrastructure/fs/transactional-writer.ts`: `stage` (mkdtemp dentro de la raíz) → escribir temporales → `commit` (rename atómico) → `cleanup` → `rollback` ante fallo
+- [X] T033 [US1][US5] Implementar **escritura transaccional** en `src/infrastructure/fs/transactional-writer.ts`: `stage` (mkdtemp dentro de la raíz) → escribir temporales → `commit` (rename atómico) → `cleanup` → `rollback` ante fallo
   - Deps: T031, T019
   - Done: éxito promueve atómicamente; fallo en cualquier punto deja el FS sin cambios.
   - Test: `tests/integration/transactional-writer.test.ts` (éxito, fallo en stage, fallo en commit).
-- [ ] T034 [US5] Implementar **verificación posterior** en `src/infrastructure/fs/verify-persisted.ts` releyendo y validando config/manifest/tokens; fallo ⇒ `Issue` `post-verify` + limpieza
+- [X] T034 [US5] Implementar **verificación posterior** en `src/infrastructure/fs/verify-persisted.ts` releyendo y validando config/manifest/tokens; fallo ⇒ `Issue` `post-verify` + limpieza
   - Deps: T033, T028, T029
   - Done: detecta corrupción/escritura incompleta tras commit; dispara limpieza.
   - Test: `tests/integration/verify-persisted.test.ts` (error en verify ⇒ exit 7).
-- [ ] T035 [P][US1] Implementar **serialización JSON determinista** en `src/infrastructure/serialization/json.ts` (orden estable, newline final, 2 espacios)
+- [X] T035 [P][US1] Implementar **serialización JSON determinista** en `src/infrastructure/serialization/json.ts` (orden estable, newline final, 2 espacios)
   - Deps: T005
   - Done: salida estable y legible (Constitución VII/XVII).
   - Test: `tests/unit/json-serialization.test.ts`.

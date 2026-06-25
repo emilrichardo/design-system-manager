@@ -11,6 +11,51 @@ export interface DocumentValidators {
   validateDtcg(data: unknown): readonly Issue[];
 }
 
+// ── Puerto de filesystem (T031) ──────────────────────────────────────────────────────
+// Operaciones mínimas necesarias para la escritura transaccional. No expone toda la API de
+// Node. La infraestructura lo implementa con node:fs/promises; admite adapters en memoria.
+
+export interface FileSystem {
+  /** Tipo de la entrada (lstat, no sigue symlinks); "absent" si no existe. */
+  lstatKind(path: string): Promise<ManagedFileKind>;
+  /** Crea un directorio (recursivo opcional). */
+  mkdir(path: string, recursive: boolean): Promise<void>;
+  /** Crea un directorio temporal único con el prefijo dado; devuelve su ruta. */
+  mkdtemp(prefix: string): Promise<string>;
+  /** Lee un archivo UTF-8. */
+  readFile(path: string): Promise<string>;
+  /** Escribe un archivo con creación exclusiva (falla si ya existe). */
+  writeFileExclusive(path: string, content: string): Promise<void>;
+  /** Renombra/mueve una ruta. */
+  rename(from: string, to: string): Promise<void>;
+  /** Elimina un archivo (tolera ausencia). */
+  removeFile(path: string): Promise<void>;
+  /** Elimina un directorio vacío. */
+  removeDir(path: string): Promise<void>;
+  /** Elimina un árbol completo (uso exclusivo para limpiar staging controlado). */
+  removeTree(path: string): Promise<void>;
+  /** Resuelve la ruta real (sigue symlinks). */
+  realpath(path: string): Promise<string>;
+}
+
+// ── Preparación y resultado de la transacción de escritura ───────────────────────────
+
+/** Archivo preparado en memoria (contenido ya serializado), listo para escribir. */
+export interface PreparedFile {
+  readonly relativePath: string;
+  readonly content: string;
+}
+
+export type TransactionResult =
+  | { readonly status: "committed"; readonly files: readonly string[] }
+  | { readonly status: "conflict"; readonly conflicts: readonly string[] }
+  | {
+      readonly status: "failed";
+      readonly category: "filesystem" | "post-verify";
+      readonly errors: readonly Issue[];
+      readonly rollbackErrors?: readonly Issue[];
+    };
+
 
 // ── Resolución de la raíz anfitriona (T017 / ADR-0002) ───────────────────────────────
 
