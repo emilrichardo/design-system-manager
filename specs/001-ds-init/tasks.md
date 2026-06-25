@@ -131,10 +131,10 @@ description: "Task list for feature 001-ds-init — Inicialización de un Design
   - Deps: T018
   - Done: ausencia ⇒ resultado/`Issue` `host` sin escribir; nunca crea ni modifica `package.json`.
   - Test: `tests/integration/no-package-json.test.ts` (exit 5; cero escrituras).
-- [ ] T021 [US3][US2][US5] Implementar **inspección de estado previo** en `src/infrastructure/host-root/inspect-state.ts`: clasifica `none`/`complete-valid`/`partial`/`complete-invalid` leyendo config/manifest/tokens (data-model §estados)
-  - Deps: T013, T019, T032 (validadores), T020
-  - Done: clasifica correctamente cada estado; `partial` lista presentes y obligatorios ausentes; no escribe.
-  - Test: `tests/unit/inspect-state.test.ts` + integración T061–T064.
+- [ ] T021 [US3][US2][US5] Implementar **inspección de presencia de archivos** (sin validar contenido) en `src/infrastructure/host-root/inspect-presence.ts`: detecta y reporta presencia/ausencia de config/manifest/tokens en las rutas administradas, devolviendo un estado preliminar `none` / `potentially-partial` / `potentially-complete` (data-model §estados). NO valida DTCG ni schemas.
+  - Deps: T013, T019, T020
+  - Done: distingue `none` de estructura potencialmente parcial vs potencialmente completa; lista presentes y obligatorios ausentes; no lee validez de contenido; no escribe.
+  - Test: `tests/unit/inspect-presence.test.ts` (none, potentially-partial, potentially-complete).
 
 **Checkpoint**: raíz resuelta y estado clasificado de forma aislada y segura.
 
@@ -180,8 +180,12 @@ description: "Task list for feature 001-ds-init — Inicialización de un Design
   - Deps: T028, T029, T014
   - Done: devuelve `ValidationResult`; errores críticos impiden continuar (antes de escribir).
   - Test: `tests/unit/validate-plan.test.ts`.
+- [ ] T030b [US3][US2][US5] Implementar **clasificación final de estado previo** en `src/infrastructure/host-root/classify-state.ts`: a partir del estado preliminar de T021, usa los validadores para distinguir `complete-valid` / `complete-invalid` / `partial` (data-model §estados)
+  - Deps: T013, T019, T020, T028, T029, T021
+  - Done: `potentially-complete` + documentos válidos → `complete-valid`; `potentially-complete` + documentos inválidos → `complete-invalid`; `potentially-partial` → `partial` (lista presentes y obligatorios ausentes); `none` → `none`. No escribe; `complete-invalid` no se confunde con `partial`.
+  - Test: `tests/unit/classify-state.test.ts` (los 4 estados, incl. complete-valid vs complete-invalid) + integración T052/T053/T054.
 
-**Checkpoint**: documentos construibles en memoria y validables sin tocar disco.
+**Checkpoint**: documentos construibles en memoria y validables sin tocar disco; estado previo clasificado definitivamente tras los validadores.
 
 ---
 
@@ -223,12 +227,12 @@ acoplar terminal. ⚠️ Sin `console.log`, sin `@clack`, sin `process.exit`, si
   - Deps: T015
   - Done: `Prompter` pide identidad/confirmación; `Reporter` recibe eventos semánticos (info/warn/conflict/error/success).
   - Test: cubierto por T060.
-- [ ] T037 [US1][US2][US3][US5] Implementar el caso de uso `initializeDesignSystem` en `src/application/initialize-design-system.ts` orquestando las 9 fases mediante puertos; **sin escritura persistente antes de `confirm`**
-  - Deps: T017, T021, T030, T031, T033, T034, T036
+- [ ] T037 [US1][US2][US3][US5] Implementar el caso de uso `initializeDesignSystem` en `src/application/initialize-design-system.ts` orquestando las 9 fases mediante puertos (usa T021 para `inspect` y T030b para la clasificación final); **sin escritura persistente antes de `confirm`**
+  - Deps: T017, T021, T030, T030b, T031, T033, T034, T036, **T040** (sus pruebas usan los adapters en memoria; implementar T040 antes que las pruebas de T037)
   - Done: cada fase identificable; devuelve `InitializationResult`; sin I/O directo ni terminal.
-  - Test: `tests/unit/initialize-design-system.test.ts` (con adapters en memoria).
+  - Test: `tests/unit/initialize-design-system.test.ts` (con adapters en memoria de T040).
 - [ ] T038 [US1] Implementar el **mapeo estado→resultado** dentro del caso de uso: `none`→flujo creación; `complete-valid`→`unchanged`; `partial`→`conflict`; `complete-invalid`→`failed/validation` (data-model)
-  - Deps: T037
+  - Deps: T030b, T037
   - Done: cada estado produce el `status` correcto; `partial` lista presentes/ausentes; no escribe.
   - Test: `tests/unit/state-to-result.test.ts` (4 estados).
 - [ ] T039 [US3] Garantizar **idempotencia**: segunda ejecución sobre `complete-valid` no modifica nada
@@ -237,8 +241,10 @@ acoplar terminal. ⚠️ Sin `console.log`, sin `@clack`, sin `process.exit`, si
   - Test: `tests/integration/idempotent-second-run.test.ts`.
 - [ ] T040 [P][US1][US4] Crear **adapters en memoria** (`InMemoryFileSystem`, `ScriptedPrompter`, `RecordingReporter`, `FakeHostRootResolver`) en `tests/helpers/in-memory-adapters.ts`
   - Deps: T031, T036
-  - Done: permiten ejecutar el caso de uso **sin terminal ni FS real**.
+  - Done: permiten ejecutar el caso de uso **sin terminal ni FS real**. **Debe completarse antes que las pruebas de T037/T038** (son consumidores directos).
   - Test: usados por T037/T038; `tests/unit/use-case-headless.test.ts` prueba ejecución sin terminal.
+
+> **Orden dentro de la Fase 6 (L2)**: implementar **T036 → T040 → T037 → T038 → T039**. T040 (adapters en memoria) precede a T037/T038 porque sus pruebas headless dependen de él.
 
 **Checkpoint**: `init` ejecutable headless con resultado estructurado; listo para múltiples interfaces.
 
@@ -339,7 +345,7 @@ acoplar terminal. ⚠️ Sin `console.log`, sin `@clack`, sin `process.exit`, si
 
 - **Fase 1 (Setup)**: sin dependencias → primero.
 - **Fase 2 (Dominio)**: depende de Fase 1; bloquea a las demás.
-- **Fase 3 (Resolución/inspección)**: depende de Dominio + validadores (T028/T029 para `inspect`).
+- **Fase 3 (Resolución/inspección de presencia)**: depende de Dominio. T021 (inspección de presencia) NO requiere validadores; la **clasificación final** de estado (T030b) se realiza en la Fase 4 tras T028/T029.
 - **Fase 4 (Generación/validación)**: depende de Dominio.
 - **Fase 5 (Transaccional)**: depende de puerto FS (T031) y path-guard (T019).
 - **Fase 6 (Caso de uso)**: depende de Fases 3–5.
@@ -348,7 +354,9 @@ acoplar terminal. ⚠️ Sin `console.log`, sin `@clack`, sin `process.exit`, si
 - **Fase 9 (Docs/validación)**: depende de Fase 8.
 
 **Dependencias críticas**: T018 (resolución de raíz) y T019 (path-guard) → habilitan T020/T021/T032/T033;
-T037 (caso de uso) → habilita toda la Fase 7–8; T044 (exit codes) → matriz de CLI.
+T028/T029 (validadores) → habilitan T030b (clasificación final de estado); T030b → habilita
+T037/T038; T040 (adapters en memoria) → precede a las pruebas de T037/T038; T037 (caso de uso) →
+habilita toda la Fase 7–8; T044 (exit codes) → matriz de CLI.
 
 ### Paralelizables (`[P]`)
 Setup T002/T003/T004/T006/T007; dominio T008–T016; schemas/builders T022–T027; T035; adapters T040;
@@ -361,8 +369,8 @@ y prácticamente toda la Fase 8 (T047–T061) por usar archivos de prueba distin
 | Historia | FR principales | Tareas | Pruebas clave |
 |---|---|---|---|
 | **US1** Inicializar | FR-001,001a–001g,003,006–018,033–035; SC-001,002,007 | T008–T012, T017–T018, T020, T022–T030, T031,T033,T035, T036–T038, T041–T046, T047–T051, T061, T064 | happy-root, state-none, exit-matrix, packaging-npx |
-| **US2** No sobrescribir | FR-005,010,011,026; SC-004 | T014, T019, T032, T038, T053, T054, T055 | detect-conflicts, state-partial, external-symlink |
-| **US3** Idempotencia | FR-004,020,021 | T013, T021, T038, T039, T052, T059 | state-complete-valid, second-run |
+| **US2** No sobrescribir | FR-005,010,011,026; SC-004 | T014, T019, T032, T030b, T038, T053, T054, T055 | detect-conflicts, classify-state, state-partial, external-symlink |
+| **US3** Idempotencia | FR-004,020,021 | T013, T021, T030b, T038, T039, T052, T059 | inspect-presence, classify-state, state-complete-valid, second-run |
 | **US4** Portabilidad | FR-023,024; SC-005 | T035, T040, T060 | portability |
 | **US5** Atomicidad | FR-008,017,022; SC-006 | T014, T030, T033, T034, T045, T056, T058 | transactional-writer, transaction-failures, verify-persisted, no-write-permission |
 
@@ -388,4 +396,4 @@ T037/T043 y se verifican en T065/T064). Ningún FR/SC queda huérfano.
 - Tests incluidos por pedido explícito (TDD recomendado: escribir la prueba de cada tarea antes de
   implementarla).
 - Sin librerías TUI (Ink/Blessed/React); sin Style Dictionary; sin reparación/migración; un solo DS.
-- Total de tareas: **66** (T001–T066).
+- Total de tareas: **67** (T001–T066 + T030b).
