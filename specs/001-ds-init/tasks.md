@@ -69,39 +69,39 @@ description: "Task list for feature 001-ds-init — Inicialización de un Design
 
 **Purpose**: Reglas puras testeables. ⚠️ Sin dependencias de CLI/Clack/fs/console/process.
 
-- [ ] T008 [P] [US1] Crear value object de **nombre** (no vacío tras trim) en `src/domain/identity/name.ts`
+- [X] T008 [P] [US1] Crear value object de **nombre** (no vacío tras trim) en `src/domain/identity/name.ts`
   - Deps: T005
   - Done: rechaza nombre vacío/solo-espacios; acepta texto libre.
   - Test: `tests/unit/name.test.ts`.
-- [ ] T009 [P] [US1] Crear validador puro de **slug** con la regex `^[a-z0-9]+(?:-[a-z0-9]+)*$` en `src/domain/identity/slug.ts`
+- [X] T009 [P] [US1] Crear validador puro de **slug** con la regex `^[a-z0-9]+(?:-[a-z0-9]+)*$` en `src/domain/identity/slug.ts`
   - Deps: T005
   - Done: acepta `mpf-design-system`,`neuraz`,`municipal-ui-2026`; rechaza `MPF Design System`,`mpf_design_system`,`-mpf`,`mpf-`,`mpf--design`,`../design-system` (ADR-0003).
   - Test: `tests/unit/slug-validate.test.ts` (todos los ejemplos válidos/inválidos de ADR-0003).
-- [ ] T010 [P] [US1] Implementar **derivación de slug** desde el nombre (minúsculas → quitar diacríticos → separadores/espacios a `-` → eliminar no permitidos → recortar `-`; vacío ⇒ requiere edición) en `src/domain/identity/slugify.ts`
+- [X] T010 [P] [US1] Implementar **derivación de slug** desde el nombre (minúsculas → quitar diacríticos → separadores/espacios a `-` → eliminar no permitidos → recortar `-`; vacío ⇒ requiere edición) en `src/domain/identity/slugify.ts`
   - Deps: T005
   - Done: `"Município Público"` → `municipio-publico`; resultado vacío señala "requiere edición".
   - Test: `tests/unit/slugify.test.ts` (incluye diacríticos y caso vacío).
-- [ ] T011 [P] [US1] Implementar validación **SemVer** (envoltura pura sobre `semver`) en `src/domain/identity/version.ts` con default `0.1.0`
+- [X] T011 [P] [US1] Implementar validación **SemVer** (envoltura pura sobre `semver`) en `src/domain/identity/version.ts` con default `0.1.0`
   - Deps: T005
   - Done: acepta `0.1.0`,`1.0.0`,`1.2.3`,`1.0.0-beta.1`; rechaza no-SemVer; default `0.1.0`.
   - Test: `tests/unit/version.test.ts`.
-- [ ] T012 [P] [US1] Definir `DesignSystemIdentity` (name, slug, description?, version) en `src/domain/identity/design-system-identity.ts`
+- [X] T012 [P] [US1] Definir `DesignSystemIdentity` (name, slug, description?, version) en `src/domain/identity/design-system-identity.ts`
   - Deps: T008–T011
   - Done: construye identidad válida; rechaza inválida agregando errores de dominio.
   - Test: `tests/unit/identity.test.ts`.
-- [ ] T013 [P] [US3][US2][US5] Definir el enum/clasificación de **estado previo** (`none`/`complete-valid`/`partial`/`complete-invalid`) en `src/domain/state/previous-state.ts`
+- [X] T013 [P] [US3][US2][US5] Definir el enum/clasificación de **estado previo** (`none`/`complete-valid`/`partial`/`complete-invalid`) en `src/domain/state/previous-state.ts`
   - Deps: T005
   - Done: tipo exhaustivo de 4 estados con metadatos (archivos presentes/ausentes).
   - Test: `tests/unit/previous-state.test.ts`.
-- [ ] T014 [P] [US2][US5] Definir `InitializationPlan` y `Conflict` (filesToCreate, conflicts, previousState, hostRoot) en `src/domain/plan/initialization-plan.ts`
+- [X] T014 [P] [US2][US5] Definir `InitializationPlan` y `Conflict` (filesToCreate, conflicts, previousState, hostRoot) en `src/domain/plan/initialization-plan.ts`
   - Deps: T013
   - Done: modela el plan y la lista de conflictos sin tocar el FS.
   - Test: `tests/unit/initialization-plan.test.ts`.
-- [ ] T015 [P] Definir `InitializationResult` (created/unchanged/cancelled/conflict/failed) + `Issue` en `src/domain/result/initialization-result.ts` (contracts/initialization-result.contract.md)
+- [X] T015 [P] Definir `InitializationResult` (created/unchanged/cancelled/conflict/failed) + `Issue` en `src/domain/result/initialization-result.ts` (contracts/initialization-result.contract.md)
   - Deps: T005
   - Done: unión discriminada exacta del contrato; `failed.errors[].code` ∈ {host,validation,filesystem,post-verify}.
   - Test: `tests/unit/initialization-result.test.ts`.
-- [ ] T016 [P] Definir errores de dominio y `ValidationResult` (ok/errors/warnings) en `src/domain/validation/validation-result.ts`
+- [X] T016 [P] Definir errores de dominio y `ValidationResult` (ok/errors/warnings) en `src/domain/validation/validation-result.ts`
   - Deps: T005
   - Done: distingue errores críticos (bloquean) de warnings (no bloquean).
   - Test: `tests/unit/validation-result.test.ts`.
