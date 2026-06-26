@@ -40,13 +40,14 @@ export interface ManagedDocumentReadRequest {
   readonly maxBytes: number;
 }
 
-/** Motivo de fallo de lectura (flujo normal, NO excepción). Encoding inválido lo detecta el parseo. */
+/** Motivo de fallo de lectura (flujo normal, NO excepción). */
 export type ManagedReadFailure =
   | "absent"
   | "not-regular-file"
   | "too-large"
   | "outside-root"
   | "symlink-external"
+  | "invalid-encoding" // bytes UTF-8 inválidos (decodificación estricta, FR-004); distinto de read-failed
   | "read-failed";
 
 /** Resultado de lectura: unión discriminada por `ok`. */

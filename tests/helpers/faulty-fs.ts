@@ -35,5 +35,6 @@ export function faultyFs(base: FileSystem, fault: FaultConfig): FileSystem {
     removeDir: (p) => (trip("removeDir"), base.removeDir(p)),
     removeTree: (p) => (trip("removeTree"), base.removeTree(p)),
     realpath: (p) => (trip("realpath"), base.realpath(p)),
+    byteSize: (p) => (trip("byteSize"), base.byteSize(p)),
   };
 }

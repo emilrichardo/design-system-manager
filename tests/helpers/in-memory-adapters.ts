@@ -152,6 +152,11 @@ export class InMemoryFileSystem implements FileSystem {
     if (c === undefined) throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
     return c;
   }
+  async byteSize(path: string): Promise<number> {
+    const c = this.files.get(path);
+    if (c === undefined) throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    return new TextEncoder().encode(c).length; // bytes UTF-8, no caracteres
+  }
   async writeFileExclusive(path: string, content: string): Promise<void> {
     if (this.files.has(path)) throw Object.assign(new Error("EEXIST"), { code: "EEXIST" });
     this.files.set(path, content);

@@ -15,20 +15,30 @@ límites—; **no** es una segunda implementación de filesystem ni reimplementa
 //   byteSize(path: string): Promise<number>;   // stat de tamaño antes de leer
 // (lstatKind/readFile/realpath de 001 permanecen sin cambios)
 
-interface ManagedDocumentReader {              // puerto delgado compuesto sobre FileSystem
-  /** Tipo de la entrada (lstat; no sigue symlinks). Delega en FileSystem.lstatKind de 001. */
-  lstatKind(absPath: string): Promise<ManagedFileKind>; // file|directory|symlink|other|absent
-  /** Tamaño en bytes (stat) ANTES de leer. Delega en FileSystem.byteSize (método aditivo). */
-  byteSize(absPath: string): Promise<number>;
-  /** Lee UTF-8 si el tamaño ≤ límite; rechaza symlink externo / fuera de la raíz. */
-  readManaged(rootDir: string, relativePath: string, maxBytes: number): Promise<ReadResult>;
+// Forma implementada (Fase 3/4): puerto DELGADO de un solo método `read(request)`. El adapter
+// concreto (T024) compone internamente FileSystem.lstatKind/byteSize (de 001, extendido) + el
+// path-guard; NO expone lstat/byteSize/Stats/fd/streams/escritura en su superficie pública.
+interface ManagedDocumentReader {
+  read(request: ManagedDocumentReadRequest): Promise<ManagedDocumentReadResult>;
 }
 
-type ReadResult =
-  | { readonly ok: true; readonly content: string; readonly sizeBytes: number }
+interface ManagedDocumentReadRequest {
+  readonly rootDir: string;
+  readonly document: "config" | "manifest" | "tokens"; // ReadableManagedDocument
+  readonly relativePath: string;                        // debe coincidir con la ruta canónica
+  readonly maxBytes: number;                            // presupuesto del documento
+}
+
+type ManagedDocumentReadResult =
+  | { readonly ok: true; readonly document: "config" | "manifest" | "tokens";
+      readonly relativePath: string; readonly content: string; readonly sizeBytes: number }
   | { readonly ok: false; readonly reason: "absent" | "not-regular-file" | "too-large"
-      | "outside-root" | "symlink-external" | "read-failed"; readonly message: string };
+      | "outside-root" | "symlink-external" | "invalid-encoding" | "read-failed";
+      readonly message: string };
 ```
+
+> `invalid-encoding` (añadido en Fase 4, corrección para **FR-004**): bytes UTF-8 inválidos detectados
+> por decodificación **estricta** (`TextDecoder(fatal)`); se distingue de `read-failed`.
 
 ## Reglas
 - MUST validar contención con el path-guard (`realpath`, anti-`..`, rutas absolutas externas, prefijos

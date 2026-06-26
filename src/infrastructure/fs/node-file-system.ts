@@ -1,5 +1,5 @@
 // Adapter real del puerto FileSystem sobre node:fs/promises (ADR-0005). Única capa con node:fs.
-import { lstat, mkdir, mkdtemp, readFile, realpath, rename, rm, rmdir, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, readFile, realpath, rename, rm, rmdir, stat, writeFile } from "node:fs/promises";
 import type { FileSystem, ManagedFileKind } from "../../application/ports.js";
 
 function errno(e: unknown): string | undefined {
@@ -50,5 +50,9 @@ export const nodeFileSystem: FileSystem = {
   },
   async realpath(path: string): Promise<string> {
     return realpath(path);
+  },
+  async byteSize(path: string): Promise<number> {
+    // stat de tamaño (sigue symlinks); NO lee el contenido. Lanza si no existe/no accesible.
+    return (await stat(path)).size;
   },
 };

@@ -41,11 +41,11 @@ export interface FileSystem {
   realpath(path: string): Promise<string>;
   /**
    * Tamaño en bytes de la entrada (stat de tamaño, SIN leer el contenido). Extensión **aditiva**
-   * (feature 002, T015): opcional para no obligar a los adapters de `001` a implementarla ahora; el
-   * adapter Node real y la composición del `ManagedDocumentReader` llegan en T021/T024. No cambia la
-   * semántica de los métodos existentes.
+   * (feature 002): obligatoria desde T021 — el límite de tamaño es una garantía de seguridad del
+   * lector, no una capacidad opcional. No expone `Stats` de Node ni cambia la semántica de los
+   * métodos existentes. Debe fallar (throw) si la ruta no existe o no es accesible.
    */
-  byteSize?(path: string): Promise<number>;
+  byteSize(path: string): Promise<number>;
 }
 
 // ── Preparación y resultado de la transacción de escritura ───────────────────────────

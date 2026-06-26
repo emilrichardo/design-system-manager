@@ -142,23 +142,23 @@ de `001` explícita.
 
 > Reutiliza `path-guard` y `resolveHostRoot` de `001`. Implementa la lectura observacionalmente pura.
 
-- [ ] T021 Implementar `FileSystem.byteSize` (stat de tamaño) en `src/infrastructure/fs/node-file-system.ts` (método aditivo; resto del adapter de 001 sin tocar).
+- [X] T021 Implementar `FileSystem.byteSize` (stat de tamaño) en `src/infrastructure/fs/node-file-system.ts` (método aditivo; resto del adapter de 001 sin tocar).
   - **Deps**: T015.
   - **Done**: `byteSize` vía `node:fs/promises.stat`; sin lecturas de contenido; 001 intacto.
   - **Test**: `tests/unit/fs/byte-size.test.ts` — tamaño correcto; archivo ausente → error controlado. (FR-006)
-- [ ] T022 [P] Añadir `byteSize` al **adapter de FileSystem en memoria** de los tests headless en `tests/helpers/` (sin tocar la API pública).
+- [X] T022 [P] Añadir `byteSize` al **adapter de FileSystem en memoria** de los tests headless en `tests/helpers/` (sin tocar la API pública).
   - **Deps**: T015.
   - **Done**: adapter en memoria soporta `byteSize`; usable sin FS real.
   - **Test**: usado por pruebas headless (T059). (SC-006, US5)
-- [ ] T023 [P] Tarea de **reutilización explícita** del `path-guard` de `001` (`assertWithinRoot`/`realpath`, anti-`..`, rutas absolutas externas, prefijos engañosos, otros workspaces) desde el reader, en `src/infrastructure/analysis/managed-document-reader.ts` (import, sin reimplementar).
+- [X] T023 [P] Tarea de **reutilización explícita** del `path-guard` de `001` (`assertWithinRoot`/`realpath`, anti-`..`, rutas absolutas externas, prefijos engañosos, otros workspaces) desde el reader, en `src/infrastructure/analysis/managed-document-reader.ts` (import, sin reimplementar).
   - **Deps**: T016. Reusa `src/infrastructure/host-root/path-guard.ts`.
   - **Done**: el reader delega contención al path-guard existente; cero duplicación.
   - **Test**: cubierto por T025 (escape/symlink). (FR-003, US6)
-- [ ] T024 Implementar `ManagedDocumentReader` en `src/infrastructure/analysis/managed-document-reader.ts`: `lstatKind`→`byteSize` (stat antes de leer)→`readManaged` UTF-8 si `≤ maxBytes`; devuelve la unión `ReadResult`. Sin cargar módulos, sin evaluar contenido, sin red, sin escrituras.
+- [X] T024 Implementar `ManagedDocumentReader` en `src/infrastructure/analysis/managed-document-reader.ts`: `lstatKind`→`byteSize` (stat antes de leer)→`readManaged` UTF-8 si `≤ maxBytes`; devuelve la unión `ReadResult`. Sin cargar módulos, sin evaluar contenido, sin red, sin escrituras.
   - **Deps**: T016, T021, T023.
   - **Done**: `stat` previo a leer; `>maxBytes`→`too-large` (no lee); UTF-8; acumulación de bytes totales controlada; cero side effects.
   - **Test**: `tests/integration/validate-inspect/reader.test.ts` — too-large, absent, not-regular-file, read-failed (archivo eliminado entre stat y lectura), encoding inválido (lo detecta el parseo posterior, no el reader). (FR-002/FR-003/FR-004, US6)
-- [ ] T025 Implementar el manejo de **symlinks externos/rotos y escape** en el reader (rechazo sin seguir el enlace) en `src/infrastructure/analysis/managed-document-reader.ts`.
+- [X] T025 Implementar el manejo de **symlinks externos/rotos y escape** en el reader (rechazo sin seguir el enlace) en `src/infrastructure/analysis/managed-document-reader.ts`.
   - **Deps**: T024.
   - **Done**: symlink externo→`symlink-external`; fuera de raíz→`outside-root`; no se sigue el enlace; coherente con `audit.md` de 001.
   - **Test**: `tests/integration/validate-inspect/security.test.ts` — symlink externo, symlink roto, ruta absoluta externa, prefijo engañoso, otro workspace. (FR-003, US6)
