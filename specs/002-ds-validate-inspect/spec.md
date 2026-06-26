@@ -35,11 +35,26 @@ superficial.
 
 ## Clarifications
 
-### Pendientes (para `/speckit-clarify`)
+### Session 2026-06-26
 
-Dos decisiones materiales quedan marcadas como `[NEEDS CLARIFICATION]` en los requisitos y en
-_Open Questions_: (1) reconciliación de la tabla de códigos de salida con la de `init`; (2) política
-para un `$type` desconocido (error vs advertencia).
+- Q: ¿Reutilizar la semántica de exit codes de `init` o definir una tabla común del binario? → A:
+  **Tabla común** para `init`/`validate`/`inspect`. El código `2` conserva su significado de `init`
+  (`unchanged`) y **no** se reutiliza con otro sentido. `validate` usa `0` (válido) / `3` (DS
+  completo inválido) / `4` (parcial o conflicto) / `5` (host o config administrada no localizable) /
+  `6` (lectura/fs). `inspect` usa los mismos y **entrega igualmente el informe recuperable** aunque
+  finalice con `3` (completo-inválido) o `4` (parcial). Los códigos `1`/`2`/`7` quedan **reservados**
+  por el contrato común (no usados normalmente por validate/inspect). Error interno de frontera CLI:
+  `70` (no contractual). Registrar como ADR en `/speckit-plan`.
+- Q: ¿`$type` desconocido es error o advertencia? → A: **distinguir** soporte DTCG de interpretación
+  profunda del gestor. (a) **Tipo DTCG reconocido** por la versión canónica fijada pero **sin** análisis
+  profundo en Neuraz → **advertencia** estructurada (`dtcg-type-not-deeply-inspected`); el DS **puede
+  seguir siendo válido**; se cuenta en `byType`, se conservan rutas/descripciones, se valida la
+  estructura genérica posible, sin transformar/resolver el valor. (b) **Tipo no reconocido** por la
+  versión DTCG fijada → **error** estructurado; DS **inválido**; el nodo se conserva en la inspección
+  como **dato no confiable**, sin interpretar `$value`. (c) **Herencia de `$type`** desde grupos se
+  respeta: un token sin `$type` propio es válido si hereda un tipo reconocido de un ancestro; sin tipo
+  propio ni heredado → error contractual. (d) **`$extensions`** no convierte un `$type` desconocido en
+  válido; los tipos personalizados quedan fuera de esta feature. Registrar como ADR en `/speckit-plan`.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -181,8 +196,8 @@ sin inferir el contenido faltante; ninguno escribe.
 
 ### Edge Cases
 
-La spec define el comportamiento; los marcados con `[NEEDS CLARIFICATION]` se resuelven en
-`/speckit-clarify`.
+La spec define el comportamiento esperado para cada caso (las dos decisiones materiales quedaron
+resueltas en _Clarifications_).
 
 - **Sin `package.json`** → error de host; no lee ni escribe; código `host`.
 - **Sin configuración** (`neuraz-ds.config.json` ausente) → "no inicializado": no se considera un DS
@@ -195,8 +210,12 @@ La spec define el comportamiento; los marcados con `[NEEDS CLARIFICATION]` se re
   los demás cuando es seguro.
 - **Schema inválido / slug inválido / SemVer inválido / DTCG inválido** → errores de validación
   estructurados.
-- **`$type` desconocido** → [NEEDS CLARIFICATION: ¿error o advertencia? Afecta si un DS con tipos
-  DTCG futuros se considera válido. El núcleo actual sólo soporta `color` (schema enum).]
+- **`$type` reconocido por DTCG pero sin análisis profundo en Neuraz** → **advertencia**
+  (`dtcg-type-not-deeply-inspected`); el DS puede seguir siendo válido; se cuenta en `byType`.
+- **`$type` no reconocido por la versión DTCG fijada** → **error**; DS inválido; el nodo se conserva
+  en la inspección como **dato no confiable**, sin interpretar `$value`.
+- **Token sin `$type` propio** → válido si hereda un tipo reconocido de un grupo ancestro; **error**
+  si no tiene tipo propio ni heredado.
 - **Alias inexistente / alias a grupo / ciclo directo / ciclo indirecto** → errores de validación
   (reusa la validación de referencias de `001`).
 - **Symlink externo / symlink roto / ruta administrada ocupada por directorio / archivo no regular**
@@ -254,8 +273,17 @@ La spec define el comportamiento; los marcados con `[NEEDS CLARIFICATION]` se re
   primero cuando sea seguro continuar; MUST distinguir categorías host/estructura/lectura/validación.
 - **FR-016**: `validate` MUST devolver un resultado estructurado (válido/ inválido + errores +
   advertencias + archivos comprobados) y MUST NOT modificar archivos.
-- **FR-017**: Un `$type` desconocido MUST [NEEDS CLARIFICATION: producir error o advertencia] y
-  MUST NOT aceptarse silenciosamente como válido.
+- **FR-017**: Política de `$type` (decidida): un **tipo DTCG reconocido** por la versión canónica
+  fijada pero **sin** análisis profundo en Neuraz MUST producir una **advertencia** estructurada
+  (`dtcg-type-not-deeply-inspected`) sin invalidar el DS, contándose en `byType` y conservando
+  rutas/descripciones; un **tipo no reconocido** por la versión DTCG fijada MUST producir un **error**
+  estructurado (DS inválido) y MUST NOT aceptarse silenciosamente. NUNCA se transforma/resuelve el
+  valor del tipo.
+- **FR-018**: La **herencia de `$type`** desde grupos MUST respetarse: un token sin `$type` propio que
+  hereda un tipo reconocido de un ancestro es válido; un token **sin tipo propio ni heredado** MUST
+  producir el error contractual correspondiente.
+- **FR-019**: La presencia de `$extensions` MUST NOT convertir un `$type` desconocido en válido; el
+  soporte de tipos personalizados queda fuera de alcance.
 
 ### Functional Requirements — `inspect`
 
@@ -286,12 +314,27 @@ La spec define el comportamiento; los marcados con `[NEEDS CLARIFICATION]` se re
 - **FR-032**: `inspect` MUST mostrar una representación textual básica (árbol/tabla de texto:
   Identidad / Archivos / Tokens {Grupos, Valores, Aliases} / Validación), comprensible sin ANSI.
   MUST NOT implementar navegación, teclado interactivo, pantalla persistente, Ink/Blessed/React.
-- **FR-033**: Ambos comandos MUST traducir su resultado a códigos de salida **inequívocos**, sin que
-  un mismo código tenga dos significados incompatibles dentro del binario.
-  [NEEDS CLARIFICATION: ¿se reutiliza la semántica de exit codes de `init` (donde `2`=`unchanged`)
-  o se define una **tabla común** para todos los comandos? La dirección recomendada para
-  validate/inspect (`0` válido, `2` inválido, `3` args, `4` parcial/conflicto, `5` host/config no
-  hallada, `6` lectura/fs) choca con `2`=`unchanged` de `init`. Decidir y registrar ADR.]
+- **FR-033**: Ambos comandos MUST traducir su resultado a códigos de salida según la **tabla común
+  del binario** (decidida), sin que un mismo código tenga dos significados incompatibles:
+
+  | Código | Significado común |
+  |---:|---|
+  | 0 | Operación exitosa y resultado válido |
+  | 1 | Operación cancelada (solo comandos interactivos) |
+  | 2 | Operación exitosa sin cambios (`unchanged`; usada por `init`) |
+  | 3 | Entrada o Design System inválido |
+  | 4 | Estructura parcial, conflicto o estado que impide completar |
+  | 5 | Proyecto anfitrión o Design System administrado no localizable |
+  | 6 | Error de lectura o filesystem |
+  | 7 | Error de verificación posterior (reservado para operaciones que escriben) |
+  | 70 | Error interno inesperado de frontera CLI (no contractual) |
+
+  - **`validate`**: válido→`0`; completo-inválido→`3`; parcial/conflicto→`4`; host/config no
+    localizable→`5`; lectura/fs→`6`.
+  - **`inspect`**: válido→`0`; completo-inválido→`3` (**entrega igualmente** el informe recuperable);
+    parcial→`4` (**entrega** presentes/ausentes y datos recuperables); no localizado→`5`; lectura→`6`.
+  - `validate`/`inspect` no usan normalmente `1`/`2`/`7`, pero permanecen **reservados** por el
+    contrato común. Esta tabla NO reasigna el `2` de `init`.
 - **FR-034**: Ayuda y versión MUST usar código `0`; errores de uso del parser MUST usar código `3`;
   un error interno inesperado de frontera CLI MAY usar el código no contractual `70` (ya
   documentado en `001`).
@@ -303,13 +346,17 @@ La spec define el comportamiento; los marcados con `[NEEDS CLARIFICATION]` se re
 
 - **DesignSystemInspection**: modelo estructurado de `inspect` — `hostRoot`, `designSystemPath`,
   `identity?` (name/slug/version/description?), `schemaVersions?`, `files` (expected/present/missing),
-  `tokens?` (total/groups/aliases/byType/paths/maxDepth), `validation` (valid/errors/warnings). Forma
+  `tokens?` (total/groups/aliases/byType/paths/maxDepth), `validation` (valid/errors/warnings). En
+  estado completo-inválido o parcial el modelo MUST marcar qué datos son **recuperados/no confiables**
+  (p. ej. nodos con `$type` no reconocido). `byType` incluye los tipos reconocidos-no-profundos. Forma
   final en `/speckit-plan`.
 - **TokenNodeSummary**: por token — ruta canónica, `$type` efectivo (+ origen si heredado),
-  `$description?`, clase (valor concreto | alias), destino del alias?, profundidad.
+  `$description?`, clase (valor concreto | alias), destino del alias?, profundidad, y marca de
+  **confiabilidad** (`trusted`/`untrusted` para tipos no reconocidos).
 - **ValidationReport**: resultado de `validate` — `valid`, `errors[]`, `warnings[]`, archivos
   comprobados, categoría por `Issue` (host/structure/read/validation). Reutiliza `Issue`/`ValidationResult`
-  de `001`.
+  de `001`. Códigos estables incluyen al menos `dtcg-type-not-deeply-inspected` (warning) y un código
+  de error para `$type` no reconocido y para token sin tipo propio ni heredado.
 - **PreviousState** (reusado de `001`): none / partial / complete-invalid / complete-valid.
 
 ## Success Criteria *(mandatory)*
@@ -328,6 +375,10 @@ La spec define el comportamiento; los marcados con `[NEEDS CLARIFICATION]` se re
 - **SC-007**: `inspect` reporta **conteos exactos** (total/grupos/aliases/byType/maxDepth) verificables
   contra documentos de prueba conocidos.
 - **SC-008**: La CLI y el núcleo producen el **mismo resultado semántico** sobre el mismo proyecto.
+- **SC-009**: Un `$type` **reconocido pero no profundo** produce **advertencia** y mantiene el DS
+  válido; un `$type` **no reconocido** produce **error** e invalida el DS — verificado en pruebas.
+- **SC-010**: Los códigos de salida de `validate`/`inspect` se ajustan a la **tabla común** y no
+  contradicen los de `init` (en particular, `2` sigue significando `unchanged`).
 
 ## Assumptions
 
@@ -382,8 +433,8 @@ solo lectura, observacionalmente puro), XV (integraciones desacopladas — casos
 XVI (incremental — solo validate/inspect), XVII (portabilidad — modelo independiente de interfaz).
 Sin tensiones detectadas. Detalle final en `/speckit-plan`.
 
-## Open Questions (para `/speckit-clarify`)
+## Open Questions
 
-1. **Exit codes** (FR-033): ¿reutilizar la semántica de `init` o definir una tabla común del binario?
-   (`2` significa `unchanged` en `init` pero se propone `inválido` para validate/inspect.)
-2. **`$type` desconocido** (FR-017): ¿error o advertencia?
+Ninguna. Las dos decisiones materiales (exit codes comunes y política de `$type`) fueron resueltas en
+la sesión de clarificación del 2026-06-26 (ver _Clarifications_). Su formalización como ADR se hará
+en `/speckit-plan`.

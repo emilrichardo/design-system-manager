@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,9 +31,11 @@
 
 ## Notes
 
-- 2 marcadores [NEEDS CLARIFICATION] permanecen **de forma deliberada**, para resolver en
-  `/speckit-clarify` (no bloquean el resto de la spec):
-  1. Reconciliación de la tabla de códigos de salida con `init` (FR-033).
-  2. Política para un `$type` desconocido: error vs advertencia (FR-017).
-- El resto del checklist pasa (15/16). Ambos marcadores acotan decisiones de contrato/scope a
-  resolver antes de `/speckit-plan`; el comportamiento por defecto está propuesto en la spec.
+- Las 2 decisiones materiales fueron **resueltas** en la clarificación del 2026-06-26 (ver
+  `## Clarifications` en spec.md):
+  1. **Exit codes comunes** del binario (FR-033): `2` sigue siendo `unchanged` de `init`; validate/
+     inspect usan 0/3/4/5/6; 1/2/7 reservados.
+  2. **Política de `$type`** (FR-017/018/019): reconocido-no-profundo → advertencia; no reconocido →
+     error; herencia respetada; `$extensions` no valida tipos desconocidos.
+- Checklist **16/16**. Sin marcadores pendientes. Lista para `/speckit-plan` (los ADR de exit codes
+  y política de tipos se registran allí).
