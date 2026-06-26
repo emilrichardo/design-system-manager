@@ -111,27 +111,27 @@ de `001` explícita.
 
 > Todo en `src/application/`. Arch-guard: application sin commander/clack/fs/path/infra/console/exit.
 
-- [ ] T015 Extender **aditivamente** el puerto `FileSystem` de `001` con un único método `byteSize(path:string):Promise<number>` en `src/application/ports.ts` (C6). NO se modifica ningún método existente.
+- [X] T015 Extender **aditivamente** el puerto `FileSystem` de `001` con un único método `byteSize(path:string):Promise<number>` en `src/application/ports.ts` (C6). NO se modifica ningún método existente.
   - **Deps**: T001.
   - **Done**: `byteSize` añadido; los adapters de 001 podrán implementarlo; 001 intacto.
   - **Test**: regresión de 001 verde (T060); typecheck. (FR-002/FR-003, C6)
-- [ ] T016 Definir el puerto `ManagedDocumentReader` y la unión `ReadResult` (`ok|absent|not-regular-file|too-large|outside-root|symlink-external|read-failed`) en `src/application/ports.ts` como **puerto delgado compuesto** sobre `FileSystem` (C6), no un segundo FS.
+- [X] T016 Definir el puerto `ManagedDocumentReader` y la unión `ReadResult` (`ok|absent|not-regular-file|too-large|outside-root|symlink-external|read-failed`) en `src/application/ports.ts` como **puerto delgado compuesto** sobre `FileSystem` (C6), no un segundo FS.
   - **Deps**: T015.
   - **Done**: contrato de managed-document-reader.contract.md; `readManaged(root,rel,maxBytes)`.
   - **Test**: cubierto por la impl en T024 y sus pruebas. (FR-003/FR-004, US6)
-- [ ] T017 Definir el puerto del **validador de lectura DTCG amplio** `DtcgReadValidator` (separado de `DocumentValidators` de generación de 001) en `src/application/ports.ts`.
+- [X] T017 Definir el puerto del **validador de lectura DTCG amplio** `DtcgReadValidator` (separado de `DocumentValidators` de generación de 001) en `src/application/ports.ts`.
   - **Deps**: T009.
   - **Done**: contrato que reconoce los 13 tipos sin transformar `$value`; separado del schema estricto de 001.
   - **Test**: cubierto por T026. (FR-012/FR-017, separación de schemas)
-- [ ] T018 Definir los tipos de la **tubería**: `AnalyzeInput {executionDir}`, `AnalyzeDependencies` (resolver, inspector, classifier, reader, documentValidators(001), dtcgReadValidator, límites) en `src/application/ports.ts` (analysis-pipeline.contract.md).
+- [X] T018 Definir los tipos de la **tubería**: `AnalyzeInput {executionDir}`, `AnalyzeDependencies` (resolver, inspector, classifier, reader, documentValidators(001), dtcgReadValidator, límites) en `src/application/ports.ts` (analysis-pipeline.contract.md).
   - **Deps**: T014, T016, T017.
   - **Done**: input/deps sin Commander/Clack/TTY/`process.*`.
   - **Test**: tipos usados por T028. (FR-005, SC-006)
-- [ ] T019 Definir los puertos de presentación `ValidationReporter` e `InspectionReporter` (reciben datos semánticos; no alteran el resultado) en `src/application/ports.ts`.
+- [X] T019 Definir los puertos de presentación `ValidationReporter` e `InspectionReporter` (reciben datos semánticos; no alteran el resultado) en `src/application/ports.ts`.
   - **Deps**: T012, T013.
   - **Done**: reporters reciben `ValidationReport`/`DesignSystemInspection`; sin texto preformateado en el núcleo.
   - **Test**: cubierto por reporters de Fase 8. (FR-031/FR-032, FR-019 TUI-ready)
-- [ ] T020 Definir las firmas de los **casos de uso headless** `validateDesignSystem(input,deps)` e `inspectDesignSystem(input,deps)` y sus tipos de salida (`ValidationReport` / `DesignSystemInspection`) en `src/application/ports.ts`.
+- [X] T020 Definir las firmas de los **casos de uso headless** `validateDesignSystem(input,deps)` e `inspectDesignSystem(input,deps)` y sus tipos de salida (`ValidationReport` / `DesignSystemInspection`) en `src/application/ports.ts`.
   - **Deps**: T018, T019.
   - **Done**: firmas sin exit codes ni terminal; salida estructurada (habilita `--json` futuro sin reimplementar, FR-035).
   - **Test**: cubierto por T030/T031 y pruebas headless (T059). (FR-005/FR-035, SC-006)

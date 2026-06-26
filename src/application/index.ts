@@ -3,3 +3,5 @@
 export * from "./ports.js";
 export * from "./validate-plan.js";
 export * from "./initialize-design-system.js";
+// Feature 002 — puertos de validate/inspect (lectura segura, tubería, casos de uso, reporters).
+export * from "./analysis-ports.js";

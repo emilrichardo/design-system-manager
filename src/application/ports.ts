@@ -39,6 +39,13 @@ export interface FileSystem {
   removeTree(path: string): Promise<void>;
   /** Resuelve la ruta real (sigue symlinks). */
   realpath(path: string): Promise<string>;
+  /**
+   * Tamaño en bytes de la entrada (stat de tamaño, SIN leer el contenido). Extensión **aditiva**
+   * (feature 002, T015): opcional para no obligar a los adapters de `001` a implementarla ahora; el
+   * adapter Node real y la composición del `ManagedDocumentReader` llegan en T021/T024. No cambia la
+   * semántica de los métodos existentes.
+   */
+  byteSize?(path: string): Promise<number>;
 }
 
 // ── Preparación y resultado de la transacción de escritura ───────────────────────────
