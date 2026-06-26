@@ -214,8 +214,9 @@ resueltas en _Clarifications_).
   (`dtcg-type-not-deeply-inspected`); el DS puede seguir siendo válido; se cuenta en `byType`.
 - **`$type` no reconocido por la versión DTCG fijada** → **error**; DS inválido; el nodo se conserva
   en la inspección como **dato no confiable**, sin interpretar `$value`.
-- **Token sin `$type` propio** → válido si hereda un tipo reconocido de un grupo ancestro; **error**
-  si no tiene tipo propio ni heredado.
+- **Token sin `$type` propio** → tipo efectivo por precedencia FR-018: del token referenciado si
+  `$value` es alias; si no, del grupo ancestro más cercano; **error** (`dtcg-type-undeterminable`) si
+  nada lo determina (incluye alias roto o cíclico).
 - **Alias inexistente / alias a grupo / ciclo directo / ciclo indirecto** → errores de validación
   (reusa la validación de referencias de `001`).
 - **Symlink externo / symlink roto / ruta administrada ocupada por directorio / archivo no regular**
@@ -251,9 +252,10 @@ resueltas en _Clarifications_).
 - **FR-006**: El recorrido del árbol DTCG MUST tener **límites internos de seguridad** documentados
   (profundidad máxima, número máximo de nodos, tamaño máximo de archivo). Superarlos MUST producir
   un `Issue` estructurado (no un fallo no controlado). [Valores exactos → `/speckit-plan` (ADR).]
-- **FR-007**: Cada `Issue` MUST poder contener: código estable, severidad (`error`|`warning`),
-  documento afectado, ruta dentro del documento, mensaje y contexto seguro. Las reglas MUST basarse
-  en códigos estables, **no** en el texto de AJV/Zod.
+- **FR-007**: Los issues de análisis MUST usar el tipo canónico **`AnalysisIssue`** (extiende el
+  `Issue` de `001` de forma retrocompatible) y poder contener: código estable, severidad
+  (`error`|`warning`), documento afectado, ruta dentro del documento, mensaje y contexto seguro. Las
+  reglas MUST basarse en códigos estables, **no** en el texto de AJV/Zod.
 - **FR-008**: `error` impide considerar válido el DS; `warning` no impide la validez pero se reporta.
 
 ### Functional Requirements — `validate`
@@ -279,9 +281,13 @@ resueltas en _Clarifications_).
   rutas/descripciones; un **tipo no reconocido** por la versión DTCG fijada MUST producir un **error**
   estructurado (DS inválido) y MUST NOT aceptarse silenciosamente. NUNCA se transforma/resuelve el
   valor del tipo.
-- **FR-018**: La **herencia de `$type`** desde grupos MUST respetarse: un token sin `$type` propio que
-  hereda un tipo reconocido de un ancestro es válido; un token **sin tipo propio ni heredado** MUST
-  producir el error contractual correspondiente.
+- **FR-018**: El `$type` **efectivo** MUST resolverse con esta **precedencia única** (ver ADR-0008/0010):
+  (1) `$type` declarado en el token; (2) si no declara y `$value` es una **referencia**, el tipo
+  efectivo del **token referenciado** (resolviendo cadenas de aliases); (3) si no es referencia, el
+  `$type` **heredado del grupo ancestro más cercano** que lo declare; (4) si nada lo determina, el
+  token es **inválido** (`dtcg-type-undeterminable`). El tipo del alias **prevalece** sobre el del
+  grupo cuando el alias no declara `$type`; un **ciclo** o un **alias roto** impiden un tipo efectivo
+  confiable. El tipo NO se infiere de la forma de `$value` y `$extensions` no participa.
 - **FR-019**: La presencia de `$extensions` MUST NOT convertir un `$type` desconocido en válido; el
   soporte de tipos personalizados queda fuera de alcance.
 
@@ -314,6 +320,13 @@ resueltas en _Clarifications_).
 - **FR-032**: `inspect` MUST mostrar una representación textual básica (árbol/tabla de texto:
   Identidad / Archivos / Tokens {Grupos, Valores, Aliases} / Validación), comprensible sin ANSI.
   MUST NOT implementar navegación, teclado interactivo, pantalla persistente, Ink/Blessed/React.
+  El **reporter textual** MUST acotar la lista de tokens/rutas a **`MAX_INSPECT_TERMINAL_TOKEN_ROWS`
+  = 200** filas (límite **de presentación**, no de análisis). Esta cota MUST NOT alterar estadísticas,
+  `valid`, errors/warnings, códigos de salida, ni marcar la inspección como parcial, ni modificar el
+  modelo headless. Cuando haya más de 200, la salida MUST indicar explícitamente cuántos se muestran y
+  cuántos se omiten (p. ej. "Mostrando 200 de 12 450 tokens; 12 250 no se muestran"), usando el orden
+  determinista de ADR-0010 para las primeras 200. No es truncado silencioso. No se implementa
+  paginación, TUI, `--json` ni flags.
 - **FR-033**: Ambos comandos MUST traducir su resultado a códigos de salida según la **tabla común
   del binario** (decidida), sin que un mismo código tenga dos significados incompatibles:
 
@@ -350,13 +363,16 @@ resueltas en _Clarifications_).
   estado completo-inválido o parcial el modelo MUST marcar qué datos son **recuperados/no confiables**
   (p. ej. nodos con `$type` no reconocido). `byType` incluye los tipos reconocidos-no-profundos. Forma
   final en `/speckit-plan`.
-- **TokenNodeSummary**: por token — ruta canónica, `$type` efectivo (+ origen si heredado),
-  `$description?`, clase (valor concreto | alias), destino del alias?, profundidad, y marca de
-  **confiabilidad** (`trusted`/`untrusted` para tipos no reconocidos).
+- **TokenNodeSummary**: por token — ruta canónica, `$type` efectivo (+ `typeOrigin`/`typeSourcePath`
+  si heredado), `$description?`, clase (valor concreto | alias), destino del alias?, profundidad, y
+  marca de **confiabilidad** `trust` (`valid` | `recovered` | `untrusted`; `untrusted` para tipos no
+  reconocidos). El enum canónico de confiabilidad es el de data-model/contratos (`valid`/`recovered`/
+  `untrusted`, más `unavailable` en `InspectedValue` de secciones); no se usa `trusted`.
 - **ValidationReport**: resultado de `validate` — `valid`, `errors[]`, `warnings[]`, archivos
-  comprobados, categoría por `Issue` (host/structure/read/validation). Reutiliza `Issue`/`ValidationResult`
-  de `001`. Códigos estables incluyen al menos `dtcg-type-not-deeply-inspected` (warning) y un código
-  de error para `$type` no reconocido y para token sin tipo propio ni heredado.
+  comprobados/no comprobados, límites, resumen numérico. Sus issues son **`AnalysisIssue`** (C4): tipo
+  aditivo que **extiende** el `Issue` de `001` con `severity`/`document?`/`context?`, sin mutar `Issue`
+  ni `ValidationResult` de `001`. Códigos estables incluyen al menos `dtcg-type-not-deeply-inspected`
+  (warning) y códigos de error para `$type` no reconocido y para `$type` indeterminable.
 - **PreviousState** (reusado de `001`): none / partial / complete-invalid / complete-valid.
 
 ## Success Criteria *(mandatory)*

@@ -77,13 +77,13 @@ una representación, no la fuente de verdad). **Gate: PASS** (pre-Phase 0 y post
 | `path-guard` (assertWithinRoot, realpath, anti-escape) | **Reusar sin cambios** | seguridad de rutas |
 | `inspect-presence` (presencia/tipos) | **Reusar sin cambios** | alimenta el estado estructural |
 | `classify-state` (none/partial/complete-valid/invalid) | **Reusar** (lectura) | 002 reusa su criterio de estado; la validación detallada la produce la nueva tubería |
-| `Issue`, `ValidationResult` | **Reusar** | + nuevos códigos estables (ADR-0008) |
+| `Issue`, `ValidationResult` | **Reusar** + tipo aditivo | `Issue` intacto; 002 define `AnalysisIssue extends Issue` (severity/document/context) + nuevos códigos estables (ADR-0008, C4) |
 | schema config / manifest + zod `documentValidators` | **Reusar sin cambios** | validación de config/manifiesto |
 | reglas slug / SemVer / identidad | **Reusar sin cambios** | dominio |
 | `dtcg-validator` (alias/refs/ciclos) | **Reusar utilidades** | comprobación de referencias/ciclos compartida |
 | **schema DTCG estricto de `001`** (`dtcg.schema` solo `color`) | **NO cambiar** | sigue restringiendo lo que `init` **genera** |
 | validación DTCG de **lectura** (todos los tipos reconocidos) | **Crear/Generalizar** | nuevo validador de lectura 002 (estructura genérica + tipos reconocidos), separado del schema de generación |
-| `FileSystem` port (lstatKind/readFile/realpath) | **Extender mínimamente** | añadir `byteSize` (stat de tamaño previo a leer) — aditivo, 001 intacto |
+| `FileSystem` port (lstatKind/readFile/realpath) | **Extender mínimamente** | añadir SOLO `byteSize` (stat previo a leer) — aditivo, 001 intacto. `ManagedDocumentReader` es un puerto delgado **compuesto** sobre este FS (no un segundo FS) (C6) |
 | `Reporter` port | **Reusar el patrón** | nuevos reporters de presentación (validate/inspect) |
 | CLI Commander / `runCli` / programa | **Extender** | registrar `validate` e `inspect`; sin tocar `init` |
 | `exit-codes.ts` de `001` | **Generalizar** | tabla común; añadir mapeos validate/inspect **sin** cambiar los de init (ADR-0006) |
@@ -157,6 +157,12 @@ src/
 `domain → application → infrastructure → cli`. La tubería común evita doble lectura/parseo/recorrido
 y garantiza que validate e inspect **no diverjan**.
 
+**Límite de presentación del reporter (C2)**: `inspect-terminal-reporter.ts` aplica
+`MAX_INSPECT_TERMINAL_TOKEN_ROWS = 200` **solo** a la impresión de filas de tokens. Es una cota de
+**presentación**, separada de los **límites de análisis** (ADR-0009): el modelo
+(`DesignSystemInspection`) conserva todos los nodos; las estadísticas, `valid`, issues y exit codes no
+cambian; con > 200 se imprime un aviso explícito de cuántos se muestran/omiten en el orden de ADR-0010.
+
 ## Tubería común de análisis
 
 ```text
@@ -185,8 +191,9 @@ Una sola pasada de lectura/parseo/recorrido; `validate` e `inspect` comparten el
   (`InspectedValue<T>` / `FileInspection` / `untrusted`); estados presente/válido/recuperado/no
   confiable/no disponible. Mínimo necesario.
 - **ADR-0008 Política error/warning + `$type`**: tipo reconocido-no-profundo → warning
-  (`dtcg-type-not-deeply-inspected`, válido); tipo no reconocido → error; sin tipo propio ni heredado
-  → error; `$description` ausente → warning; grupo vacío → warning; `$extensions` no valida tipos.
+  (`dtcg-type-not-deeply-inspected`, válido); tipo no reconocido → error; **precedencia C1 del tipo
+  efectivo** declarado → alias → grupo → indeterminable (`dtcg-type-undeterminable` = error);
+  `$description` ausente → warning; grupo vacío → warning; `$extensions` no valida tipos.
 - **ADR-0009 Límites seguros**: tamaño/archivo 5 MiB, total 16 MiB, profundidad 32, nodos 100 000,
   ruta 512, alias 256, issues 1 000 (justificados en research). Límite duro → error + análisis parcial
   marcado + DS no validado completamente (inválido); inspect entrega lo recuperado.
@@ -195,9 +202,11 @@ Una sola pasada de lectura/parseo/recorrido; `validate` e `inspect` comparten el
 
 ## Estrategia de pruebas (resumen)
 
-- **Unit**: effective-type (herencia/origen), token-path, profundidad, detección grupo/token/alias,
+- **Unit**: effective-type (precedencia C1: declarado→alias→grupo→indeterminable; `typeOrigin` +
+  `typeSourcePath` cuando hereda de grupo — C5), token-path, profundidad, detección grupo/token/alias,
   conteos/byType (incl. categoría `(untyped)`/no reconocido), warnings, no-confiables, límites,
-  determinismo, proyección a ValidationReport/Inspection, mapeo de exit codes.
+  determinismo, proyección a ValidationReport/Inspection, mapeo de exit codes,
+  `AnalysisIssue` estructuralmente compatible con `Issue` de `001` (C4).
 - **Integración (FS real)**: DS válido de `init`; no-inicializado; parcial; completo-inválido; JSON
   roto; config/manifest/DTCG inválidos; alias roto/a-grupo/ciclos; tipo reconocido-no-profundo; tipo
   desconocido; tipo heredado; archivo grande; árbol profundo; límite de nodos; archivo eliminado
@@ -205,7 +214,13 @@ Una sola pasada de lectura/parseo/recorrido; `validate` e `inspect` comparten el
   (snapshot antes/después: bytes/mtime/permisos/listado); validate→inspect sin cambios; inspect→validate
   mismo resultado semántico.
 - **CLI**: ayuda; comandos registrados; sin prompts; stdout/stderr; exit codes; proceso hijo; CI sin
-  TTY; CLI ≡ núcleo.
+  TTY; CLI ≡ núcleo. **Cota del reporter de `inspect` (C2)**: 199 filas (sin aviso, todas visibles);
+  200 filas (borde, todas visibles, sin aviso); 201 filas (muestra 200 + aviso de 1 omitido);
+  estadísticas/conteos completos aunque solo se rendericen 200; **mensaje exacto** de cantidad
+  mostrada/omitida; igualdad semántica núcleo↔CLI (el modelo conserva todas las filas).
+- **Tipo efectivo (C1)**: alias sin tipo dentro de grupo tipado (gana el alias); alias encadenado
+  (resuelve el tipo final); alias roto (sin tipo efectivo); alias cíclico (sin tipo efectivo);
+  token concreto con tipo heredado del grupo; token sin tipo disponible → `dtcg-type-undeterminable`.
 - **Regresión 001**: suite completa de `init` verde; el documento de `init` valida e inspecciona OK;
   los exit codes de `init` no cambian; ampliar el DTCG read-validator **no** altera la salida de `init`.
 

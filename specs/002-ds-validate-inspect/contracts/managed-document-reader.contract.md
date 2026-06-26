@@ -2,13 +2,23 @@
 
 Puerto de aplicación para leer **solo** los documentos administrados, con límites y seguridad de
 rutas. Implementado en infraestructura sobre `node:fs/promises` reutilizando el `path-guard` de `001`.
-Extiende el puerto `FileSystem` de `001` de forma **aditiva** con `byteSize`.
+
+**Relación con `FileSystem` de `001` (C6)**: NO se introduce un segundo puerto de filesystem. El
+puerto `FileSystem` de `001` se **extiende aditivamente** con un único método nuevo, `byteSize`
+(stat de tamaño previo a la lectura); `lstatKind`/`readFile`/`realpath` ya existen y se reutilizan.
+`ManagedDocumentReader` es un **puerto de aplicación delgado** (orientado a documentos administrados)
+**compuesto sobre** ese `FileSystem` extendido —añade contención por `path-guard` y la política de
+límites—; **no** es una segunda implementación de filesystem ni reimplementa el acceso a disco.
 
 ```ts
-interface ManagedDocumentReader {
-  /** Tipo de la entrada (lstat; no sigue symlinks). Reusa lstatKind de 001. */
+// FileSystem (001) extendido de forma aditiva — único método nuevo:
+//   byteSize(path: string): Promise<number>;   // stat de tamaño antes de leer
+// (lstatKind/readFile/realpath de 001 permanecen sin cambios)
+
+interface ManagedDocumentReader {              // puerto delgado compuesto sobre FileSystem
+  /** Tipo de la entrada (lstat; no sigue symlinks). Delega en FileSystem.lstatKind de 001. */
   lstatKind(absPath: string): Promise<ManagedFileKind>; // file|directory|symlink|other|absent
-  /** Tamaño en bytes (stat) ANTES de leer, para aplicar el límite de tamaño. */
+  /** Tamaño en bytes (stat) ANTES de leer. Delega en FileSystem.byteSize (método aditivo). */
   byteSize(absPath: string): Promise<number>;
   /** Lee UTF-8 si el tamaño ≤ límite; rechaza symlink externo / fuera de la raíz. */
   readManaged(rootDir: string, relativePath: string, maxBytes: number): Promise<ReadResult>;

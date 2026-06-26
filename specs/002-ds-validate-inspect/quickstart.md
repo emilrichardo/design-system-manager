@@ -21,6 +21,11 @@ npx neuraz-ds inspect         # → inspección completa, exit 0
 `validate` muestra: raíz anfitriona, archivos comprobados, estado, nº de errores/warnings, lista de
 issues. `inspect` muestra: Identidad / Archivos / Tokens (Grupos, Valores, Aliases) / Validación.
 
+> Cota de presentación (C2): el reporter textual de `inspect` imprime como máximo
+> **`MAX_INSPECT_TERMINAL_TOKEN_ROWS = 200`** filas de tokens. Con más de 200 añade un aviso del estilo
+> `Mostrando 200 de 12 450 tokens; 12 250 tokens no se muestran en la salida textual.` Es una cota de
+> CLI: el modelo headless y las estadísticas conservan todos los tokens; no cambia `valid` ni el exit code.
+
 ## Matriz de estados y códigos (uno por escenario)
 
 | Escenario | validate | inspect | Exit |

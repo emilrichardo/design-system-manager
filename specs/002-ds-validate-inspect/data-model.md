@@ -29,21 +29,22 @@ Resultado de la tubería única; del que se derivan validate e inspect.
 | `documents` | `Record<rel, ParsedDocument>` | por documento: raw?, parsed?, trust, issues |
 | `nodes` | `readonly TokenNodeSummary[]` | tokens hallados |
 | `statistics` | `InspectionStatistics` | conteos |
-| `errors` | `readonly Issue[]` | acumulados (categoría host/structure/read/validation/limit) |
-| `warnings` | `readonly Issue[]` | acumulados |
+| `errors` | `readonly AnalysisIssue[]` | acumulados (categoría host/structure/read/validation/limit) |
+| `warnings` | `readonly AnalysisIssue[]` | acumulados |
 | `limits` | `AnalysisLimitsResult` | qué límites se alcanzaron |
 | `valid` | `boolean` | sin errores críticos y análisis completo |
 
 ### ParsedDocument
-`{ relativePath; exists: boolean; kind: ManagedFileKind; parsed?: unknown; trust: "valid"|"recovered"|"unavailable"; issues: Issue[] }`.
+`{ relativePath; exists: boolean; kind: ManagedFileKind; parsed?: unknown; trust: "valid"|"recovered"|"unavailable"; issues: AnalysisIssue[] }`.
 
 ### TokenNodeSummary (dominio)
 | Campo | Tipo | Notas |
 |---|---|---|
 | `path` | `string` | ruta canónica `a.b.c` (orden de inserción JSON) |
 | `declaredType` | `string \| null` | `$type` propio |
-| `effectiveType` | `string \| null` | tras herencia (own→alias→grupo); `null` si indeterminable |
-| `typeOrigin` | `own` \| `alias` \| `group:<ruta>` \| `none` | |
+| `effectiveType` | `string \| null` | precedencia C1 (declarado→alias→grupo); `null` si indeterminable (incl. ciclo/alias roto) |
+| `typeOrigin` | `own` \| `alias` \| `group` \| `none` | origen del tipo efectivo |
+| `typeSourcePath` | `string \| null` | ruta del grupo fuente cuando `typeOrigin = "group"` (C5); si no, `null` |
 | `kind` | `concrete` \| `alias` | clase del `$value` |
 | `aliasTarget` | `string \| null` | ruta destino si alias |
 | `aliasState` | `valid` \| `missing` \| `to-group` \| `cyclic` \| `malformed` \| `n/a` | |
@@ -91,10 +92,27 @@ bajo su literal pero marcado untrusted), `maxDepth`, `aliasIssues` (missing/to-g
 ### AnalysisLimitsResult (dominio)
 `{ reached: boolean; hits: Array<{ limit: "file-size"|"total-size"|"depth"|"nodes"|"path-len"|"alias-len"|"issues"; detail: string }>; partial: boolean }`.
 
-### Issue (reusado de `001`, mismos campos)
-`{ code: string; message: string; path?: string }`. 002 añade severidad y documento vía un envoltorio
-de reporte (o extiende `Issue` con `severity`/`document` — decisión menor en implementación, sin romper
-001). Códigos estables nuevos (ADR-0008): `dtcg-type-not-deeply-inspected` (warning),
+### Issue (001) y AnalysisIssue (002 — forma canónica, C4)
+`Issue` de `001` es `{ code: string; message: string; path?: string }` y **no se modifica**. 002 define
+un **tipo aditivo retrocompatible** (decisión registrada: tipo especializado, no mutación de `Issue`):
+
+```ts
+type Severity = "error" | "warning";
+type ManagedDocument = "config" | "manifest" | "tokens" | "host" | "structure";
+interface AnalysisIssue extends Issue {        // estructuralmente compatible con Issue de 001
+  readonly severity: Severity;                 // error invalida; warning no
+  readonly document?: ManagedDocument;         // documento afectado cuando se conoce
+  readonly context?: Record<string, unknown>;  // contexto seguro opcional (sin secretos)
+}
+```
+
+- `AnalysisIssue` **es un** `Issue` (extiende): cualquier consumidor de `001` lo acepta sin migrar.
+- `code` permanece estable; **nunca** se usa el texto de AJV/Zod como código.
+- `path` se hereda de `Issue` (ruta dentro del documento). `document`/`context` son opcionales.
+- `ValidationReport`/`DesignSystemAnalysis` usan `AnalysisIssue` en `errors`/`warnings`.
+- **No** se introduce un segundo tipo llamado `Issue`; el nombre especializado es `AnalysisIssue`.
+
+Códigos estables nuevos (ADR-0008): `dtcg-type-not-deeply-inspected` (warning),
 `dtcg-type-unrecognized` (error), `dtcg-type-undeterminable` (error), `dtcg-empty-group` (warning),
 `dtcg-description-missing` (warning), `config-path-escape` (error), `limit-*-exceeded` (error),
 `read-failed` (error), `coherence-*` (error). **No** se usan textos de AJV/Zod como códigos.

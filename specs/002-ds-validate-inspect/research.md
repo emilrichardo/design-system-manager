@@ -31,11 +31,13 @@ normativa de DTCG.
 
 ## 3. Herencia de `$type` (tipo efectivo)
 
-- **Decision** (precedencia, alineada con el estándar): (1) `$type` propio del token; (2) si el
-  `$value` es alias, el tipo del token referenciado; (3) `$type` del grupo ancestro más cercano;
-  (4) si no se determina → **error** (`dtcg-type-undeterminable`). "Las herramientas MUST NOT
-  adivinar el tipo inspeccionando el valor."
-- Se informa: tipo declarado, tipo efectivo y **origen** (`own` | `alias` | `group:<ruta>`).
+- **Decision** (precedencia normativa única C1, alineada con el estándar): (1) `$type` declarado en el
+  token; (2) si **no** declara y `$value` es alias, el tipo efectivo del token referenciado (resolviendo
+  cadenas); (3) si no es referencia, `$type` heredado del grupo ancestro más cercano; (4) si no se
+  determina → **error** (`dtcg-type-undeterminable`). El alias prevalece sobre el grupo; ciclo/alias roto
+  ⇒ sin tipo efectivo confiable. "Las herramientas MUST NOT adivinar el tipo inspeccionando el valor."
+- Se informa: `declaredType`, `effectiveType` y **origen** `typeOrigin` (`own` | `alias` | `group` |
+  `none`); cuando es `group`, la ruta del grupo fuente va en `typeSourcePath` (C5).
 
 ## 4. Aliases / referencias
 

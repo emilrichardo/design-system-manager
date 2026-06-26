@@ -22,8 +22,11 @@
 - **Ruta canónica**: segmentos unidos por `.`; la raíz es profundidad `0`; cada nivel suma 1.
 
 ### Tipo efectivo e índice
-- `$type` efectivo: propio → del alias resuelto → del grupo ancestro más cercano → indeterminable
-  (ver ADR-0008).
+- `$type` efectivo — precedencia normativa única (C1, ver ADR-0008): **(1)** declarado en el token →
+  **(2)** si no declara y `$value` es referencia, tipo efectivo del token referenciado (resolviendo
+  cadenas) → **(3)** si no es referencia, heredado del grupo ancestro más cercano que lo declare →
+  **(4)** indeterminable (inválido). El tipo del alias prevalece sobre el del grupo; ciclo o alias roto
+  ⇒ `effectiveType: null`.
 - Se construye un índice **`tokenPath → token` en una sola pasada**; los aliases se resuelven contra
   el índice (sin recorrer el árbol por cada alias) y se detectan ciclos sobre ese grafo.
 
