@@ -15,3 +15,7 @@ export * from "./builders/build-manifest.js";
 export * from "./builders/build-tokens.js";
 export * from "./result/initialization-result.js";
 export * from "./validation/validation-result.js";
+// Feature 002 — modelos puros de análisis/validación/inspección.
+export * from "./analysis/index.js";
+export * from "./traversal/index.js";
+export * from "./dtcg/index.js";

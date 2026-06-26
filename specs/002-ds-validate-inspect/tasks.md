@@ -40,11 +40,11 @@ de `001` explícita.
 
 > Solo wiring/barrels mínimos. NO se duplica el bootstrap de `001` (build/lint/tsconfig/vitest ya existen).
 
-- [ ] T001 Crear barrels y árbol de carpetas vacíos de 002 en `src/domain/analysis/index.ts`, `src/domain/traversal/index.ts`, `src/domain/dtcg/index.ts`, `src/infrastructure/analysis/index.ts` y carpetas de test `tests/unit/analysis/`, `tests/integration/validate-inspect/`, `tests/cli/` (reusa la config vitest/tsconfig de 001).
+- [X] T001 Crear barrels y árbol de carpetas vacíos de 002 en `src/domain/analysis/index.ts`, `src/domain/traversal/index.ts`, `src/domain/dtcg/index.ts`, `src/infrastructure/analysis/index.ts` y carpetas de test `tests/unit/analysis/`, `tests/integration/validate-inspect/`, `tests/cli/` (reusa la config vitest/tsconfig de 001).
   - **Deps**: ninguna.
   - **Done**: `npm run typecheck` y `npm run build` siguen verdes; `npm test` sigue **274/274** (sin código nuevo ejecutable aún).
   - **Test**: CI base de 001 sin regresión (typecheck + build).
-- [ ] T002 Centralizar las constantes de 002 en `src/domain/traversal/limits.ts` (placeholders de valores ADR-0009) y `src/cli/inspect-presentation.ts` con `MAX_INSPECT_TERMINAL_TOKEN_ROWS = 200` documentado como **cota de presentación** (no de análisis).
+- [X] T002 Centralizar las constantes de 002 en `src/domain/traversal/limits.ts` (placeholders de valores ADR-0009) y `src/cli/inspect-presentation.ts` con `MAX_INSPECT_TERMINAL_TOKEN_ROWS = 200` documentado como **cota de presentación** (no de análisis).
   - **Deps**: T001.
   - **Done**: constantes exportadas y referenciadas por una prueba trivial de import; arch-guard OK (dominio sin Node).
   - **Test**: `tests/unit/analysis/constants.test.ts` afirma valores exactos (5 MiB/16 MiB/32/100000/512/256/1000 y 200).
@@ -56,51 +56,51 @@ de `001` explícita.
 > Fuente normativa: data-model.md + contratos + ADR-0007/0008/0009/0010. Arch-guard: estos archivos
 > NO pueden importar Node/fs/zod/ajv/commander/clack/console.
 
-- [ ] T003 [P] Definir `AnalysisIssue` (extiende el `Issue` de `001` de forma aditiva: `severity:"error"|"warning"`, `document?:ManagedDocument`, `context?:Record<string,unknown>`) y `ManagedDocument` en `src/domain/analysis/analysis-issue.ts` (C4).
+- [X] T003 [P] Definir `AnalysisIssue` (extiende el `Issue` de `001` de forma aditiva: `severity:"error"|"warning"`, `document?:ManagedDocument`, `context?:Record<string,unknown>`) y `ManagedDocument` en `src/domain/analysis/analysis-issue.ts` (C4).
   - **Deps**: T001. Reusa `src/domain/issue.ts` (sin modificarlo).
   - **Done**: `AnalysisIssue extends Issue`; `code` estable; type-only; arch-guard OK.
   - **Test**: `tests/unit/analysis/analysis-issue.test.ts` — un `AnalysisIssue` es asignable a `Issue` (compat. estructural, C4) y nunca usa texto AJV/Zod como `code`. (FR-007/FR-008)
-- [ ] T004 [P] Definir `InspectedValue<T>` y el enum de confiabilidad canónico `Trust = "valid"|"recovered"|"untrusted"|"unavailable"` en `src/domain/analysis/inspected-value.ts` (C3).
+- [X] T004 [P] Definir `InspectedValue<T>` y el enum de confiabilidad canónico `Trust = "valid"|"recovered"|"untrusted"|"unavailable"` en `src/domain/analysis/inspected-value.ts` (C3).
   - **Deps**: T001.
   - **Done**: enum único `valid/recovered/untrusted/unavailable`; sin `trusted`; type-only.
   - **Test**: `tests/unit/analysis/inspected-value.test.ts` — marca por sección/valor; no envuelve primitivos innecesariamente. (FR-023)
-- [ ] T005 [P] Definir `StructuralState = "not-initialized"|"partial"|"complete-invalid"|"complete-valid"` y su derivación desde `PreviousState` de `001` en `src/domain/analysis/structural-state.ts`.
+- [X] T005 [P] Definir `StructuralState = "not-initialized"|"partial"|"complete-invalid"|"complete-valid"` y su derivación desde `PreviousState` de `001` en `src/domain/analysis/structural-state.ts`.
   - **Deps**: T001. Reusa `src/domain/state/previous-state.ts`.
   - **Done**: mapeo puro `PreviousState → StructuralState`; sin Node.
   - **Test**: `tests/unit/analysis/structural-state.test.ts` — los 4 estados y el mapeo. (FR-011, US7)
-- [ ] T006 [P] Definir `TokenNodeSummary` en `src/domain/analysis/token-node-summary.ts`: `path`, `declaredType`, `effectiveType`, `typeOrigin:"own"|"alias"|"group"|"none"`, `typeSourcePath:string|null` (C5), `kind:"concrete"|"alias"`, `aliasTarget`, `aliasState`, `description`, `depth`, `trust:"valid"|"recovered"|"untrusted"`.
+- [X] T006 [P] Definir `TokenNodeSummary` en `src/domain/analysis/token-node-summary.ts`: `path`, `declaredType`, `effectiveType`, `typeOrigin:"own"|"alias"|"group"|"none"`, `typeSourcePath:string|null` (C5), `kind:"concrete"|"alias"`, `aliasTarget`, `aliasState`, `description`, `depth`, `trust:"valid"|"recovered"|"untrusted"`.
   - **Deps**: T004.
   - **Done**: `typeOrigin` literal + `typeSourcePath` separado (C5); type-only.
   - **Test**: `tests/unit/analysis/token-node-summary.test.ts` — `typeSourcePath` solo cuando `typeOrigin==="group"`. (FR-022, C5)
-- [ ] T007 [P] Definir `AnalysisLimitsResult` (`reached`, `hits:[{limit,detail}]`, `partial`) en `src/domain/traversal/limits.ts` (ampliando T002) con los 7 tipos de límite.
+- [X] T007 [P] Definir `AnalysisLimitsResult` (`reached`, `hits:[{limit,detail}]`, `partial`) en `src/domain/traversal/limits.ts` (ampliando T002) con los 7 tipos de límite.
   - **Deps**: T002.
   - **Done**: tipos `file-size|total-size|depth|nodes|path-len|alias-len|issues`; `partial` derivable.
   - **Test**: `tests/unit/analysis/limits.test.ts` — forma del resultado y `partial`. (FR-006, ADR-0009)
-- [ ] T008 [P] Implementar `tokenPath` (ruta canónica `a.b.c`, orden de inserción JSON) y cálculo de profundidad (raíz=0) en `src/domain/traversal/token-path.ts`.
+- [X] T008 [P] Implementar `tokenPath` (ruta canónica `a.b.c`, orden de inserción JSON) y cálculo de profundidad (raíz=0) en `src/domain/traversal/token-path.ts`.
   - **Deps**: T001.
   - **Done**: función pura determinista; raíz profundidad 0; sin reordenamiento silencioso.
   - **Test**: `tests/unit/analysis/token-path.test.ts` — rutas y profundidad sobre fixtures. (FR-021/FR-022, ADR-0010, SC-007)
-- [ ] T009 [P] Definir el conjunto de **tipos reconocidos** DTCG 2025.10 (13) y el subconjunto **profundo** (`color`) en `src/domain/dtcg/recognized-types.ts` (centralizado, sin duplicar).
+- [X] T009 [P] Definir el conjunto de **tipos reconocidos** DTCG 2025.10 (13) y el subconjunto **profundo** (`color`) en `src/domain/dtcg/recognized-types.ts` (centralizado, sin duplicar).
   - **Deps**: T001. Fuente: research.md §1.
   - **Done**: set único exportado; `isRecognized`, `isDeeplySupported` puros.
   - **Test**: `tests/unit/analysis/recognized-types.test.ts` — 13 tipos; `color` profundo; otros reconocidos-no-profundos. (FR-017, SC-009)
-- [ ] T010 Implementar la precedencia del **`$type` efectivo** (C1) como función pura en `src/domain/traversal/effective-type.ts`: (1) declarado → (2) tipo del token referenciado si alias (resolviendo cadenas) → (3) grupo ancestro más cercano → (4) indeterminable; devuelve `{effectiveType, typeOrigin, typeSourcePath}`.
+- [X] T010 Implementar la precedencia del **`$type` efectivo** (C1) como función pura en `src/domain/traversal/effective-type.ts`: (1) declarado → (2) tipo del token referenciado si alias (resolviendo cadenas) → (3) grupo ancestro más cercano → (4) indeterminable; devuelve `{effectiveType, typeOrigin, typeSourcePath}`.
   - **Deps**: T006, T009. Recibe un resolvedor de alias/índice (inyectado) para no acoplar al recorrido.
   - **Done**: precedencia exacta C1; ciclo/alias roto ⇒ `effectiveType:null`; no infiere de la forma de `$value`; `$extensions` no participa.
   - **Test**: `tests/unit/analysis/effective-type.test.ts` — own; alias en grupo tipado (gana alias); alias encadenado; alias roto; cíclico; heredado de grupo; sin tipo → `null`. (FR-018, SC-009)
-- [ ] T011 Definir las **reglas de conteo** e `InspectionStatistics` (`total`, `groups`, `concreteValues`, `aliases`, `byType` por tipo efectivo con categoría `(untyped)` y literal por tipo no reconocido, `maxDepth`, `aliasIssues`) en `src/domain/analysis/inspection-statistics.ts`.
+- [X] T011 Definir las **reglas de conteo** e `InspectionStatistics` (`total`, `groups`, `concreteValues`, `aliases`, `byType` por tipo efectivo con categoría `(untyped)` y literal por tipo no reconocido, `maxDepth`, `aliasIssues`) en `src/domain/analysis/inspection-statistics.ts`.
   - **Deps**: T006, T008, T010.
   - **Done**: raíz NO cuenta como grupo; grupo vacío cuenta + warning; token = nodo con `$value`; alias = `$value` `{...}`; `concreteValues = total − aliases`.
   - **Test**: `tests/unit/analysis/inspection-statistics.test.ts` — conteos exactos y `byType` (incl. `(untyped)`/no reconocido). (FR-021, SC-007)
-- [ ] T012 Definir `ValidationReport` en `src/domain/analysis/validation-report.ts` (`valid`, `structuralState`, `checkedDocuments`, `uncheckedDocuments`, `errors:AnalysisIssue[]`, `warnings:AnalysisIssue[]`, `limits`, `summary`).
+- [X] T012 Definir `ValidationReport` en `src/domain/analysis/validation-report.ts` (`valid`, `structuralState`, `checkedDocuments`, `uncheckedDocuments`, `errors:AnalysisIssue[]`, `warnings:AnalysisIssue[]`, `limits`, `summary`).
   - **Deps**: T003, T005, T007.
   - **Done**: `error` invalida, `warning` no; type-only; usa `AnalysisIssue`.
   - **Test**: `tests/unit/analysis/validation-report.test.ts` — `valid=false` con ≥1 error o límite duro. (FR-008/FR-016)
-- [ ] T013 Definir `DesignSystemInspection` (forma canónica del contrato) en `src/domain/analysis/design-system-inspection.ts`: `host`, `structuralState`, `identity?`/`schemaVersions?` (`InspectedValue`), `files{expected,present:FileInspection[],missing}`, `tokens?{...,paths:TokenNodeSummary[]}`, `validation:ValidationReport`, `limits`.
+- [X] T013 Definir `DesignSystemInspection` (forma canónica del contrato) en `src/domain/analysis/design-system-inspection.ts`: `host`, `structuralState`, `identity?`/`schemaVersions?` (`InspectedValue`), `files{expected,present:FileInspection[],missing}`, `tokens?{...,paths:TokenNodeSummary[]}`, `validation:ValidationReport`, `limits`.
   - **Deps**: T004, T006, T011, T012.
   - **Done**: incluye `validation`; confiabilidad por sección; sin dependencia de formato terminal. `FileInspection` definido.
   - **Test**: `tests/unit/analysis/design-system-inspection.test.ts` — incluye validación; marca recuperado/no-confiable. (FR-020/FR-023)
-- [ ] T014 Definir `DesignSystemAnalysis` (modelo interno común) en `src/domain/analysis/design-system-analysis.ts`: `host`, `presence`, `structuralState`, `documents:Record<rel,ParsedDocument>`, `nodes`, `statistics`, `errors`, `warnings`, `limits`, `valid`; + `ParsedDocument`.
+- [X] T014 Definir `DesignSystemAnalysis` (modelo interno común) en `src/domain/analysis/design-system-analysis.ts`: `host`, `presence`, `structuralState`, `documents:Record<rel,ParsedDocument>`, `nodes`, `statistics`, `errors`, `warnings`, `limits`, `valid`; + `ParsedDocument`.
   - **Deps**: T011, T012, T013.
   - **Done**: único modelo del que se derivan `ValidationReport` e `DesignSystemInspection`; type-only.
   - **Test**: `tests/unit/analysis/design-system-analysis.test.ts` — forma y trust por documento. (FR-005)
