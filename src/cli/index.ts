@@ -1,11 +1,31 @@
 #!/usr/bin/env node
-// Binario `neuraz-ds` (bootstrap mínimo, Fase 1).
-// Aún no implementa comandos: el comando `init` y el wiring de Commander llegan en la Fase 7.
-// No introduce comportamiento funcional; solo informa el estado del paquete.
+// Entrypoint del binario `neuraz-ds`. Pequeño: compone dependencias reales, ejecuta el programa,
+// aplica process.exitCode y maneja solo errores de frontera (excepciones inesperadas → 70).
+import { createRealDependencies } from "./composition.js";
+import { INTERNAL_ERROR_EXIT } from "./exit-codes.js";
+import { processIO } from "./io.js";
+import { runCli } from "./program.js";
+import { installSignalHandlers } from "./signals.js";
+import { readCliVersion } from "./version.js";
 
-const message =
-  "neuraz-ds: bootstrap — aún no hay comandos implementados. " +
-  "El comando `init` se añadirá en una fase posterior.";
+const removeSignals = installSignalHandlers(process, () => {
+  // No abortar abruptamente: solo marcar cancelación; la transacción finaliza o hace rollback.
+  process.exitCode = 1;
+});
 
-process.stdout.write(`${message}\n`);
-process.exitCode = 0;
+try {
+  const io = processIO;
+  const code = await runCli({
+    argv: process.argv,
+    cwd: process.cwd(),
+    io,
+    deps: createRealDependencies(io),
+    version: readCliVersion(),
+  });
+  process.exitCode = code;
+} catch (e) {
+  processIO.err(`Error interno: ${e instanceof Error ? e.message : String(e)}\n`);
+  process.exitCode = INTERNAL_ERROR_EXIT;
+} finally {
+  removeSignals();
+}

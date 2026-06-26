@@ -254,27 +254,27 @@ acoplar terminal. ⚠️ Sin `console.log`, sin `@clack`, sin `process.exit`, si
 
 **Purpose**: Commander + Clack + reporter + exit codes. Sin reglas de negocio en el comando.
 
-- [ ] T041 [US1] Implementar el adapter **Prompter con `@clack/prompts`** en `src/infrastructure/prompts/clack-prompter.ts` (identidad + confirmación; cancelación → `cancelled`)
+- [X] T041 [US1] Implementar el adapter **Prompter con `@clack/prompts`** en `src/infrastructure/prompts/clack-prompter.ts` (identidad + confirmación; cancelación → `cancelled`)
   - Deps: T036
   - Done: implementa el puerto `Prompter`; la cancelación se propaga como estado, no como excepción no controlada.
   - Test: `tests/unit/clack-prompter.test.ts` (mock de clack) + CLI T056.
-- [ ] T042 [US1] Implementar el adapter **Reporter de terminal** en `src/infrastructure/reporter/terminal-reporter.ts` con categorías info/advertencia/conflicto/error/éxito (FR-019)
+- [X] T042 [US1] Implementar el adapter **Reporter de terminal** en `src/infrastructure/reporter/terminal-reporter.ts` con categorías info/advertencia/conflicto/error/éxito (FR-019)
   - Deps: T036
   - Done: traduce eventos semánticos a salida; separado del caso de uso.
   - Test: `tests/unit/terminal-reporter.test.ts`.
-- [ ] T043 [US1] Configurar **Commander** y registrar el comando `init` en `src/cli/index.ts` y `src/cli/commands/init.ts`; delega todo al caso de uso
+- [X] T043 [US1] Configurar **Commander** y registrar el comando `init` en `src/cli/index.ts` y `src/cli/commands/init.ts`; delega todo al caso de uso
   - Deps: T037, T041, T042
   - Done: `neuraz-ds init` arranca el flujo; el comando no contiene reglas de negocio.
   - Test: `tests/cli/help.test.ts`, `tests/cli/unknown-command.test.ts`.
-- [ ] T044 [US1][US5] Implementar el **mapeo resultado→exit code** en `src/cli/exit-codes.ts` (0/1/2/3/4/5/6/7 según contracts/exit-codes.md) y la traducción `Issue.code`→exit
+- [X] T044 [US1][US5] Implementar el **mapeo resultado→exit code** en `src/cli/exit-codes.ts` (0/1/2/3/4/5/6/7 según contracts/exit-codes.md) y la traducción `Issue.code`→exit
   - Deps: T015, T043
   - Done: cada `status`/`Issue.code` produce el exit contractual exacto.
   - Test: `tests/unit/exit-codes.test.ts` (los 8 códigos).
-- [ ] T045 [US5] Manejar **señales/interrupciones** (SIGINT/SIGTERM) en `src/cli/index.ts`: cancelar limpio (`cancelled`, exit 1) sin dejar archivos parciales
+- [X] T045 [US5] Manejar **señales/interrupciones** (SIGINT/SIGTERM) en `src/cli/index.ts`: cancelar limpio (`cancelled`, exit 1) sin dejar archivos parciales
   - Deps: T044, T033
   - Done: Ctrl-C antes de commit ⇒ sin escritura; durante stage ⇒ rollback.
   - Test: `tests/cli/sigint.test.ts`.
-- [ ] T046 [US1] Mostrar la **raíz anfitriona resuelta** y el plan antes de confirmar (FR-001f, FR-010)
+- [X] T046 [US1] Mostrar la **raíz anfitriona resuelta** y el plan antes de confirmar (FR-001f, FR-010)
   - Deps: T043, T018
   - Done: la salida previa a `confirm` incluye la raíz y los archivos a crear.
   - Test: `tests/cli/plan-preview.test.ts`.

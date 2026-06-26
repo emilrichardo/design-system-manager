@@ -35,12 +35,14 @@ export function validHostRoot(rootDir = "/host"): HostRoot {
 
 export class FakeHostRootResolver implements HostRootResolver {
   calls = 0;
+  lastExecutionDir: string | undefined;
   constructor(
     private readonly resolution: HostRootResolution,
     private readonly trace?: string[],
   ) {}
-  resolve(): HostRootResolution {
+  resolve(executionDir: string): HostRootResolution {
     this.calls += 1;
+    this.lastExecutionDir = executionDir;
     this.trace?.push("resolve");
     return this.resolution;
   }
@@ -190,6 +192,7 @@ export interface BuildDepsOverrides {
   tx?: TransactionResult;
   trace?: string[];
   reporterThrows?: boolean;
+  reporter?: Reporter;
 }
 
 export interface BuiltDeps {
@@ -224,7 +227,7 @@ export function buildDeps(overrides: BuildDepsOverrides = {}): BuiltDeps {
     resolver,
     classifier,
     prompter,
-    reporter,
+    reporter: overrides.reporter ?? reporter,
     preparer,
     validators: documentValidators,
     writer,

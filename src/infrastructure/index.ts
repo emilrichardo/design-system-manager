@@ -21,3 +21,7 @@ export {
   documentPreparer,
   transactionalWriter,
 } from "./initialize-adapters.js";
+export { ClackPrompter } from "./prompts/clack-prompter.js";
+export type { ClackApi } from "./prompts/clack-prompter.js";
+export { TerminalReporter } from "./reporter/terminal-reporter.js";
+export type { OutputWriter } from "./reporter/terminal-reporter.js";

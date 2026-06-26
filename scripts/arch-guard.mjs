@@ -22,6 +22,7 @@ const RULES = [
       { re: /from\s+["']@clack\/prompts["']/, msg: "domain no debe importar @clack/prompts" },
       { re: /from\s+["'](node:)?fs(\/promises)?["']/, msg: "domain no debe importar filesystem" },
       { re: /from\s+["'](node:)?path["']/, msg: "domain no debe importar node:path" },
+      { re: /\bprocess\.exit\s*\(/, msg: "process.exit() no permitido en domain" },
     ],
   },
   {
@@ -33,6 +34,14 @@ const RULES = [
       { re: /from\s+["'](node:)?fs(\/promises)?["']/, msg: "application no debe importar filesystem" },
       { re: /from\s+["'](node:)?path["']/, msg: "application no debe importar node:path" },
       { re: /from\s+["'][^"']*infrastructure/, msg: "application no debe importar infraestructura concreta" },
+      { re: /\bprocess\.exit\s*\(/, msg: "process.exit() no permitido en application" },
+    ],
+  },
+  {
+    dir: "src/infrastructure",
+    forbidden: [
+      { re: /from\s+["']commander["']/, msg: "infrastructure no debe importar commander (solo CLI)" },
+      { re: /\bprocess\.exit\s*\(/, msg: "process.exit() no permitido en infrastructure" },
     ],
   },
 ];
