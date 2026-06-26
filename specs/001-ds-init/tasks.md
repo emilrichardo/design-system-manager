@@ -326,15 +326,15 @@ acoplar terminal. ⚠️ Sin `console.log`, sin `@clack`, sin `process.exit`, si
 
 **Purpose**: Documentación mínima de `001-ds-init` y verificación de empaquetado/constitución.
 
-- [ ] T062 [P] Actualizar `specs/001-ds-init/quickstart.md` con los comandos reales una vez estabilizada la CLI
+- [X] T062 [P] Actualizar `specs/001-ds-init/quickstart.md` con los comandos reales una vez estabilizada la CLI
   - Deps: T061; Done: quickstart ejecutable coincide con la CLI; Test: revisión manual + T064.
-- [ ] T063 [P] Escribir `README.md` del paquete con uso de `neuraz-ds init` (sin ampliar alcance)
+- [X] T063 [P] Escribir `README.md` del paquete con uso de `neuraz-ds init` (sin ampliar alcance)
   - Deps: T061; Done: README describe instalación y `init`; Test: lint de enlaces.
-- [ ] T064 Prueba de **empaquetado** (`npm pack`) y de ejecución vía **`npx`** en un proyecto temporal en `tests/integration/packaging-npx.test.ts`
+- [X] T064 Prueba de **empaquetado** (`npm pack`) y de ejecución vía **`npx`** en un proyecto temporal en `tests/integration/packaging-npx.test.ts`
   - Deps: T043; Done: el tarball expone `bin` y `npx neuraz-ds init` funciona; Test: este archivo.
-- [ ] T065 **Auditoría constitucional**: test que verifica ausencia de `console.*` e imports de `@clack`/`commander` en `src/domain/**` y `src/application/**` en `tests/unit/architecture-guard.test.ts`
+- [X] T065 **Auditoría constitucional**: test que verifica ausencia de `console.*` e imports de `@clack`/`commander` en `src/domain/**` y `src/application/**` en `tests/unit/architecture-guard.test.ts`
   - Deps: T037; Done: el test falla si una capa importa lo prohibido (Constitución V/XV); Test: este archivo.
-- [ ] T066 Verificar que `initializeDesignSystem` corre **headless** y que `Prompter`/`Reporter` son puertos independientes (preparación TUI/Studio/MCP) en `tests/unit/headless-and-ports.test.ts`
+- [X] T066 Verificar que `initializeDesignSystem` corre **headless** y que `Prompter`/`Reporter` son puertos independientes (preparación TUI/Studio/MCP) en `tests/unit/headless-and-ports.test.ts`
   - Deps: T040; Done: caso de uso ejecutable sin terminal; resultado semántico; Test: este archivo.
 
 **Checkpoint**: feature documentada, empaquetable y conforme a la constitución.
