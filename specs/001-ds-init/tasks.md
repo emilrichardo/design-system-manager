@@ -287,35 +287,35 @@ acoplar terminal. ⚠️ Sin `console.log`, sin `@clack`, sin `process.exit`, si
 
 **Purpose**: Validar escenarios reales de spec/quickstart con FS real en temp dirs (SC-007).
 
-- [ ] T047 [P][US1] Integración: **proyecto npm válido, ejecución desde la raíz** → `created` (exit 0); crea la estructura ADR-0004 en `tests/integration/happy-root.test.ts`
+- [X] T047 [P][US1] Integración: **proyecto npm válido, ejecución desde la raíz** → `created` (exit 0); crea la estructura ADR-0004 en `tests/integration/happy-root.test.ts`
   - Deps: T043; Done: archivos creados y válidos; Test: este archivo.
-- [ ] T048 [P][US1] Integración: **ejecución desde subcarpeta** resuelve a la raíz del package.json más cercano en `tests/integration/from-subfolder.test.ts`
+- [X] T048 [P][US1] Integración: **ejecución desde subcarpeta** resuelve a la raíz del package.json más cercano en `tests/integration/from-subfolder.test.ts`
   - Deps: T018; Done: escribe en la raíz correcta; Test: este archivo.
-- [ ] T049 [P][US1] Integración: **monorepo** usa el package.json más cercano (no la raíz global) en `tests/integration/monorepo-nearest.test.ts`
+- [X] T049 [P][US1] Integración: **monorepo** usa el package.json más cercano (no la raíz global) en `tests/integration/monorepo-nearest.test.ts`
   - Deps: T018; Done: raíz = workspace cercano; Test: este archivo.
-- [ ] T050 [P][US1] Integración: **sin `package.json`** → `failed/host` (exit 5), cero escrituras en `tests/integration/no-package-json.test.ts`
+- [X] T050 [P][US1] Integración: **sin `package.json`** → `failed/host` (exit 5), cero escrituras en `tests/integration/no-package-json.test.ts`
   - Deps: T020; Done: nada escrito; Test: este archivo.
-- [ ] T051 [P][US1] Integración: estado **`none`** → `created` (exit 0) tras confirmar en `tests/integration/state-none.test.ts`
+- [X] T051 [P][US1] Integración: estado **`none`** → `created` (exit 0) tras confirmar en `tests/integration/state-none.test.ts`
   - Deps: T038; Done: crea DS; Test: este archivo.
-- [ ] T052 [P][US3] Integración: estado **`complete-valid`** → `unchanged` (exit 2) en `tests/integration/state-complete-valid.test.ts`
+- [X] T052 [P][US3] Integración: estado **`complete-valid`** → `unchanged` (exit 2) en `tests/integration/state-complete-valid.test.ts`
   - Deps: T038; Done: sin cambios; Test: este archivo.
-- [ ] T053 [P][US2] Integración: estado **`partial`** → `conflict` (exit 4); enumera presentes y ausentes; no escribe en `tests/integration/state-partial.test.ts`
+- [X] T053 [P][US2] Integración: estado **`partial`** → `conflict` (exit 4); enumera presentes y ausentes; no escribe en `tests/integration/state-partial.test.ts`
   - Deps: T038; Done: lista de presentes/ausentes correcta; cero escrituras; Test: este archivo.
-- [ ] T054 [P][US2] Integración: estado **`complete-invalid`** → `failed/validation` (exit 3); no modifica en `tests/integration/state-complete-invalid.test.ts`
+- [X] T054 [P][US2] Integración: estado **`complete-invalid`** → `failed/validation` (exit 3); no modifica en `tests/integration/state-complete-invalid.test.ts`
   - Deps: T038; Done: informa errores; sin cambios; Test: este archivo.
-- [ ] T055 [P][US2][US5] Integración: **symlink externo / ruta que escapa** → `failed/host` (exit 5) antes de escribir en `tests/integration/external-symlink.test.ts`
+- [X] T055 [P][US2][US5] Integración: **symlink externo / ruta que escapa** → `failed/host` (exit 5) antes de escribir en `tests/integration/external-symlink.test.ts`
   - Deps: T019; Done: rechazo previo a escritura; Test: este archivo.
-- [ ] T056 [P][US5] Integración: **sin permisos de escritura** → `failed/filesystem` (exit 6), sin parciales en `tests/integration/no-write-permission.test.ts`
+- [X] T056 [P][US5] Integración: **sin permisos de escritura** → `failed/filesystem` (exit 6), sin parciales en `tests/integration/no-write-permission.test.ts`
   - Deps: T033; Done: rollback; Test: este archivo.
-- [ ] T057 [P][US1] Integración: **cancelación** en confirmación → `cancelled` (exit 1), cero escrituras en `tests/integration/cancel.test.ts`
+- [X] T057 [P][US1] Integración: **cancelación** en confirmación → `cancelled` (exit 1), cero escrituras en `tests/integration/cancel.test.ts`
   - Deps: T037; Done: nada escrito; Test: este archivo.
-- [ ] T058 [P][US5] Integración: **error en stage**, **error en commit**, **error en verify** (inyectados) → exit 6/6/7 con rollback/limpieza en `tests/integration/transaction-failures.test.ts`
+- [X] T058 [P][US5] Integración: **error en stage**, **error en commit**, **error en verify** (inyectados) → exit 6/6/7 con rollback/limpieza en `tests/integration/transaction-failures.test.ts`
   - Deps: T033, T034; Done: cada punto de fallo no deja estado parcial; Test: este archivo.
-- [ ] T059 [P][US3] Integración: **segunda ejecución** idempotente en `tests/integration/second-run.test.ts`
+- [X] T059 [P][US3] Integración: **segunda ejecución** idempotente en `tests/integration/second-run.test.ts`
   - Deps: T039; Done: 2ª corrida `unchanged`; Test: este archivo.
-- [ ] T060 [P][US4] Integración de **portabilidad**: tras `init`, los archivos validan con un validador externo y permanecen legibles sin el gestor en `tests/integration/portability.test.ts`
+- [X] T060 [P][US4] Integración de **portabilidad**: tras `init`, los archivos validan con un validador externo y permanecen legibles sin el gestor en `tests/integration/portability.test.ts`
   - Deps: T047; Done: archivos válidos e independientes del paquete; Test: este archivo.
-- [ ] T061 [P][US1] CLI: **éxito, unchanged, conflicto, host inválido, filesystem, post-verify, entrada inválida** por subproceso, verificando exit codes y archivos en `tests/cli/exit-matrix.test.ts`
+- [X] T061 [P][US1] CLI: **éxito, unchanged, conflicto, host inválido, filesystem, post-verify, entrada inválida** por subproceso, verificando exit codes y archivos en `tests/cli/exit-matrix.test.ts`
   - Deps: T044; Done: matriz de exit codes verde (verificación semántica, no solo snapshots); Test: este archivo.
 
 **Checkpoint**: todos los escenarios de spec/quickstart cubiertos con FS real.
