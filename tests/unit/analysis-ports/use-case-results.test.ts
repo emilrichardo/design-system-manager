@@ -8,7 +8,7 @@ import type {
   ValidateDesignSystemResult,
 } from "../../../src/application/analysis-ports.js";
 import type { DesignSystemInspection } from "../../../src/domain/analysis/design-system-inspection.js";
-import { hostRoot } from "../../helpers/analysis-fixtures.js";
+import { analysisHost } from "../../helpers/analysis-fixtures.js";
 
 const validReport = validationReport({
   structuralState: "complete-valid",
@@ -40,7 +40,7 @@ function inspection(state: DesignSystemInspection["structuralState"], report = v
 
 describe("ValidateDesignSystemResult (T020)", () => {
   it("valid lleva host + report válido", () => {
-    const r: ValidateDesignSystemResult = { outcome: "valid", host: hostRoot(), report: validReport };
+    const r: ValidateDesignSystemResult = { outcome: "valid", host: analysisHost(), report: validReport };
     expect(r.outcome).toBe("valid");
     if (r.outcome === "valid") expect(r.report.valid).toBe(true);
   });
@@ -48,7 +48,7 @@ describe("ValidateDesignSystemResult (T020)", () => {
   it("complete-invalid preserva el ValidationReport con errores", () => {
     const r: ValidateDesignSystemResult = {
       outcome: "complete-invalid",
-      host: hostRoot(),
+      host: analysisHost(),
       report: invalidReport,
     };
     if (r.outcome === "complete-invalid") {
@@ -66,7 +66,7 @@ describe("ValidateDesignSystemResult (T020)", () => {
       warnings: [],
       limits: analysisLimitsResult([{ limit: "nodes", detail: ">100000" }]),
     });
-    const r: ValidateDesignSystemResult = { outcome: "partial", host: hostRoot(), report: partialReport };
+    const r: ValidateDesignSystemResult = { outcome: "partial", host: analysisHost(), report: partialReport };
     if (r.outcome === "partial") expect(r.report.limits.partial).toBe(true);
   });
 
@@ -89,12 +89,12 @@ describe("ValidateDesignSystemResult (T020)", () => {
       warnings: [],
       limits: noLimitsReached,
     });
-    const r: ValidateDesignSystemResult = { outcome: "read-error", host: hostRoot(), report: readReport };
+    const r: ValidateDesignSystemResult = { outcome: "read-error", host: analysisHost(), report: readReport };
     if (r.outcome === "read-error") expect(r.report.errors[0]?.code).toBe("read-failed");
   });
 
   it("ningún resultado expone un código numérico de proceso", () => {
-    const r: ValidateDesignSystemResult = { outcome: "valid", host: hostRoot(), report: validReport };
+    const r: ValidateDesignSystemResult = { outcome: "valid", host: analysisHost(), report: validReport };
     expect("exitCode" in (r as object)).toBe(false);
   });
 });
@@ -103,7 +103,7 @@ describe("InspectDesignSystemResult (T020)", () => {
   it("complete-invalid entrega inspección recuperable (no null)", () => {
     const r: InspectDesignSystemResult = {
       outcome: "complete-invalid",
-      host: hostRoot(),
+      host: analysisHost(),
       inspection: inspection("complete-invalid", invalidReport),
     };
     if (r.outcome === "complete-invalid") {
@@ -115,7 +115,7 @@ describe("InspectDesignSystemResult (T020)", () => {
   it("partial entrega inspección recuperable", () => {
     const r: InspectDesignSystemResult = {
       outcome: "partial",
-      host: hostRoot(),
+      host: analysisHost(),
       inspection: inspection("partial"),
     };
     if (r.outcome === "partial") expect(r.inspection.structuralState).toBe("partial");

@@ -10,14 +10,13 @@ import type { StructuralState } from "../domain/analysis/structural-state.js";
 import type { TokenNodeSummary } from "../domain/analysis/token-node-summary.js";
 import type { InspectionStatistics } from "../domain/analysis/inspection-statistics.js";
 import type { AnalysisLimitsResult } from "../domain/traversal/limits.js";
-import type { DesignSystemAnalysis } from "../domain/analysis/design-system-analysis.js";
+import type { AnalysisHost, DesignSystemAnalysis } from "../domain/analysis/design-system-analysis.js";
 import type { ValidationReport } from "../domain/analysis/validation-report.js";
 import type { DesignSystemInspection } from "../domain/analysis/design-system-inspection.js";
 import type {
   DocumentValidators,
   HostError,
   HostInspector,
-  HostRoot,
   HostRootResolver,
   StateClassifier,
 } from "./ports.js";
@@ -128,14 +127,14 @@ export type AnalyzeExistingDesignSystem = (
 // Sin stdout/stderr/ANSI/colores/cota-200/tablas. Reciben datos semánticos, no `report(string)`.
 
 export interface ValidationReporter {
-  hostResolved(host: HostRoot): void | Promise<void>;
+  hostResolved(host: AnalysisHost): void | Promise<void>;
   structuralStateDetected(state: StructuralState): void | Promise<void>;
   validated(report: ValidationReport): void | Promise<void>;
   completed(result: ValidateDesignSystemResult): void | Promise<void>;
 }
 
 export interface InspectionReporter {
-  hostResolved(host: HostRoot): void | Promise<void>;
+  hostResolved(host: AnalysisHost): void | Promise<void>;
   structuralStateDetected(state: StructuralState): void | Promise<void>;
   inspected(inspection: DesignSystemInspection): void | Promise<void>;
   completed(result: InspectDesignSystemResult): void | Promise<void>;
@@ -153,40 +152,46 @@ export type AnalysisOutcome =
   | "read-error";
 
 export type ValidateDesignSystemResult =
-  | { readonly outcome: "valid"; readonly host: HostRoot; readonly report: ValidationReport }
-  | { readonly outcome: "complete-invalid"; readonly host: HostRoot; readonly report: ValidationReport }
-  | { readonly outcome: "partial"; readonly host: HostRoot; readonly report: ValidationReport }
+  | { readonly outcome: "valid"; readonly host: AnalysisHost; readonly report: ValidationReport }
+  | { readonly outcome: "complete-invalid"; readonly host: AnalysisHost; readonly report: ValidationReport }
+  | { readonly outcome: "partial"; readonly host: AnalysisHost; readonly report: ValidationReport }
   | {
       readonly outcome: "not-found";
-      readonly host: HostRoot | null;
+      readonly host: AnalysisHost | null;
       readonly report: ValidationReport | null;
       readonly hostError: HostError | null;
     }
-  | { readonly outcome: "read-error"; readonly host: HostRoot; readonly report: ValidationReport };
+  | { readonly outcome: "read-error"; readonly host: AnalysisHost; readonly report: ValidationReport };
 
 export type InspectDesignSystemResult =
-  | { readonly outcome: "valid"; readonly host: HostRoot; readonly inspection: DesignSystemInspection }
+  | { readonly outcome: "valid"; readonly host: AnalysisHost; readonly inspection: DesignSystemInspection }
   | {
       readonly outcome: "complete-invalid";
-      readonly host: HostRoot;
+      readonly host: AnalysisHost;
       readonly inspection: DesignSystemInspection;
     }
-  | { readonly outcome: "partial"; readonly host: HostRoot; readonly inspection: DesignSystemInspection }
+  | { readonly outcome: "partial"; readonly host: AnalysisHost; readonly inspection: DesignSystemInspection }
   | {
       readonly outcome: "not-found";
-      readonly host: HostRoot | null;
+      readonly host: AnalysisHost | null;
       readonly inspection: DesignSystemInspection | null;
       readonly hostError: HostError | null;
     }
-  | { readonly outcome: "read-error"; readonly host: HostRoot; readonly inspection: DesignSystemInspection };
+  | { readonly outcome: "read-error"; readonly host: AnalysisHost; readonly inspection: DesignSystemInspection };
+
+/**
+ * Análisis **ya enlazado** a sus dependencias (la composición cierra `AnalyzeDesignSystemDependencies`).
+ * Los casos de uso lo invocan con un único argumento `(input)`; no resuelven host ni leen por su cuenta.
+ */
+export type AnalyzeUseCase = (input: AnalyzeDesignSystemInput) => Promise<DesignSystemAnalysis>;
 
 export interface ValidateDesignSystemDependencies {
-  readonly analyze: AnalyzeExistingDesignSystem;
+  readonly analyze: AnalyzeUseCase;
   readonly reporter: ValidationReporter;
 }
 
 export interface InspectDesignSystemDependencies {
-  readonly analyze: AnalyzeExistingDesignSystem;
+  readonly analyze: AnalyzeUseCase;
   readonly reporter: InspectionReporter;
 }
 

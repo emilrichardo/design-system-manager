@@ -199,15 +199,15 @@ de `001` explícita.
 
 ## Fase 7 — Casos de uso públicos (proyecciones headless)
 
-- [ ] T031 Implementar `validateDesignSystem(input, deps)` en `src/application/validate-design-system.ts`: invoca la tubería y **proyecta** `DesignSystemAnalysis → ValidationReport`. Sin Commander/Clack/TTY/consola/exit codes.
+- [X] T031 Implementar `validateDesignSystem(input, deps)` en `src/application/validate-design-system.ts`: invoca la tubería y **proyecta** `DesignSystemAnalysis → ValidationReport`. Sin Commander/Clack/TTY/consola/exit codes.
   - **Deps**: T029, T012, T020.
   - **Done**: devuelve `ValidationReport` estructurado; no escribe; comportamiento por estado (not-initialized/partial/complete-invalid/complete-valid).
   - **Test**: `tests/integration/validate-inspect/validate-usecase.test.ts` — 4 estados; acumula todos los errores; idéntico en 2 ejecuciones. (FR-005/FR-016, US1/US2, SC-001/SC-003)
-- [ ] T032 Implementar `inspectDesignSystem(input, deps)` en `src/application/inspect-design-system.ts`: invoca la tubería y **proyecta** `DesignSystemAnalysis → DesignSystemInspection` (que **incluye** el `ValidationReport`). Marca datos recuperados/no confiables; conserva **todos** los nodos (sin cota; la cota es de presentación).
+- [X] T032 Implementar `inspectDesignSystem(input, deps)` en `src/application/inspect-design-system.ts`: invoca la tubería y **proyecta** `DesignSystemAnalysis → DesignSystemInspection` (que **incluye** el `ValidationReport`). Marca datos recuperados/no confiables; conserva **todos** los nodos (sin cota; la cota es de presentación).
   - **Deps**: T029, T013, T031, T020.
   - **Done**: devuelve `DesignSystemInspection` con `validation`; en complete-invalid/partial distingue recuperado/no-confiable; no infiere componentes/páginas/estilos; no resuelve colores a CSS; no escribe.
   - **Test**: `tests/integration/validate-inspect/inspect-usecase.test.ts` — conteos exactos en válido; recuperable en inválido; incluye validación. (FR-020/FR-021/FR-023/FR-024, US3, SC-007)
-- [ ] T033 [P] Probar el **comportamiento por estados** de ambos casos de uso de forma explícita en `tests/integration/validate-inspect/states.test.ts`: not-initialized; partial (presentes/ausentes, sin reparar); complete-invalid (errores + recuperable); complete-valid.
+- [X] T033 [P] Probar el **comportamiento por estados** de ambos casos de uso de forma explícita en `tests/integration/validate-inspect/states.test.ts`: not-initialized; partial (presentes/ausentes, sin reparar); complete-invalid (errores + recuperable); complete-valid.
   - **Deps**: T031, T032.
   - **Done**: cada estado produce el resultado semántico esperado; inspect entrega informe incluso en inválido/parcial; ninguno repara ni infiere.
   - **Test**: el propio archivo. (FR-011/FR-016/FR-023, US7, SC-001)

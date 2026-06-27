@@ -7,7 +7,7 @@ import {
   RecordingInspectionReporter,
   RecordingValidationReporter,
 } from "../../helpers/analysis-fakes.js";
-import { hostRoot } from "../../helpers/analysis-fixtures.js";
+import { analysisHost } from "../../helpers/analysis-fixtures.js";
 
 const report = validationReport({
   structuralState: "complete-valid",
@@ -21,10 +21,10 @@ const report = validationReport({
 describe("ValidationReporter (T019)", () => {
   it("recibe datos estructurados y registra el orden, sin imprimir", async () => {
     const reporter = new RecordingValidationReporter();
-    await reporter.hostResolved(hostRoot());
+    await reporter.hostResolved(analysisHost());
     await reporter.structuralStateDetected("complete-valid");
     await reporter.validated(report);
-    await reporter.completed({ outcome: "valid", host: hostRoot(), report });
+    await reporter.completed({ outcome: "valid", host: analysisHost(), report });
     expect(reporter.calls).toEqual([
       "host:/repo",
       "state:complete-valid",
@@ -44,10 +44,10 @@ describe("InspectionReporter (T019)", () => {
       limits: noLimitsReached,
     };
     const reporter = new RecordingInspectionReporter();
-    await reporter.hostResolved(hostRoot());
+    await reporter.hostResolved(analysisHost());
     await reporter.structuralStateDetected("complete-valid");
     await reporter.inspected(inspection);
-    await reporter.completed({ outcome: "valid", host: hostRoot(), inspection });
+    await reporter.completed({ outcome: "valid", host: analysisHost(), inspection });
     expect(reporter.calls).toEqual([
       "host:/repo",
       "state:complete-valid",

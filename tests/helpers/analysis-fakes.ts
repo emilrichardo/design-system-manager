@@ -2,7 +2,7 @@
 // usan filesystem real. Registran llamadas y devuelven resultados programados.
 import type {
   AnalyzeDesignSystemInput,
-  AnalyzeExistingDesignSystem,
+  AnalyzeUseCase,
   InspectDesignSystemResult,
   InspectionReporter,
   ManagedDocumentReadRequest,
@@ -12,11 +12,10 @@ import type {
   ValidateDesignSystemResult,
   ValidationReporter,
 } from "../../src/application/analysis-ports.js";
-import type { DesignSystemAnalysis } from "../../src/domain/analysis/design-system-analysis.js";
+import type { AnalysisHost, DesignSystemAnalysis } from "../../src/domain/analysis/design-system-analysis.js";
 import type { DesignSystemInspection } from "../../src/domain/analysis/design-system-inspection.js";
 import type { StructuralState } from "../../src/domain/analysis/structural-state.js";
 import type { ValidationReport } from "../../src/domain/analysis/validation-report.js";
-import type { HostRoot } from "../../src/application/ports.js";
 
 /** Reader programable: registra peticiones y devuelve un resultado por documento. */
 export class ScriptedDocumentReader implements ManagedDocumentReader {
@@ -37,7 +36,7 @@ export class ScriptedDocumentReader implements ManagedDocumentReader {
 export function scriptedAnalyzer(
   analysis: DesignSystemAnalysis,
   trace?: string[],
-): AnalyzeExistingDesignSystem {
+): AnalyzeUseCase {
   return async (input: AnalyzeDesignSystemInput) => {
     trace?.push(`analyze:${input.executionDir}`);
     return analysis;
@@ -47,8 +46,8 @@ export function scriptedAnalyzer(
 /** Reporter de validación de grabación (no imprime). */
 export class RecordingValidationReporter implements ValidationReporter {
   readonly calls: string[] = [];
-  async hostResolved(host: HostRoot): Promise<void> {
-    this.calls.push(`host:${host.rootDir}`);
+  async hostResolved(host: AnalysisHost): Promise<void> {
+    this.calls.push(`host:${host.root}`);
   }
   async structuralStateDetected(state: StructuralState): Promise<void> {
     this.calls.push(`state:${state}`);
@@ -64,8 +63,8 @@ export class RecordingValidationReporter implements ValidationReporter {
 /** Reporter de inspección de grabación (no imprime). */
 export class RecordingInspectionReporter implements InspectionReporter {
   readonly calls: string[] = [];
-  async hostResolved(host: HostRoot): Promise<void> {
-    this.calls.push(`host:${host.rootDir}`);
+  async hostResolved(host: AnalysisHost): Promise<void> {
+    this.calls.push(`host:${host.root}`);
   }
   async structuralStateDetected(state: StructuralState): Promise<void> {
     this.calls.push(`state:${state}`);
