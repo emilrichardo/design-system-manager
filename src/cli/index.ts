@@ -4,8 +4,10 @@
 import {
   createBoundAnalyze,
   createInspectDependencies,
+  createInspectJsonDependencies,
   createRealDependencies,
   createValidateDependencies,
+  createValidateJsonDependencies,
 } from "./composition.js";
 import { INTERNAL_ERROR_EXIT } from "./exit-codes.js";
 import { processIO } from "./io.js";
@@ -28,6 +30,8 @@ try {
     deps: createRealDependencies(io),
     validateDeps: createValidateDependencies(io, analyze),
     inspectDeps: createInspectDependencies(io, analyze),
+    validateJsonDeps: createValidateJsonDependencies(io, analyze),
+    inspectJsonDeps: createInspectJsonDependencies(io, analyze),
     version: readCliVersion(),
   });
   process.exitCode = code;

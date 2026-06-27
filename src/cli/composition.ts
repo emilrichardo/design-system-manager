@@ -23,6 +23,8 @@ import { ClackPrompter } from "../infrastructure/prompts/clack-prompter.js";
 import { TerminalReporter } from "../infrastructure/reporter/terminal-reporter.js";
 import { ValidateTerminalReporter } from "../infrastructure/reporter/validate-terminal-reporter.js";
 import { InspectTerminalReporter } from "../infrastructure/reporter/inspect-terminal-reporter.js";
+import { ValidateJsonReporter } from "../infrastructure/reporter/validate-json-reporter.js";
+import { InspectJsonReporter } from "../infrastructure/reporter/inspect-json-reporter.js";
 import type { CliIO } from "./io.js";
 
 export function createRealDependencies(io: CliIO): InitializeDependencies {
@@ -60,4 +62,14 @@ export function createValidateDependencies(io: CliIO, analyze: AnalyzeUseCase): 
 
 export function createInspectDependencies(io: CliIO, analyze: AnalyzeUseCase): InspectDesignSystemDependencies {
   return { analyze, reporter: new InspectTerminalReporter(io) };
+}
+
+// Feature 003 — variantes de presentación JSON. Mismo `analyze` enlazado (sin segundo análisis):
+// solo cambia el reporter (un único adapter activo por ejecución).
+export function createValidateJsonDependencies(io: CliIO, analyze: AnalyzeUseCase): ValidateDesignSystemDependencies {
+  return { analyze, reporter: new ValidateJsonReporter(io) };
+}
+
+export function createInspectJsonDependencies(io: CliIO, analyze: AnalyzeUseCase): InspectDesignSystemDependencies {
+  return { analyze, reporter: new InspectJsonReporter(io) };
 }

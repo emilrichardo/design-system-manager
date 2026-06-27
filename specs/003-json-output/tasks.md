@@ -108,25 +108,25 @@
 
 ### Fase 8 — Flag CLI y selección de presentación
 
-- [ ] T019 [US1] [US3] Registrar la opción local booleana `--json` (`default false`) en los subcomandos `validate` e `inspect` en `src/cli/program.ts`; **no** en `init`; **no** global.
+- [X] T019 [US1] [US3] Registrar la opción local booleana `--json` (`default false`) en los subcomandos `validate` e `inspect` en `src/cli/program.ts`; **no** en `init`; **no** global.
   - Done: `validate`/`inspect` aceptan `--json`; `init --json` y `--json validate` (global) siguen siendo error de uso (exit 3); el valor llega vía `cmd.opts().json`.
   - Test: incluido en T022 (+ child en T031).
-- [ ] T020 [US6] Añadir `createValidateJsonDependencies(io, analyze)` y `createInspectJsonDependencies(io, analyze)` en `src/cli/composition.ts`, reutilizando `createBoundAnalyze` y los reporters JSON.
+- [X] T020 [US6] Añadir `createValidateJsonDependencies(io, analyze)` y `createInspectJsonDependencies(io, analyze)` en `src/cli/composition.ts`, reutilizando `createBoundAnalyze` y los reporters JSON.
   - Done: devuelven las deps con el reporter JSON; mismo analyzer enlazado (sin segundo análisis); sin instanciar el reporter textual.
   - Test: `tests/unit/cli/composition-json.test.ts` — construye deps JSON con IO falso; el reporter es el JSON.
-- [ ] T021 [US1] [US3] Cablear la selección de modo en `src/cli/program.ts` (acción lee `opts.json` → deps textual o JSON) y pasar las deps JSON desde `src/cli/index.ts`; conservar `exitCodeForOutcome` y **una** ejecución del caso de uso.
+- [X] T021 [US1] [US3] Cablear la selección de modo en `src/cli/program.ts` (acción lee `opts.json` → deps textual o JSON) y pasar las deps JSON desde `src/cli/index.ts`; conservar `exitCodeForOutcome` y **una** ejecución del caso de uso.
   - Done: sin flag → reporter textual (idéntico a hoy); con `--json` → reporter JSON; exit code sin cambios; un solo adapter por ejecución.
   - Test: incluido en T022.
-- [ ] T022 [P] [US6] `tests/cli/validate-inspect-json-commands.test.ts` (vía `runCli`, IO falso, sin TTY).
+- [X] T022 [P] [US6] `tests/cli/validate-inspect-json-commands.test.ts` (vía `runCli`, IO falso, sin TTY).
   - Done: n/a (test).
   - Test: `validate`/`inspect` sin flag → texto; con `--json` → JSON parseable en stdout, stderr vacío; exit codes intactos por outcome; `init --json`→3; `--json validate`→3.
 
 ### Fase 9 — Error interno CLI en modo JSON
 
-- [ ] T023 [US8] En `src/cli/program.ts`, en modo JSON, envolver la ejecución del caso de uso: ante excepción inesperada (tras aceptar argumentos) escribir **una** vez `serializeJsonV1(internalErrorEnvelope(command))` en `io.err`, devolver `INTERNAL_ERROR_EXIT` (70) y dejar **stdout vacío**. El handler conoce `command` + `jsonMode` (sin husmear `process.argv`).
+- [X] T023 [US8] En `src/cli/program.ts`, en modo JSON, envolver la ejecución del caso de uso: ante excepción inesperada (tras aceptar argumentos) escribir **una** vez `serializeJsonV1(internalErrorEnvelope(command))` en `io.err`, devolver `INTERNAL_ERROR_EXIT` (70) y dejar **stdout vacío**. El handler conoce `command` + `jsonMode` (sin husmear `process.argv`).
   - Done: stdout vacío, stderr un JSON seguro, exit 70; modo humano conserva el error interno actual; errores de uso de Commander **no** se convierten en internal-error JSON.
   - Test: incluido en T024.
-- [ ] T024 [P] [US8] `tests/cli/json-internal-error.test.ts` (inyectando un `analyze` que lanza).
+- [X] T024 [P] [US8] `tests/cli/json-internal-error.test.ts` (inyectando un `analyze` que lanza).
   - Done: n/a (test).
   - Test: excepción en validate/inspect JSON → stderr parseable (`outcome:"internal-error"`), stdout vacío, exit 70, sin stack/mensaje original; modo humano intacto; error de uso Commander sigue exit 3 sin JSON.
 

@@ -80,10 +80,16 @@ describe("T047 — ayuda, versión, uso, sin prompts (sin TTY)", () => {
     expect((await runBinary(["inspect", "--help"], dir)).code).toBe(0);
   });
 
-  it("--json no aceptado (error de uso → 3)", async () => {
+  it("--json es una opción válida en validate/inspect (003); DS válido → 0", async () => {
     const dir = await project(buildTokens());
-    expect((await runBinary(["validate", "--json"], dir)).code).toBe(3);
-    expect((await runBinary(["inspect", "--json"], dir)).code).toBe(3);
+    expect((await runBinary(["validate", "--json"], dir)).code).toBe(0);
+    expect((await runBinary(["inspect", "--json"], dir)).code).toBe(0);
+  });
+
+  it("opción desconocida sigue siendo error de uso → 3", async () => {
+    const dir = await project(buildTokens());
+    expect((await runBinary(["validate", "--unknown"], dir)).code).toBe(3);
+    expect((await runBinary(["inspect", "--unknown"], dir)).code).toBe(3);
   });
 
   it("comando inexistente → 3; sin stack en stderr", async () => {
