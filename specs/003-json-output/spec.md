@@ -151,7 +151,10 @@ cap in inspect, same stdout/stderr separation.
 
 **Why this priority**: Existing users and CI integrations must not break.
 
-**Independent Test**: Run the full existing 002 test suite; all 589 tests must pass unchanged.
+**Independent Test**: Run the full existing 001 + 002 suite. All tests pass except the single 002
+assertion that `--json` is rejected (`tests/cli/validate-inspect-binary.test.ts`, "--json no
+aceptado → 3"), which 003 necessarily updates because `--json` becomes a valid flag. No other
+historical test changes.
 
 **Acceptance Scenarios**:
 
@@ -247,8 +250,11 @@ contains a JSON envelope with `outcome: "internal-error"`, stdout is empty, exit
   `warnings` (array), `limits` (object).
 - **FR-008**: `host`, when present, MUST contain `root` (absolute path of the host project)
   and `designSystemPath` (absolute path of the DS directory).
-- **FR-009**: For `not-found` outcomes, `result` MUST be `null`; for `not-found` with a
-  `hostError`, the envelope MUST include an `error` field with `code` and `message`.
+- **FR-009**: For `not-found` outcomes, `result` MUST be `null` and the envelope MUST include an
+  `error` field (`{code, message} | null`) sourced from the result's `hostError`. **In v1 the
+  reused use cases do not populate `hostError`, so `error` is `null` for `not-found`**; the field is
+  reserved so a future use-case change can surface the host-resolution reason without a format bump.
+  003 MUST NOT modify the use cases to populate it.
 
 #### Inspect JSON result
 
@@ -313,7 +319,10 @@ contains a JSON envelope with `outcome: "internal-error"`, stdout is empty, exit
 
 - **FR-028**: Commands without `--json` MUST produce identical output and behavior to
   pre-003 versions. No change to textual reporters, exit codes, or stdout/stderr separation.
-- **FR-029**: The existing 589 test suite (001 + 002) MUST pass without modification.
+- **FR-029**: The existing 001 + 002 suite MUST keep passing. Exactly **one** 002 test changes: the
+  assertion that `--json` is rejected with exit 3 (`tests/cli/validate-inspect-binary.test.ts`,
+  "--json no aceptado → 3") is updated, since `--json` becomes a supported flag. Every other
+  historical test passes **without modification**; no test is weakened to hide a behavior change.
 
 #### Read-only / no second analysis
 
@@ -370,8 +379,8 @@ contains a JSON envelope with `outcome: "internal-error"`, stdout is empty, exit
 - **SC-005**: Running the same command twice on the same DS produces byte-identical JSON.
 - **SC-006**: No additional file reads, parsing, or traversal occur when `--json` is active
   beyond what the existing headless use case already performs.
-- **SC-007**: All 589 existing tests (001 + 002) pass without modification after
-  implementing 003.
+- **SC-007**: The 001 + 002 suite keeps passing after 003, with exactly one updated 002 test (the
+  `--json`-rejected assertion); every other historical test is unmodified.
 - **SC-008**: `--json` commands function correctly without TTY and with stdout redirected
   to a file.
 - **SC-009**: No JSON output contains stack traces, raw library errors, or internal

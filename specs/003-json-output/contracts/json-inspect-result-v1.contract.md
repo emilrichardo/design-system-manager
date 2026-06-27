@@ -43,7 +43,8 @@ interface JsonInspectResultV1 {
 - Identidad/schemaVersions: cada subcampo es un `InspectedValue` con `value` siempre presente
   (posible `null`) y `trust`. Si el modelo no trae `identity`/`tokens` → `null`.
 - `not-found` → `result: null` (no se inventan identidad/paths/inspección; FR-013), `error` mapea
-  `hostError` o `null`.
+  `hostError`. **En v1 `hostError` no se puebla** (003 no modifica los casos de uso) → `error` es
+  `null`. Campo reservado.
 
 ## Exit codes (ADR-0006)
 

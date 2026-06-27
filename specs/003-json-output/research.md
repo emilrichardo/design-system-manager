@@ -110,7 +110,9 @@ sancionada por el propio prompt)**: el envelope tiene los **cuatro campos base s
 declara (`not-found` e `internal-error`), un campo adicional `error`:
 
 - `valid`/`complete-invalid`/`partial`/`read-error` → `result: <DTO>` (sin `error`).
-- `not-found` → `result: null`, `error: { code, message } | null` (mapea `hostError`).
+- `not-found` → `result: null`, `error: { code, message } | null` (mapea `hostError`). **Nota
+  verificada en código**: `validate-design-system.ts`/`inspect-design-system.ts` fijan
+  `hostError: null` siempre y 003 no los modifica → `error` es **`null`** en v1 (campo reservado).
 - `internal-error` (solo CLI) → `result: null`, `error: { code: "internal-cli-error", message }`.
 
 Esto satisface FR-004 (cuatro campos base), FR-009 (error en not-found), US8 (error superior en

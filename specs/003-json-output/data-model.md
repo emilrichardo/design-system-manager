@@ -228,7 +228,7 @@ Orden de claves del envelope (determinismo): `formatVersion`, `command`, `outcom
 | `TokensInspection.paths` | `tokens.paths` | `mapNode` por nodo (**todos**) | `[]` |
 | `TokenNodeSummary.*` | `JsonTokenNodeV1.*` | identidad (campos ya `string\|null`) | — |
 | `inspection.validation: ValidationReport` | `validation: JsonValidationV1` | `mapValidation` (sin host) | — |
-| `result.hostError: HostError \| null` (not-found) | `error: JsonErrorV1 \| null` | `{code, message}` (sin `path`) | `null` |
+| `result.hostError: HostError \| null` (not-found) | `error: JsonErrorV1 \| null` | `{code, message}` (sin `path`) — **`hostError` no se puebla en v1 → siempre `null`** (campo reservado) | `null` |
 | excepción inesperada (CLI) | `error: JsonErrorV1` | `{code:"internal-cli-error", message seguro}` | n/a |
 
 ## 9. Invariantes

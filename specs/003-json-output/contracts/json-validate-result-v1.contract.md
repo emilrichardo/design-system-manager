@@ -72,7 +72,9 @@ código.
 
 ## Ejemplo — `not-found` (exit 5)
 
-`result` es `null`; `error` mapea el `hostError` (o `null` si no lo hay).
+`result` es `null`; `error` mapea el `hostError` del resultado. **En v1 los casos de uso reutilizados
+dejan `hostError` en `null`** (003 no los modifica), por lo que `error` es **`null`**. El campo queda
+reservado para que un cambio futuro del caso de uso pueda exponer el motivo sin romper el formato.
 
 ```json
 {
@@ -80,7 +82,7 @@ código.
   "command": "validate",
   "outcome": "not-found",
   "result": null,
-  "error": { "code": "package-json-missing", "message": "No se encontró package.json en el proyecto anfitrión." }
+  "error": null
 }
 ```
 

@@ -189,8 +189,10 @@ empaquetado revele una omisión objetiva — no se anticipa).
   `command`/`outcome` correctos, **stderr vacío**, exit esperado.
 - **No-análisis-adicional**: spies confirman `analyze` llamado **una** vez por comando en modo JSON;
   el mapper de inspect no recalcula estadísticas.
-- **Regresión 001/002**: suite histórica **589/589** intacta; + prueba `init → validate --json →
-  inspect --json → init unchanged` con documentos **byte-idénticos**.
+- **Regresión 001/002**: la suite histórica sigue verde con **exactamente un test 002 actualizado**
+  — la aserción "`--json` no aceptado → 3" en `tests/cli/validate-inspect-binary.test.ts` (ahora
+  `--json` es válido); el resto **sin modificar** (no se debilita ningún test). + prueba `init →
+  validate --json → inspect --json → init unchanged` con documentos **byte-idénticos**.
 
 ## Empaquetado
 

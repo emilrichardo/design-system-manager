@@ -23,8 +23,8 @@ type InternalErrorEnvelope =
 
 - **Cuatro campos base siempre presentes**: `formatVersion`, `command`, `outcome`, `result`
   (FR-004/FR-006). En `not-found` e `internal-error`, `result === null`.
-- Campo `error` **solo** en `not-found` (mapea `hostError`, puede ser `null`) e `internal-error`
-  (FR-009, US8). En los demás outcomes no aparece.
+- Campo `error` **solo** en `not-found` (mapea `hostError`; **`null` en v1** porque los casos de uso
+  no lo pueblan — campo reservado) e `internal-error` (FR-009, US8). En los demás outcomes no aparece.
 - Orden canónico de claves: `formatVersion`, `command`, `outcome`, `result`, `error`.
 - `formatVersion` es independiente de `package.version` (FR-005).
 - Serialización: `JSON.stringify(envelope, null, 2) + "\n"` (2 espacios + newline; FR-022).

@@ -60,4 +60,6 @@ global (evita `neuraz-ds --json init`).
 ## Compatibilidad humana
 
 Sin `--json`: textos, secciones, separación de streams, cota textual de 200, ayuda, ausencia de
-prompts y comportamiento sin TTY **idénticos** a pre-003 (FR-028/FR-029). Regresión: 589/589 verdes.
+prompts y comportamiento sin TTY **idénticos** a pre-003 (FR-028/FR-029). Regresión: la suite
+histórica sigue verde con **un** test 002 actualizado (la aserción "`--json` no aceptado → 3"); el
+resto sin modificar.
