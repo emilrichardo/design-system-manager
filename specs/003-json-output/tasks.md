@@ -81,22 +81,22 @@
 
 ### Fase 6 — Serializer determinista
 
-- [ ] T014 [US5] Crear `serializeJsonV1(envelope)` en `src/infrastructure/reporter/json-serializer.ts`.
+- [X] T014 [US5] Crear `serializeJsonV1(envelope)` en `src/infrastructure/reporter/json-serializer.ts`.
   - Done: única responsabilidad `JSON.stringify(envelope, null, 2) + "\n"`; función pura; sin sorted-key/compact/pretty/JSONL; sin mutar la entrada.
   - Test: `tests/unit/json/json-serializer.test.ts` — parseable; 2 espacios; exactamente un `\n` final; sin BOM/ANSI; Unicode; mismo DTO→mismos bytes; input congelado.
 
 ### Fase 7 — Reporters JSON
 
-- [ ] T015 [US1] [US5] Implementar `ValidateJsonReporter` (implements `ValidationReporter`) en `src/infrastructure/reporter/validate-json-reporter.ts`.
+- [X] T015 [US1] [US5] Implementar `ValidateJsonReporter` (implements `ValidationReporter`) en `src/infrastructure/reporter/validate-json-reporter.ts`.
   - Done: `hostResolved`/`structuralStateDetected`/`validated` no-op; **solo** `completed(result)` escribe — `io.out(serializeJsonV1(toValidateEnvelope(result)))`, una sola escritura; **stdout** para todos los outcomes esperados (incl. exit≠0); no analiza, no toca fs, no recalcula exit codes, no cota 200.
   - Test: incluido en T016.
-- [ ] T016 [P] [US1] [US5] `tests/unit/cli/validate-json-reporter.test.ts` (IO falso).
+- [X] T016 [P] [US1] [US5] `tests/unit/cli/validate-json-reporter.test.ts` (IO falso).
   - Done: n/a (test).
   - Test: ninguna escritura antes de `completed`; exactamente una escritura; payload parseable; outcome no-válido también va a stdout; reporter textual no ejecutado; input congelado.
-- [ ] T017 [US3] [US5] Implementar `InspectJsonReporter` (implements `InspectionReporter`) en `src/infrastructure/reporter/inspect-json-reporter.ts`.
+- [X] T017 [US3] [US5] Implementar `InspectJsonReporter` (implements `InspectionReporter`) en `src/infrastructure/reporter/inspect-json-reporter.ts`.
   - Done: misma disciplina; `completed` → `io.out(serializeJsonV1(toInspectEnvelope(result)))`; **sin** cota 200 (todos los paths).
   - Test: incluido en T018.
-- [ ] T018 [P] [US3] [US5] `tests/unit/cli/inspect-json-reporter.test.ts` (IO falso).
+- [X] T018 [P] [US3] [US5] `tests/unit/cli/inspect-json-reporter.test.ts` (IO falso).
   - Done: n/a (test).
   - Test: escritura única en `completed`; payload parseable; >200 paths conservados; sin mensaje de truncado; outcome no-válido en stdout.
 

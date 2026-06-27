@@ -28,3 +28,7 @@ export { ClackPrompter } from "./prompts/clack-prompter.js";
 export type { ClackApi } from "./prompts/clack-prompter.js";
 export { TerminalReporter } from "./reporter/terminal-reporter.js";
 export type { OutputWriter } from "./reporter/terminal-reporter.js";
+// Feature 003 — presentación JSON: serializer + reporters JSON (una sola emisión en `completed`).
+export { serializeJsonV1 } from "./reporter/json-serializer.js";
+export { ValidateJsonReporter } from "./reporter/validate-json-reporter.js";
+export { InspectJsonReporter } from "./reporter/inspect-json-reporter.js";
