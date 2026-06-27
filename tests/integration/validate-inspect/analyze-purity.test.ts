@@ -23,7 +23,6 @@ function deps(): AnalyzeDesignSystemDependencies {
   return {
     hostRootResolver,
     presenceInspector: { inspectPresence },
-    stateClassifier: { classify: () => ({ kind: "none" }) },
     documentReader: createManagedDocumentReader({ fileSystem: nodeFileSystem }),
     documentValidators,
     dtcgAnalyzer: createDtcgAnalyzer(),

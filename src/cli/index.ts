@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 // Entrypoint del binario `neuraz-ds`. Pequeño: compone dependencias reales, ejecuta el programa,
 // aplica process.exitCode y maneja solo errores de frontera (excepciones inesperadas → 70).
-import { createRealDependencies } from "./composition.js";
+import {
+  createBoundAnalyze,
+  createInspectDependencies,
+  createRealDependencies,
+  createValidateDependencies,
+} from "./composition.js";
 import { INTERNAL_ERROR_EXIT } from "./exit-codes.js";
 import { processIO } from "./io.js";
 import { runCli } from "./program.js";
@@ -15,11 +20,14 @@ const removeSignals = installSignalHandlers(process, () => {
 
 try {
   const io = processIO;
+  const analyze = createBoundAnalyze();
   const code = await runCli({
     argv: process.argv,
     cwd: process.cwd(),
     io,
     deps: createRealDependencies(io),
+    validateDeps: createValidateDependencies(io, analyze),
+    inspectDeps: createInspectDependencies(io, analyze),
     version: readCliVersion(),
   });
   process.exitCode = code;

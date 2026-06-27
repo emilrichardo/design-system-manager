@@ -1,6 +1,13 @@
-// Composition root de la CLI: ensambla el caso de uso con adapters reales de infraestructura
-// + ClackPrompter + TerminalReporter. Sin contenedor de DI, sin singletons mutables.
+// Composition root de la CLI: ensambla los casos de uso con adapters reales de infraestructura.
+// Sin contenedor de DI, sin singletons mutables. Una sola factory de análisis enlazada para 002.
 import type { InitializeDependencies } from "../application/ports.js";
+import type {
+  AnalyzeDesignSystemInput,
+  AnalyzeUseCase,
+  InspectDesignSystemDependencies,
+  ValidateDesignSystemDependencies,
+} from "../application/analysis-ports.js";
+import { analyzeExistingDesignSystem } from "../application/analyze-existing-design-system.js";
 import {
   documentPreparer,
   documentValidators,
@@ -8,8 +15,14 @@ import {
   stateClassifier,
   transactionalWriter,
 } from "../infrastructure/initialize-adapters.js";
+import { nodeFileSystem } from "../infrastructure/fs/node-file-system.js";
+import { inspectPresence } from "../infrastructure/host-root/inspect-presence.js";
+import { createManagedDocumentReader } from "../infrastructure/analysis/managed-document-reader.js";
+import { createDtcgAnalyzer } from "../infrastructure/analysis/dtcg-read-validator.js";
 import { ClackPrompter } from "../infrastructure/prompts/clack-prompter.js";
 import { TerminalReporter } from "../infrastructure/reporter/terminal-reporter.js";
+import { ValidateTerminalReporter } from "../infrastructure/reporter/validate-terminal-reporter.js";
+import { InspectTerminalReporter } from "../infrastructure/reporter/inspect-terminal-reporter.js";
 import type { CliIO } from "./io.js";
 
 export function createRealDependencies(io: CliIO): InitializeDependencies {
@@ -22,4 +35,29 @@ export function createRealDependencies(io: CliIO): InitializeDependencies {
     prompter: new ClackPrompter(),
     reporter: new TerminalReporter(io),
   };
+}
+
+/**
+ * Tubería de análisis ENLAZADA a sus adapters reales (un único reader y un único analyzer por
+ * ejecución). Compartida por `validate` e `inspect`: no hay doble lectura/parseo/recorrido.
+ */
+export function createBoundAnalyze(): AnalyzeUseCase {
+  const documentReader = createManagedDocumentReader({ fileSystem: nodeFileSystem });
+  const dtcgAnalyzer = createDtcgAnalyzer();
+  return (input: AnalyzeDesignSystemInput) =>
+    analyzeExistingDesignSystem(input, {
+      hostRootResolver,
+      presenceInspector: { inspectPresence },
+      documentReader,
+      documentValidators,
+      dtcgAnalyzer,
+    });
+}
+
+export function createValidateDependencies(io: CliIO, analyze: AnalyzeUseCase): ValidateDesignSystemDependencies {
+  return { analyze, reporter: new ValidateTerminalReporter(io) };
+}
+
+export function createInspectDependencies(io: CliIO, analyze: AnalyzeUseCase): InspectDesignSystemDependencies {
+  return { analyze, reporter: new InspectTerminalReporter(io) };
 }

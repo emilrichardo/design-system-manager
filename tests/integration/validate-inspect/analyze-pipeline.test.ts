@@ -66,7 +66,6 @@ function deps(spies?: Spies, limits: PipelineLimits = ANALYSIS_LIMITS): AnalyzeD
   return {
     hostRootResolver,
     presenceInspector: { inspectPresence },
-    stateClassifier: { classify: () => ({ kind: "none" }) }, // no usado por la tubería (single-pass)
     documentReader: reader,
     documentValidators,
     dtcgAnalyzer: analyzer,

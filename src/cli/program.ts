@@ -1,23 +1,31 @@
-// T041/T043 — Programa Commander testeable. createProgram registra `neuraz-ds init`; runCli
-// parsea (async), traduce el resultado a código de salida y mapea errores del parser:
-// help/version → 0, errores de uso → 3 (USAGE_ERROR_EXIT). No llama a process.exit.
+// T041/T043/T037 — Programa Commander testeable. createProgram registra `init`, `validate` e
+// `inspect`; runCli parsea (async), traduce el resultado a código de salida y mapea errores del
+// parser: help/version → 0, errores de uso → 3 (USAGE_ERROR_EXIT). No llama a process.exit.
 import { Command, CommanderError } from "commander";
 import type { InitializeDependencies } from "../application/ports.js";
+import type {
+  ValidateDesignSystemDependencies,
+  InspectDesignSystemDependencies,
+} from "../application/analysis-ports.js";
 import type { CliIO } from "./io.js";
-import { exitCodeForResult, USAGE_ERROR_EXIT } from "./exit-codes.js";
+import { exitCodeForResult, exitCodeForOutcome, INTERNAL_ERROR_EXIT, USAGE_ERROR_EXIT } from "./exit-codes.js";
 import { runInit } from "./commands/init.js";
+import { runValidate } from "./commands/validate.js";
+import { runInspect } from "./commands/inspect.js";
 
 export interface ProgramHandlers {
   version: string;
   io: CliIO;
   onInit: () => Promise<number>;
+  onValidate: () => Promise<number>;
+  onInspect: () => Promise<number>;
 }
 
 export function createProgram(handlers: ProgramHandlers): {
   program: Command;
-  getInitCode: () => number | null;
+  getCode: () => number | null;
 } {
-  const state: { initCode: number | null } = { initCode: null };
+  const state: { code: number | null } = { code: null };
   const program = new Command();
   program
     .name("neuraz-ds")
@@ -34,10 +42,26 @@ export function createProgram(handlers: ProgramHandlers): {
     .description("Inicializa un Design System local en el proyecto anfitrión.");
   init.exitOverride();
   init.action(async () => {
-    state.initCode = await handlers.onInit();
+    state.code = await handlers.onInit();
   });
 
-  return { program, getInitCode: () => state.initCode };
+  const validate = program
+    .command("validate")
+    .description("Valida el Design System administrado sin modificar archivos.");
+  validate.exitOverride();
+  validate.action(async () => {
+    state.code = await handlers.onValidate();
+  });
+
+  const inspect = program
+    .command("inspect")
+    .description("Inspecciona la estructura, tokens y estado del Design System sin modificar archivos.");
+  inspect.exitOverride();
+  inspect.action(async () => {
+    state.code = await handlers.onInspect();
+  });
+
+  return { program, getCode: () => state.code };
 }
 
 export interface CliRuntime {
@@ -45,14 +69,26 @@ export interface CliRuntime {
   cwd: string;
   io: CliIO;
   deps: InitializeDependencies;
+  /** Dependencias de `validate`/`inspect`. Opcionales: el binario real siempre las provee; pruebas
+   *  centradas en `init` pueden omitirlas (esos comandos no se ejecutan allí). */
+  validateDeps?: ValidateDesignSystemDependencies;
+  inspectDeps?: InspectDesignSystemDependencies;
   version: string;
 }
 
 export async function runCli(runtime: CliRuntime): Promise<number> {
-  const { program, getInitCode } = createProgram({
+  const { program, getCode } = createProgram({
     version: runtime.version,
     io: runtime.io,
     onInit: () => runInit(runtime.cwd, runtime.deps).then(exitCodeForResult),
+    onValidate: () =>
+      runtime.validateDeps === undefined
+        ? Promise.resolve(INTERNAL_ERROR_EXIT)
+        : runValidate(runtime.cwd, runtime.validateDeps).then((r) => exitCodeForOutcome(r.outcome)),
+    onInspect: () =>
+      runtime.inspectDeps === undefined
+        ? Promise.resolve(INTERNAL_ERROR_EXIT)
+        : runInspect(runtime.cwd, runtime.inspectDeps).then((r) => exitCodeForOutcome(r.outcome)),
   });
 
   try {
@@ -72,7 +108,7 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
     throw e; // excepción inesperada → la maneja el entrypoint
   }
 
-  const code = getInitCode();
+  const code = getCode();
   if (code !== null) return code;
 
   // Sin subcomando: mostrar ayuda y terminar con éxito.

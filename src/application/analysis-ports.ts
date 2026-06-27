@@ -18,7 +18,6 @@ import type {
   HostError,
   HostInspector,
   HostRootResolver,
-  StateClassifier,
 } from "./ports.js";
 
 // ── T016 — ManagedDocumentReader (puerto delgado, lectura segura) ──────────────────────────────
@@ -105,7 +104,6 @@ export interface AnalyzeDesignSystemInput {
 export interface AnalyzeDesignSystemDependencies {
   readonly hostRootResolver: HostRootResolver;
   readonly presenceInspector: HostInspector;
-  readonly stateClassifier: StateClassifier;
   readonly documentReader: ManagedDocumentReader;
   /** Validadores de `001` (config/manifest). La tubería NO usa su `validateDtcg` (color-only). */
   readonly documentValidators: DocumentValidators;

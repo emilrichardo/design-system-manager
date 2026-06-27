@@ -218,23 +218,23 @@ de `001` explícita.
 
 > La CLI solo provee `cwd`, ejecuta casos de uso, presenta y mapea exit codes. Sin prompts; funciona sin TTY/en CI.
 
-- [ ] T034 Generalizar `src/cli/exit-codes.ts` a la **tabla común** del binario añadiendo `exitCodeForValidation(report)` y `exitCodeForInspection(inspection)` (0/3/4/5/6) **sin** modificar `exitCodeForResult` de `init` (ADR-0006). `2` sigue siendo `unchanged`.
+- [X] T034 Generalizar `src/cli/exit-codes.ts` a la **tabla común** del binario añadiendo `exitCodeForValidation(report)` y `exitCodeForInspection(inspection)` (0/3/4/5/6) **sin** modificar `exitCodeForResult` de `init` (ADR-0006). `2` sigue siendo `unchanged`.
   - **Deps**: T012, T013.
   - **Done**: funciones puras nuevas; init intacto; ningún código con doble significado.
   - **Test**: `tests/unit/cli/exit-codes.test.ts` — validate/inspect: válido→0, completo-inválido→3, parcial→4, no-localizable→5, lectura/fs→6; init sin cambios; `2` no reasignado. (FR-033/FR-034, SC-010)
-- [ ] T035 [P] Implementar el **reporter textual de `validate`** en `src/infrastructure/reporter/validate-terminal-reporter.ts`: raíz anfitriona, archivos comprobados, estado final, nº errores/warnings, lista de issues. Comprensible sin ANSI. No altera el resultado.
+- [X] T035 [P] Implementar el **reporter textual de `validate`** en `src/infrastructure/reporter/validate-terminal-reporter.ts`: raíz anfitriona, archivos comprobados, estado final, nº errores/warnings, lista de issues. Comprensible sin ANSI. No altera el resultado.
   - **Deps**: T019, T031.
   - **Done**: implementa `ValidationReporter`; salida determinista; sin lógica de negocio.
   - **Test**: `tests/cli/validate-output.test.ts` — secciones presentes; igualdad semántica con el núcleo. (FR-031, SC-008)
-- [ ] T036 Implementar el **reporter textual de `inspect`** en `src/infrastructure/reporter/inspect-terminal-reporter.ts`: árbol/tabla Identidad/Archivos/Tokens{Grupos,Valores,Aliases}/Validación; aplica `MAX_INSPECT_TERMINAL_TOKEN_ROWS = 200` **solo a la impresión** de filas de tokens, con aviso "Mostrando 200 de N; (N−200) no se muestran" en orden ADR-0010. No altera estadísticas/`valid`/issues/exit/parcialidad.
+- [X] T036 Implementar el **reporter textual de `inspect`** en `src/infrastructure/reporter/inspect-terminal-reporter.ts`: árbol/tabla Identidad/Archivos/Tokens{Grupos,Valores,Aliases}/Validación; aplica `MAX_INSPECT_TERMINAL_TOKEN_ROWS = 200` **solo a la impresión** de filas de tokens, con aviso "Mostrando 200 de N; (N−200) no se muestran" en orden ADR-0010. No altera estadísticas/`valid`/issues/exit/parcialidad.
   - **Deps**: T019, T032, T002.
   - **Done**: cota de presentación 200; estadísticas completas siempre; aviso explícito (no truncado silencioso); sin navegación/Ink/Blessed/React.
   - **Test**: `tests/cli/inspect-cap.test.ts` — 199 filas (sin aviso); 200 (borde, sin aviso); 201 (200 + aviso de 1 omitido); conteos completos con solo 200 filas; mensaje exacto; CLI≡núcleo. (FR-032, C2, SC-007/SC-008)
-- [ ] T037 Registrar los comandos `validate` e `inspect` en `src/cli/commands/validate.ts` y `src/cli/commands/inspect.ts` (Commander), delegando **toda** la lógica a los casos de uso; sin prompts; sin TTY obligatorio.
+- [X] T037 Registrar los comandos `validate` e `inspect` en `src/cli/commands/validate.ts` y `src/cli/commands/inspect.ts` (Commander), delegando **toda** la lógica a los casos de uso; sin prompts; sin TTY obligatorio.
   - **Deps**: T031, T032, T034, T035, T036.
   - **Done**: comandos que pasan `executionDir`, ejecutan el caso de uso, presentan y mapean exit code; cero reglas de negocio en el comando.
   - **Test**: `tests/cli/commands.test.ts` — comandos registrados; sin prompts; ejecutan en CI sin TTY. (FR-030, US4)
-- [ ] T038 Conectar el wiring de dependencias en `src/cli/composition.ts` y registrar los subcomandos en `src/cli/program.ts` (reusa la CLI base/`runCli` de 001; `init` sin cambios).
+- [X] T038 Conectar el wiring de dependencias en `src/cli/composition.ts` y registrar los subcomandos en `src/cli/program.ts` (reusa la CLI base/`runCli` de 001; `init` sin cambios).
   - **Deps**: T037.
   - **Done**: composición de adapters reales (reader, validadores, reporters); `validate`/`inspect` visibles en `--help`; `init` intacto.
   - **Test**: `tests/cli/program.test.ts` — `--help` lista los 3 comandos; exit 0 para help/version. (FR-030/FR-034)
