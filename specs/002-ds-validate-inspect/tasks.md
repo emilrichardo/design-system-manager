@@ -186,11 +186,11 @@ de `001` explícita.
 
 ## Fase 6 — Tubería compartida (una sola lectura/parseo/recorrido)
 
-- [ ] T029 Implementar `analyzeExistingDesignSystem(input, deps)` en `src/application/analyze-design-system.ts`: orquesta resolve(host) → inspect-presence(001) → classify-state(001) → read(managed) → parse(`JSON.parse` seguro, marca trust) → validate(config/manifest zod de 001 + `DtcgReadValidator`) → traverse(árbol DTCG) → coherence → produce `DesignSystemAnalysis`. **Una sola** lectura/parseo/recorrido.
+- [X] T029 Implementar `analyzeExistingDesignSystem(input, deps)` en `src/application/analyze-design-system.ts`: orquesta resolve(host) → inspect-presence(001) → classify-state(001) → read(managed) → parse(`JSON.parse` seguro, marca trust) → validate(config/manifest zod de 001 + `DtcgReadValidator`) → traverse(árbol DTCG) → coherence → produce `DesignSystemAnalysis`. **Una sola** lectura/parseo/recorrido.
   - **Deps**: T014, T018, T024, T026, T027. Reusa `resolveHostRoot`, `inspectPresence`, `classifyState`, `documentValidators` de 001.
   - **Done**: un único `DesignSystemAnalysis`; sin doble lectura/parseo/recorrido; acumula todos los errores recuperables; categoriza host/structure/read/validation/limit; sin escritura.
   - **Test**: `tests/integration/validate-inspect/analyze.test.ts` — un solo paso de lectura (espía del reader) produce análisis completo; acumulación de errores. (FR-001/FR-004/FR-010/FR-011/FR-012/FR-015, SC-001)
-- [ ] T030 Implementar la **comprobación de coherencia entre documentos** (config `designSystemDir` ↔ ubicación del manifiesto; `tokensDir` del manifiesto consistente) dentro de la tubería, en `src/application/analyze-design-system.ts` (o helper `src/application/coherence.ts`).
+- [X] T030 Implementar la **comprobación de coherencia entre documentos** (config `designSystemDir` ↔ ubicación del manifiesto; `tokensDir` del manifiesto consistente) dentro de la tubería, en `src/application/analyze-design-system.ts` (o helper `src/application/coherence.ts`).
   - **Deps**: T029.
   - **Done**: `designSystemDir` dentro de la raíz; coincide con la ubicación real del manifiesto; `coherence-*` como error.
   - **Test**: `tests/integration/validate-inspect/coherence.test.ts` — `designSystemDir` con escape/absoluta; desajuste config↔manifiesto. (FR-010/FR-014)

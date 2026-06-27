@@ -7,6 +7,9 @@
 import type { ManagedDocument } from "../domain/analysis/analysis-issue.js";
 import type { AnalysisIssue } from "../domain/analysis/analysis-issue.js";
 import type { StructuralState } from "../domain/analysis/structural-state.js";
+import type { TokenNodeSummary } from "../domain/analysis/token-node-summary.js";
+import type { InspectionStatistics } from "../domain/analysis/inspection-statistics.js";
+import type { AnalysisLimitsResult } from "../domain/traversal/limits.js";
 import type { DesignSystemAnalysis } from "../domain/analysis/design-system-analysis.js";
 import type { ValidationReport } from "../domain/analysis/validation-report.js";
 import type { DesignSystemInspection } from "../domain/analysis/design-system-inspection.js";
@@ -74,6 +77,25 @@ export interface DtcgReadValidator {
   validate(document: unknown): readonly AnalysisIssue[];
 }
 
+/**
+ * Resultado rico del análisis del documento de tokens (una sola pasada de recorrido). Es la salida
+ * estructural que la tubería reutiliza directamente (nodos/estadísticas/issues/límites/validez) sin
+ * volver a recorrer. Solo tipos de dominio.
+ */
+export interface DtcgAnalysisResult {
+  readonly valid: boolean;
+  readonly nodes: readonly TokenNodeSummary[];
+  readonly statistics: InspectionStatistics;
+  readonly errors: readonly AnalysisIssue[];
+  readonly warnings: readonly AnalysisIssue[];
+  readonly limits: AnalysisLimitsResult;
+}
+
+/** Puerto: analiza (una vez) un documento de tokens ya parseado y devuelve el resultado rico. */
+export interface DtcgAnalyzer {
+  analyze(document: unknown): DtcgAnalysisResult;
+}
+
 // ── T018 — Tubería compartida de análisis ──────────────────────────────────────────────────────
 /** Entrada headless común (la CLI provee `executionDir`; el núcleo no usa process.cwd()). */
 export interface AnalyzeDesignSystemInput {
@@ -86,10 +108,10 @@ export interface AnalyzeDesignSystemDependencies {
   readonly presenceInspector: HostInspector;
   readonly stateClassifier: StateClassifier;
   readonly documentReader: ManagedDocumentReader;
-  /** Validadores de `001` (config/manifest + DTCG color-only de generación). */
+  /** Validadores de `001` (config/manifest). La tubería NO usa su `validateDtcg` (color-only). */
   readonly documentValidators: DocumentValidators;
-  /** Validador de lectura amplio de `002` (13 tipos reconocidos). */
-  readonly dtcgReadValidator: DtcgReadValidator;
+  /** Analizador DTCG de lectura amplio de `002` (UNA sola pasada de recorrido → resultado rico). */
+  readonly dtcgAnalyzer: DtcgAnalyzer;
 }
 
 /**

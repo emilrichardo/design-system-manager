@@ -4,8 +4,18 @@
 // recorrido (traverseDtcgTree) y proyecta sus issues; el resultado rico (nodos/estadísticas/límites)
 // se obtiene de `traverseDtcgTree` directamente (lo usará la tubería T029).
 import type { AnalysisIssue } from "../../domain/analysis/analysis-issue.js";
-import type { DtcgReadValidator } from "../../application/analysis-ports.js";
+import type { DtcgAnalyzer, DtcgReadValidator } from "../../application/analysis-ports.js";
 import { traverseDtcgTree } from "./traverse-dtcg-tree.js";
+
+/**
+ * Crea el analizador DTCG de lectura (puerto `DtcgAnalyzer`): una sola pasada de `traverseDtcgTree`
+ * por documento. Es lo que usa la tubería compartida (T029) para no duplicar el recorrido.
+ */
+export function createDtcgAnalyzer(): DtcgAnalyzer {
+  return {
+    analyze: (document: unknown) => traverseDtcgTree(document),
+  };
+}
 
 /**
  * Crea el validador de lectura. `validate(document)` devuelve los issues (errores seguidos de
