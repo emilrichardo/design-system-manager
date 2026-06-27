@@ -51,25 +51,25 @@
 
 ### Fase 3 — Mapper de validate
 
-- [ ] T009 [US1] [US2] Implementar `toValidateEnvelope(result)` en `src/application/json/map-validate.ts` → `JsonValidateEnvelopeV1`.
+- [X] T009 [US1] [US2] Implementar `toValidateEnvelope(result)` en `src/application/json/map-validate.ts` → `JsonValidateEnvelopeV1`.
   - Done: cubre `valid|complete-invalid|partial|read-error` (result = `{host}` ⊕ `toJsonValidation`) y `not-found` (`result:null`, `error:null` — `hostError` no se puebla en v1, contrato remediado); recibe el resultado público ya clasificado; **no** reconstruye `ValidationReport`; sin campos de inspect.
   - Test: incluido en T010.
-- [ ] T010 [P] [US1] [US2] `tests/unit/json/map-validate.test.ts`.
+- [X] T010 [P] [US1] [US2] `tests/unit/json/map-validate.test.ts`.
   - Done: n/a (test).
   - Test: host presente/`null`; los 5 outcomes; `not-found`→`result:null`+`error:null`; checked/unchecked/summary/errors/warnings/limits; envelope determinista; input congelado; sin claves de inspect.
 
 ### Fase 4 — Mapper de inspect
 
-- [ ] T011 [US3] [US4] Implementar `toInspectEnvelope(result)` en `src/application/json/map-inspect.ts` → `JsonInspectEnvelopeV1` (helpers puros internos para `JsonTokenNodeV1` y `JsonFileInspectionV1`).
+- [X] T011 [US3] [US4] Implementar `toInspectEnvelope(result)` en `src/application/json/map-inspect.ts` → `JsonInspectEnvelopeV1` (helpers puros internos para `JsonTokenNodeV1` y `JsonFileInspectionV1`).
   - Done: mapea host, structuralState, identity/schemaVersions (cada campo vía `toJsonInspectedValue`→`null` si ausente), files (expected/present/missing, `sizeBytes ?? null`), tokens (estadísticas + `byType` sin reordenar + **todos** los paths) y `validation` (vía `toJsonValidation`); `not-found`→`result:null`,`error:null`; **no** importa `MAX_INSPECT_TERMINAL_TOKEN_ROWS`; no recalcula aliases/tipos/confianza/estadísticas/profundidad.
   - Test: incluido en T012.
-- [ ] T012 [P] [US3] [US4] `tests/unit/json/map-inspect.test.ts`.
+- [X] T012 [P] [US3] [US4] `tests/unit/json/map-inspect.test.ts`.
   - Done: n/a (test).
   - Test: 0/199/200/201/250 paths (todos presentes; sin uso de la cota); identity unavailable→`{value:null,trust:"unavailable"}`; estados recuperables (complete-invalid/partial); not-found result null; determinista; input congelado.
 
 ### Fase 5 — Envelope de error interno
 
-- [ ] T013 [P] [US8] Implementar `internalErrorEnvelope(command)` en `src/application/json/map-internal-error.ts` → `JsonInternalErrorEnvelopeV1`.
+- [X] T013 [P] [US8] Implementar `internalErrorEnvelope(command)` en `src/application/json/map-internal-error.ts` → `JsonInternalErrorEnvelopeV1`.
   - Done: `{formatVersion, command, outcome:"internal-error", result:null, error:{code:"internal-cli-error", message}}` con `message` fijo y seguro; **no** agrega `internal-error` a los outcomes headless; sin error original/stack/path/env.
   - Test: `tests/unit/json/map-internal-error.test.ts` — 4 campos base + `error`, `validate`/`inspect`, mensaje fijo, sin datos sensibles, determinista.
 
