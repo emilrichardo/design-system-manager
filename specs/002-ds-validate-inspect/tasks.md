@@ -282,15 +282,15 @@ de `001` explícita.
   - **Deps**: T037, T038.
   - **Done**: exit codes contractuales; sin prompts; funciona con stdin cerrado.
   - **Test**: el propio archivo. (FR-030/FR-031/FR-032/FR-033/FR-034, SC-008)
-- [ ] T048 **Regresión completa de `001`** en `tests/integration/regression-001.test.ts`: suite de `init` verde; exit codes de `init` sin cambios; el DS de `init` pasa `validate` y se inspecciona; el `DtcgReadValidator` amplio **no** altera la salida de `init`; el `dtcg.schema` estricto de generación permanece intacto.
+- [X] T048 **Regresión completa de `001`** en `tests/integration/regression-001.test.ts`: suite de `init` verde; exit codes de `init` sin cambios; el DS de `init` pasa `validate` y se inspecciona; el `DtcgReadValidator` amplio **no** altera la salida de `init`; el `dtcg.schema` estricto de generación permanece intacto.
   - **Deps**: T029, T031, T032, T034.
   - **Done**: **274/274** de 001 verdes + nuevas aserciones de no-regresión; schema de generación sin cambios.
   - **Test**: el propio archivo + ejecución de la suite 001. (SC-010, separación de schemas)
-- [ ] T049 **Arch-guard de 002**: ampliar/validar `scripts/arch-guard.mjs` para los nuevos directorios (dominio sin Node/fs/zod/ajv; aplicación sin infra/commander/clack/exit; reporters/CLI sin lógica de negocio).
+- [X] T049 **Arch-guard de 002**: ampliar/validar `scripts/arch-guard.mjs` para los nuevos directorios (dominio sin Node/fs/zod/ajv; aplicación sin infra/commander/clack/exit; reporters/CLI sin lógica de negocio).
   - **Deps**: todas las fases de implementación.
   - **Done**: `npm run lint` (arch-guard) verde con las nuevas rutas; sin violaciones de capas.
   - **Test**: `npm run lint`. (Constitución; arquitectura)
-- [ ] T050 **Cierre**: ejecutar `npm run typecheck && npm run lint && npm test && npm run build`; actualizar la matriz de trazabilidad final y marcar tareas completadas.
+- [X] T050 **Cierre**: ejecutar `npm run typecheck && npm run lint && npm test && npm run build`; actualizar la matriz de trazabilidad final y marcar tareas completadas.
   - **Deps**: T001–T049.
   - **Done**: typecheck/lint/build verdes; tests 274 (001) + nuevos de 002 verdes; matriz completa.
   - **Test**: pipeline completo verde.
