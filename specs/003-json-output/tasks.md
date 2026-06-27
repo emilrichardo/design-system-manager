@@ -180,28 +180,28 @@
 
 ### Fase 13 — Regresión de 001 y 002
 
-- [ ] T034 [US6] Actualizar la única prueba histórica de 002 que esperaba `--json` rechazado en `tests/cli/validate-inspect-binary.test.ts` ("--json no aceptado → 3").
+- [X] T034 [US6] Actualizar la única prueba histórica de 002 que esperaba `--json` rechazado en `tests/cli/validate-inspect-binary.test.ts` ("--json no aceptado → 3").
   - Done: la aserción pasa a verificar que `validate --json`/`inspect --json` ahora son válidos (exit por outcome, JSON en stdout); ningún otro test histórico se modifica ni se debilita.
   - Test: la propia prueba actualizada + suite 001/002 verde (588 sin tocar + esta).
-- [ ] T035 [US6] `tests/integration/json-output/regression-flow.test.ts`: `init → validate --json → inspect --json → init unchanged`.
+- [X] T035 [US6] `tests/integration/json-output/regression-flow.test.ts`: `init → validate --json → inspect --json → init unchanged`.
   - Done: n/a (test).
   - Test: los tres documentos quedan **byte-idénticos**; `init` de nuevo → `unchanged`/2; salida humana y cota 200 intactas; `package.json` sin cambios; no `init --json`.
 
 ### Fase 14 — Documentación, empaquetado y cierre
 
-- [ ] T036 [P] [US1] [US3] Actualizar `README.md`: `--json` en validate/inspect, envelope versionado, tabla de exit codes (incl. 70), `formatVersion`, diferencia human/JSON, `>200` tokens, límites v1.
+- [X] T036 [P] [US1] [US3] Actualizar `README.md`: `--json` en validate/inspect, envelope versionado, tabla de exit codes (incl. 70), `formatVersion`, diferencia human/JSON, `>200` tokens, límites v1.
   - Done: documenta el contrato sin prometer fuera de alcance; coherente con los contratos.
   - Test: revisión manual; sin afirmaciones contradictorias con spec/contracts.
-- [ ] T037 [P] Alinear el texto de ayuda de `validate`/`inspect` (descripción de `--json`) y verificar `quickstart.md`.
+- [X] T037 [P] Alinear el texto de ayuda de `validate`/`inspect` (descripción de `--json`) y verificar `quickstart.md`.
   - Done: `--help` de cada subcomando menciona `--json`; quickstart coherente.
   - Test: `--help` de validate/inspect muestra `--json`; child-process help → exit 0.
-- [ ] T038 Empaquetado: `npm run build` + `npm pack --dry-run` (y tarball real verificado/eliminado).
+- [X] T038 Empaquetado: `npm run build` + `npm pack --dry-run` (y tarball real verificado/eliminado).
   - Done: nuevos módulos `dist/application/json/*` y `dist/infrastructure/reporter/*json*`; tarball solo `dist`+`package.json`+`README.md`; sin specs/tests/fixtures; **sin nuevas dependencias**.
   - Test: `tests/integration/packaging-npx.test.ts` sigue verde; listado del tarball revisado.
-- [ ] T039 Smoke del paquete instalado en proyecto temporal: `neuraz-ds validate --json` / `inspect --json`.
+- [X] T039 Smoke del paquete instalado en proyecto temporal: `neuraz-ds validate --json` / `inspect --json`.
   - Done: el binario empaquetado emite JSON v1 válido; **no** se publica.
   - Test: smoke manual/automatizado (parse de stdout, exit esperado).
-- [ ] T040 Cierre: crear `specs/003-json-output/audit.md` (matriz US/FR/SC, constitución 17/17, auditoría final) y verificar pipeline completo.
+- [X] T040 Cierre: crear `specs/003-json-output/audit.md` (matriz US/FR/SC, constitución 17/17, auditoría final) y verificar pipeline completo.
   - Done: trazabilidad 8/8 · 35/35 · 10/10; `typecheck`/`lint`/`test`/`build`/`pack` verdes; working tree limpio.
   - Test: pipeline completo verde; sin desviaciones abiertas.
 

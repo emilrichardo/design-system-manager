@@ -54,10 +54,13 @@ Acumula **todos** los errores recuperables. **No repara, no modifica archivos.**
 
 ```bash
 npx neuraz-ds validate    # no interactivo; funciona en CI sin TTY
+npx neuraz-ds validate --json
 ```
 
 Muestra raíz, estado, documentos comprobados, nº de errores/warnings, tokens y la lista de issues.
-Códigos principales: `0` válido · `3` inválido · `4` parcial · `5` no localizado · `6` lectura/fs.
+Con `--json`, stdout contiene exactamente un documento JSON v1 parseable, sin texto humano, y el
+código de salida no cambia. Códigos principales: `0` válido · `3` inválido · `4` parcial · `5` no
+localizado · `6` lectura/fs.
 
 ## `neuraz-ds inspect`
 
@@ -68,19 +71,20 @@ incluso en estados inválidos o parciales, marcando la confiabilidad. **No infie
 
 ```bash
 npx neuraz-ds inspect     # no interactivo; funciona en CI sin TTY
+npx neuraz-ds inspect --json
 ```
 
 La salida de terminal muestra **hasta 200 rutas de tokens** (cota de presentación); con más, indica
-cuántas se omiten. El **modelo headless conserva todos los nodos** (la cota es solo visual). Códigos
-principales: `0` · `3` · `4` · `5` · `6`.
+cuántas se omiten. Con `--json`, `tokens.paths` conserva **todos** los nodos (sin cota de 200).
+Códigos principales: `0` · `3` · `4` · `5` · `6`.
 
 ### Comandos disponibles
 
 | Comando | Descripción |
 |---|---|
 | `neuraz-ds init` | Inicializa el Design System local (interactivo, puede escribir). |
-| `neuraz-ds validate` | Valida el Design System administrado **sin modificar archivos**. |
-| `neuraz-ds inspect` | Inspecciona estructura, tokens y estado **sin modificar archivos**. |
+| `neuraz-ds validate [--json]` | Valida el Design System administrado **sin modificar archivos**. |
+| `neuraz-ds inspect [--json]` | Inspecciona estructura, tokens y estado **sin modificar archivos**. |
 | `neuraz-ds --help` / `<cmd> --help` | Ayuda. |
 | `neuraz-ds --version` | Versión del gestor. |
 
@@ -100,6 +104,51 @@ principales: `0` · `3` · `4` · `5` · `6`.
 
 `validate` e `inspect` **no** usan `1`, `2` ni `7` en su flujo normal (operaciones de solo lectura).
 
+## Salida JSON v1
+
+`validate --json` e `inspect --json` son la superficie estable para CI, agentes, scripts y otros
+consumidores headless. `init --json` no existe, `--json` no es global y no hay flags de formato como
+`--compact`, `--pretty` u `--output`.
+
+El envelope público siempre incluye cuatro campos base:
+
+```json
+{
+  "formatVersion": "1.0.0",
+  "command": "validate",
+  "outcome": "valid",
+  "result": {}
+}
+```
+
+- `formatVersion` versiona el contrato JSON y es independiente de `package.version`.
+- `command` es `"validate"` o `"inspect"`.
+- `outcome` para estados esperados es `valid`, `complete-invalid`, `partial`, `not-found` o
+  `read-error`; `internal-error` existe solo en la frontera CLI.
+- `result` contiene el DTO del comando o `null` cuando no hay Design System administrado.
+- `error` aparece solo en `not-found` e `internal-error`; en `not-found` es `null` en v1 porque los
+  casos de uso reutilizados no pueblan `hostError`.
+
+Reglas de canales:
+
+| Caso | stdout | stderr | exit |
+|---|---|---|---:|
+| outcome esperado con `--json` | exactamente un JSON con newline final | vacío | `0`/`3`/`4`/`5`/`6` |
+| error interno CLI con `--json` | vacío | envelope JSON `internal-error` con newline final | `70` |
+| error de uso Commander | política existente del parser | mensaje de uso/error | `3` |
+
+La serialización usa 2 espacios y newline final, no emite ANSI/spinners/tablas, no contiene
+`undefined`, preserva el orden de arrays del modelo, y no incluye stacks, errores crudos de librería,
+contenidos de archivos ni el `context` interno de los issues. Los campos contractuales no disponibles
+se serializan como `null`.
+
+Resumen de DTOs:
+
+- `validate --json`: `host`, `structuralState`, `valid`, documentos comprobados/no comprobados,
+  `summary`, `errors`, `warnings` y `limits`.
+- `inspect --json`: `host`, `structuralState`, `identity`, `schemaVersions`, `files`, `tokens`,
+  `validation` y `limits`; `identity` y `schemaVersions` usan `{value, trust}`.
+
 ## Arquitectura headless
 
 La lógica de validación/inspección vive en un único productor compartido del que se derivan dos
@@ -112,8 +161,9 @@ analyzeExistingDesignSystem   (1 lectura + 1 parseo por documento, 1 recorrido d
 ```
 
 Los casos de uso `validateDesignSystem` / `inspectDesignSystem` son **headless** (sin terminal): una
-futura TUI/Studio/MCP puede reutilizarlos sin reescribir el núcleo. `--json` queda habilitado por
-diseño (los casos de uso ya devuelven datos estructurados) pero **no** se implementa en esta versión.
+futura TUI/Studio/MCP puede reutilizarlos sin reescribir el núcleo. La salida JSON se deriva de los
+mismos resultados públicos mediante DTOs y mappers puros; no serializa objetos de dominio en crudo ni
+ejecuta un segundo análisis.
 
 ## Estado y límites de esta versión
 
@@ -123,14 +173,13 @@ Implementa `init`, `validate` e `inspect`. Límites actuales (no son defectos):
 - tokens en **JSON DTCG 2025.10**; inspección **profunda** solo de `color`;
 - los otros **12 tipos** DTCG reconocidos se validan de forma superficial y producen un *warning*
   (`dtcg-type-not-deeply-inspected`), sin invalidar el Design System;
-- **sin** reparación/edición/migración, **sin** `--json`, **sin** TUI/viewer/MCP, **sin** Style
-  Dictionary y **sin** múltiples themes/presets ni múltiples archivos de tokens.
+- **sin** reparación/edición/migración, **sin** TUI/viewer/MCP, **sin** Style Dictionary y **sin**
+  múltiples themes/presets ni múltiples archivos de tokens.
 
 ### Roadmap (futuro, no disponible)
 
 ```text
 TUI opcional / viewer efímero
-salida --json
 Style Dictionary
 MCP
 ```
@@ -147,6 +196,7 @@ npm run build       # compila a dist/
 
 Requiere **Node.js `>=22`**. Construido con Spec-Driven Development
 ([GitHub Spec Kit](https://github.com/github/spec-kit)); especificaciones en
-[`specs/001-ds-init/`](specs/001-ds-init/) y [`specs/002-ds-validate-inspect/`](specs/002-ds-validate-inspect/),
-decisiones en [`docs/adr/`](docs/adr/) (0001–0010), principios en
+[`specs/001-ds-init/`](specs/001-ds-init/), [`specs/002-ds-validate-inspect/`](specs/002-ds-validate-inspect/)
+y [`specs/003-json-output/`](specs/003-json-output/), decisiones en [`docs/adr/`](docs/adr/)
+(0001–0013), principios en
 [`.specify/memory/constitution.md`](.specify/memory/constitution.md).

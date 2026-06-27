@@ -12,8 +12,10 @@ Design System.
 ## Uso
 
 ```bash
-neuraz-ds validate --json
-neuraz-ds inspect --json
+npm install -D @neuraz/design-system-manager
+npx neuraz-ds init
+npx neuraz-ds validate --json
+npx neuraz-ds inspect --json
 ```
 
 Reglas: **stdout** contiene exactamente un documento JSON (2 espacios + newline final), **stderr**
@@ -25,7 +27,7 @@ idéntico al actual (reporter textual, cota de 200 en `inspect`).
 ### DS válido (exit 0)
 
 ```bash
-neuraz-ds validate --json
+npx neuraz-ds validate --json
 echo "exit: $?"   # 0
 ```
 
@@ -34,7 +36,7 @@ echo "exit: $?"   # 0
 ### DS inválido (exit 3)
 
 ```bash
-neuraz-ds validate --json; echo "exit: $?"   # 3
+npx neuraz-ds validate --json; echo "exit: $?"   # 3
 ```
 
 El JSON es válido y parseable; `outcome` es `"complete-invalid"`, `result.valid` es `false`, y
@@ -43,7 +45,7 @@ El JSON es válido y parseable; `outcome` es `"complete-invalid"`, `result.valid
 ### DS parcial (exit 4)
 
 ```bash
-neuraz-ds inspect --json; echo "exit: $?"   # 4
+npx neuraz-ds inspect --json; echo "exit: $?"   # 4
 ```
 
 `outcome` es `"partial"`; `result` conserva la información recuperable (archivos presentes/ausentes,
@@ -52,15 +54,16 @@ identidad recuperada con `trust`).
 ### Sin DS administrado (exit 5)
 
 ```bash
-neuraz-ds validate --json; echo "exit: $?"   # 5
+npx neuraz-ds validate --json; echo "exit: $?"   # 5
 ```
 
-`outcome` es `"not-found"`, `result` es `null`, `error` describe la causa (o `null`).
+`outcome` es `"not-found"`, `result` es `null` y `error` es `null` en v1. El campo queda reservado
+para un futuro `hostError`, pero 003 no modifica los casos de uso para poblarlo.
 
 ### `inspect` con más de 200 tokens (exit 0)
 
 ```bash
-neuraz-ds inspect --json
+npx neuraz-ds inspect --json
 ```
 
 `result.tokens.paths` contiene **todos** los nodos (sin cota de 200) y `result.tokens.total ===
@@ -71,14 +74,14 @@ result.tokens.paths.length`. No aparece ningún mensaje de truncado (eso es solo
 > `jq` **no** es dependencia del paquete; es solo un ejemplo de consumo.
 
 ```bash
-neuraz-ds validate --json | jq -r '.outcome'        # p. ej. "valid"
-neuraz-ds inspect  --json | jq '.result.tokens.total'
+npx neuraz-ds validate --json | jq -r '.outcome'        # p. ej. "valid"
+npx neuraz-ds inspect  --json | jq '.result.tokens.total'
 ```
 
 Redirigir a un archivo también funciona (sin TTY):
 
 ```bash
-neuraz-ds inspect --json > inspection.json
+npx neuraz-ds inspect --json > inspection.json
 node -e "JSON.parse(require('fs').readFileSync('inspection.json','utf8')); console.log('ok')"
 ```
 
@@ -87,7 +90,7 @@ node -e "JSON.parse(require('fs').readFileSync('inspection.json','utf8')); conso
 Patrón típico en CI: capturar el JSON y seguir según el código.
 
 ```bash
-out="$(neuraz-ds validate --json)"; code=$?
+out="$(npx neuraz-ds validate --json)"; code=$?
 echo "$out" | jq -e '.outcome'      # JSON siempre parseable
 exit "$code"                         # 0/3/4/5/6 según el estado
 ```
@@ -96,3 +99,4 @@ exit "$code"                         # 0/3/4/5/6 según el estado
 
 Sin `--json`, `validate` e `inspect` conservan textos, secciones, separación stdout/stderr, cota
 textual de 200, códigos y funcionamiento sin TTY. La suite histórica (001 + 002) permanece verde.
+`init --json`, `--json` global, `--compact`, `--pretty` y `--output` están fuera de alcance.

@@ -76,14 +76,35 @@ describe("T047 — ayuda, versión, uso, sin prompts (sin TTY)", () => {
     expect(help.stdout).toContain("inspect");
     expect(help.stdout).toContain("init");
     expect((await runBinary(["--version"], dir)).code).toBe(0);
-    expect((await runBinary(["validate", "--help"], dir)).code).toBe(0);
-    expect((await runBinary(["inspect", "--help"], dir)).code).toBe(0);
+    const initHelp = await runBinary(["init", "--help"], dir);
+    const validateHelp = await runBinary(["validate", "--help"], dir);
+    const inspectHelp = await runBinary(["inspect", "--help"], dir);
+    expect(initHelp.code).toBe(0);
+    expect(validateHelp.code).toBe(0);
+    expect(inspectHelp.code).toBe(0);
+    expect(initHelp.stdout).not.toContain("--json");
+    expect(validateHelp.stdout).toContain("--json");
+    expect(inspectHelp.stdout).toContain("--json");
   });
 
   it("--json es una opción válida en validate/inspect (003); DS válido → 0", async () => {
     const dir = await project(buildTokens());
-    expect((await runBinary(["validate", "--json"], dir)).code).toBe(0);
-    expect((await runBinary(["inspect", "--json"], dir)).code).toBe(0);
+    const validate = await runBinary(["validate", "--json"], dir);
+    const inspect = await runBinary(["inspect", "--json"], dir);
+    expect(validate.code).toBe(0);
+    expect(inspect.code).toBe(0);
+    expect(validate.stderr).toBe("");
+    expect(inspect.stderr).toBe("");
+    expect(JSON.parse(validate.stdout)).toMatchObject({
+      formatVersion: "1.0.0",
+      command: "validate",
+      outcome: "valid",
+    });
+    expect(JSON.parse(inspect.stdout)).toMatchObject({
+      formatVersion: "1.0.0",
+      command: "inspect",
+      outcome: "valid",
+    });
   });
 
   it("opción desconocida sigue siendo error de uso → 3", async () => {
