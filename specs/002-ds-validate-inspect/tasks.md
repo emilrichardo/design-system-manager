@@ -246,39 +246,39 @@ de `001` explícita.
 > Muchas pruebas unitarias ya se crean junto a su unidad en Fases 2–8. Esta fase añade integración
 > end-to-end, CLI por proceso hijo, pureza observacional y la regresión completa de `001`.
 
-- [ ] T039 [P] Suite de **integración con DS válido creado por `init`** en `tests/integration/validate-inspect/init-fixture.test.ts`: crear el DS con el núcleo de `init` y verificar `validate`→válido/exit 0 e `inspect`→inspección completa/exit 0.
+- [X] T039 [P] Suite de **integración con DS válido creado por `init`** en `tests/integration/validate-inspect/init-fixture.test.ts`: crear el DS con el núcleo de `init` y verificar `validate`→válido/exit 0 e `inspect`→inspección completa/exit 0.
   - **Deps**: T031, T032.
   - **Done**: el documento de `init` valida e inspecciona correctamente.
   - **Test**: el propio archivo. (US1/US3, SC-008, regresión 001)
-- [ ] T040 [P] Integración de **DTCG inválido / JSON roto / config / manifest / slug / SemVer** en `tests/integration/validate-inspect/invalid.test.ts`.
+- [X] T040 [P] Integración de **DTCG inválido / JSON roto / config / manifest / slug / SemVer** en `tests/integration/validate-inspect/invalid.test.ts`.
   - **Deps**: T031, T032.
   - **Done**: errores estructurados acumulados; inspect entrega lo recuperable; exit 3.
   - **Test**: el propio archivo. (FR-012/FR-015/FR-023, US2, SC-001)
-- [ ] T041 [P] Integración de **política de `$type`** en `tests/integration/validate-inspect/type-policy.test.ts`: tipo own; por alias; por group; faltante; reconocido-no-profundo→warning (válido); no reconocido→error (inválido); `$extensions` no legitima; herencia + aliases encadenados.
+- [X] T041 [P] Integración de **política de `$type`** en `tests/integration/validate-inspect/type-policy.test.ts`: tipo own; por alias; por group; faltante; reconocido-no-profundo→warning (válido); no reconocido→error (inválido); `$extensions` no legitima; herencia + aliases encadenados.
   - **Deps**: T031, T032.
   - **Done**: cada caso produce severidad/validez correctas; `byType` por tipo efectivo; nodo no reconocido `untrusted`.
   - **Test**: el propio archivo. (FR-017/FR-018/FR-019, C1, SC-009)
-- [ ] T042 [P] Integración de **portabilidad** (subcarpeta, monorepo, proyecto sin Git, sin `package.json`) en `tests/integration/validate-inspect/portability.test.ts`.
+- [X] T042 [P] Integración de **portabilidad** (subcarpeta, monorepo, proyecto sin Git, sin `package.json`) en `tests/integration/validate-inspect/portability.test.ts`.
   - **Deps**: T031, T032.
   - **Done**: resuelve el workspace correcto; sin `package.json`→host/exit 5.
   - **Test**: el propio archivo. (FR-001, US4, SC-005)
-- [ ] T043 [P] Integración de **límites** (archivo grande, árbol profundo, límite de nodos, alias largo) en `tests/integration/validate-inspect/limits.test.ts`.
+- [X] T043 [P] Integración de **límites** (archivo grande, árbol profundo, límite de nodos, alias largo) en `tests/integration/validate-inspect/limits.test.ts`.
   - **Deps**: T027, T031, T032.
   - **Done**: límite duro→error+`partial`; inspect entrega lo recuperado; sin desbordamiento ni truncado silencioso.
   - **Test**: el propio archivo. (FR-006, ADR-0009)
-- [ ] T044 [P] [US6] **Pureza observacional**: snapshot (listado+bytes+mtime+permisos) antes/después de `validate` e `inspect` sobre estados válido/inválido/parcial en `tests/integration/validate-inspect/observational-purity.test.ts`.
+- [X] T044 [P] [US6] **Pureza observacional**: snapshot (listado+bytes+mtime+permisos) antes/después de `validate` e `inspect` sobre estados válido/inválido/parcial en `tests/integration/validate-inspect/observational-purity.test.ts`.
   - **Deps**: T031, T032.
   - **Done**: snapshot idéntico; cero escrituras; cero staging; sin temporales en la raíz; `package.json`/config/tokens intactos.
   - **Test**: el propio archivo. (FR-002, US6, SC-002)
-- [ ] T045 [P] **Determinismo y equivalencia validate/inspect** en `tests/integration/validate-inspect/determinism.test.ts`: mismo proyecto → mismo resultado/conteos; `inspect.validation` ≡ `validate`; validate→inspect sin cambios.
+- [X] T045 [P] **Determinismo y equivalencia validate/inspect** en `tests/integration/validate-inspect/determinism.test.ts`: mismo proyecto → mismo resultado/conteos; `inspect.validation` ≡ `validate`; validate→inspect sin cambios.
   - **Deps**: T031, T032.
   - **Done**: resultados deterministas; misma semántica de validación entre ambos comandos.
   - **Test**: el propio archivo. (SC-003/SC-008)
-- [ ] T046 [P] [US5] **Headless** con adapters en memoria (sin Commander/Clack/TTY/consola/proceso hijo/`process.*`) en `tests/integration/validate-inspect/headless.test.ts`.
+- [X] T046 [P] [US5] **Headless** con adapters en memoria (sin Commander/Clack/TTY/consola/proceso hijo/`process.*`) en `tests/integration/validate-inspect/headless.test.ts`.
   - **Deps**: T022, T031, T032.
   - **Done**: ambos casos de uso ejecutables sin terminal; mismo resultado semántico que la CLI.
   - **Test**: el propio archivo. (FR-005, US5, SC-006)
-- [ ] T047 [P] **CLI por proceso hijo** (CI sin TTY) en `tests/cli/child-process.test.ts`: ayuda, versión, `validate`, `inspect`; stdout/stderr; exit codes 0/3/4/5/6; igualdad semántica con el núcleo.
+- [X] T047 [P] **CLI por proceso hijo** (CI sin TTY) en `tests/cli/child-process.test.ts`: ayuda, versión, `validate`, `inspect`; stdout/stderr; exit codes 0/3/4/5/6; igualdad semántica con el núcleo.
   - **Deps**: T037, T038.
   - **Done**: exit codes contractuales; sin prompts; funciona con stdin cerrado.
   - **Test**: el propio archivo. (FR-030/FR-031/FR-032/FR-033/FR-034, SC-008)

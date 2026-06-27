@@ -194,6 +194,7 @@ export function traverseDtcgTree(
             const target = m[1] as string;
             if (target.length > limits.maxAliasLength) {
               aliasTooLong = true;
+              recordHit("alias-len", `> ${limits.maxAliasLength}`); // límite duro (ADR-0009) → partial
             } else {
               aliasTarget = target;
             }
