@@ -15,31 +15,31 @@
 
 ### Fase 1 — Contrato JSON v1 y modelos
 
-- [ ] T001 [P] [US7] Crear `src/application/json/format-version.ts` con `export const JSON_FORMAT_VERSION = "1.0.0"`.
+- [X] T001 [P] [US7] Crear `src/application/json/format-version.ts` con `export const JSON_FORMAT_VERSION = "1.0.0"`.
   - Done: constante inmutable, independiente de `package.version`; sin imports de Node/CLI/infra.
   - Test: `tests/unit/json/format-version.test.ts` afirma el valor exacto `"1.0.0"`.
-- [ ] T002 [US7] Definir todos los tipos DTO v1 en `src/application/json/dto.ts` (solo tipos): enums (`JsonCommand`, `JsonExpectedOutcome`, `JsonInternalOutcome`), `JsonHostV1`, `JsonInspectedValueV1<T>`, `JsonIssueV1`, `JsonLimitHitV1`/`JsonLimitsV1`, `JsonSummaryV1`, `JsonValidationV1`, `JsonValidateResultV1`, `JsonFileInspectionV1`, `JsonTokenNodeV1`, `JsonIdentityV1`, `JsonSchemaVersionsV1`, `JsonFilesV1`, `JsonTokensV1`, `JsonInspectResultV1`, `JsonErrorV1`, los envelopes `JsonValidateEnvelopeV1`/`JsonInspectEnvelopeV1` (unión por `outcome`) y `JsonInternalErrorEnvelopeV1`.
+- [X] T002 [US7] Definir todos los tipos DTO v1 en `src/application/json/dto.ts` (solo tipos): enums (`JsonCommand`, `JsonExpectedOutcome`, `JsonInternalOutcome`), `JsonHostV1`, `JsonInspectedValueV1<T>`, `JsonIssueV1`, `JsonLimitHitV1`/`JsonLimitsV1`, `JsonSummaryV1`, `JsonValidationV1`, `JsonValidateResultV1`, `JsonFileInspectionV1`, `JsonTokenNodeV1`, `JsonIdentityV1`, `JsonSchemaVersionsV1`, `JsonFilesV1`, `JsonTokensV1`, `JsonInspectResultV1`, `JsonErrorV1`, los envelopes `JsonValidateEnvelopeV1`/`JsonInspectEnvelopeV1` (unión por `outcome`) y `JsonInternalErrorEnvelopeV1`.
   - Done: coincide con [data-model.md](data-model.md) §2–§7; 4 campos base siempre; `error` solo en `not-found`/`internal-error`; sin tipos de dominio reexpuestos; sin Node/CLI/exit-codes.
   - Test: cubierto por los tests de mappers (T006/T008/T010/T012/T014/T016/T018) que tipan contra estos DTO.
-- [ ] T003 [P] [US7] Crear barrel `src/application/json/index.ts` y reexportar lo mínimo en `src/application/index.ts` (DTO + `JSON_FORMAT_VERSION` + mappers a medida que existan).
+- [X] T003 [P] [US7] Crear barrel `src/application/json/index.ts` y reexportar lo mínimo en `src/application/index.ts` (DTO + `JSON_FORMAT_VERSION` + mappers a medida que existan).
   - Done: API pública headless disponible (`import { JSON_FORMAT_VERSION } from "@neuraz/design-system-manager"`); arch-guard OK.
   - Test: `tests/unit/json/exports.test.ts` importa version + un DTO type-only y un mapper desde el índice público.
-- [ ] T004 [P] [US7] `tests/unit/json/dto-invariants.test.ts`: invariantes que TS no garantiza en runtime.
+- [X] T004 [P] [US7] `tests/unit/json/dto-invariants.test.ts`: invariantes que TS no garantiza en runtime.
   - Done: n/a (test).
   - Test: sobre literales de muestra, valida 4 campos base presentes y ausencia de `undefined` (recorrido recursivo) para validate/inspect/internal-error.
 
 ### Fase 2 — Mappers comunes puros
 
-- [ ] T005 [P] [US7] Implementar `toJsonInspectedValue` en `src/application/json/map-inspected-value.ts`.
+- [X] T005 [P] [US7] Implementar `toJsonInspectedValue` en `src/application/json/map-inspected-value.ts`.
   - Done: `{ value: iv?.value ?? null, trust: iv?.trust ?? "unavailable" }`; `value` siempre presente; nunca `undefined`; preserva `valid|recovered|untrusted|unavailable`.
   - Test: `tests/unit/json/map-inspected-value.test.ts` — presente, recovered/untrusted preservados, `undefined`→`{value:null,trust:"unavailable"}`, input congelado.
-- [ ] T006 [P] [US7] Implementar `toJsonIssue` en `src/application/json/map-issue.ts`.
+- [X] T006 [P] [US7] Implementar `toJsonIssue` en `src/application/json/map-issue.ts`.
   - Done: produce `{severity,code,message,document,path}`; `document`/`path` → `null` si ausentes; **nunca** incluye `context`/stack/objetos Error.
   - Test: `tests/unit/json/map-issue.test.ts` — error/warning, ausencias→null, `context` descartado, input congelado, orden estable de arrays.
-- [ ] T007 [P] [US7] Implementar `map-common.ts` (`toJsonHost`, `toJsonLimits`, `toJsonSummary`) en `src/application/json/map-common.ts`.
+- [X] T007 [P] [US7] Implementar `map-common.ts` (`toJsonHost`, `toJsonLimits`, `toJsonSummary`) en `src/application/json/map-common.ts`.
   - Done: `host:null` cuando no hay; `limits` copia `{reached,partial,hits[]}`; `summary.tokens` → `?? null`; copias defensivas; sin mutar entrada.
   - Test: `tests/unit/json/map-common.test.ts` — host null/presente, hits copiados y en orden, tokens null, input congelado.
-- [ ] T008 [US7] Implementar `toJsonValidation(report)` en `src/application/json/map-validation.ts` (usa T006/T007).
+- [X] T008 [US7] Implementar `toJsonValidation(report)` en `src/application/json/map-validation.ts` (usa T006/T007).
   - Done: `JsonValidationV1` sin `host`; arrays `errors`/`warnings` mapeados en orden; `limits`/`summary` vía map-common.
   - Test: `tests/unit/json/map-validation.test.ts` — válido/ inválido, orden de issues preservado, determinismo, sin reconstrucción.
 

@@ -9,3 +9,5 @@ export { analyzeExistingDesignSystem } from "./analyze-existing-design-system.js
 export type { PipelineLimits } from "./analyze-existing-design-system.js";
 export { validateDesignSystem } from "./validate-design-system.js";
 export { inspectDesignSystem } from "./inspect-design-system.js";
+// Feature 003 — contrato JSON v1 (DTO + mappers comunes, headless).
+export * from "./json/index.js";
