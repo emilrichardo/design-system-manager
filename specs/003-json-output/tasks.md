@@ -138,37 +138,37 @@
 
 ### Fase 10 — Integración con filesystem real
 
-- [ ] T025 [US1] [US2] `tests/integration/json-output/validate-json.test.ts` (helpers `tmp-project`/`ds-fixtures`).
+- [X] T025 [US1] [US2] `tests/integration/json-output/validate-json.test.ts` (helpers `tmp-project`/`ds-fixtures`).
   - Done: n/a (test).
   - Test: `valid/complete-invalid/partial/not-found/read-error` → `JSON.parse(out)` ok, envelope/outcome correctos, exit por outcome, stderr vacío, sin modificación del DS.
-- [ ] T026 [US3] [US4] `tests/integration/json-output/inspect-json.test.ts`.
+- [X] T026 [US3] [US4] `tests/integration/json-output/inspect-json.test.ts`.
   - Done: n/a (test).
   - Test: mismos 5 outcomes + recuperables; identity/schemaVersions/files/tokens/validation presentes; not-found result null.
-- [ ] T027 [P] [US3] `tests/integration/json-output/inspect-json-paths.test.ts` (250 tokens).
+- [X] T027 [P] [US3] `tests/integration/json-output/inspect-json-paths.test.ts` (250 tokens).
   - Done: n/a (test).
   - Test: `tokens.paths.length === tokens.total === 250`; sin mensaje de truncado; exit 0.
-- [ ] T028 [P] [US2] `tests/integration/json-output/edge-cases.test.ts`.
+- [X] T028 [P] [US2] `tests/integration/json-output/edge-cases.test.ts`.
   - Done: n/a (test).
   - Test: UTF-8 inválido, tipo desconocido, tipo reconocido superficial, alias roto, ciclo, paths con espacios, Unicode → JSON válido y outcome correcto.
-- [ ] T029 [P] [US6] `tests/integration/json-output/human-vs-json.test.ts`.
+- [X] T029 [P] [US6] `tests/integration/json-output/human-vs-json.test.ts`.
   - Done: n/a (test).
   - Test: human y JSON difieren en formato pero coinciden en `outcome` y exit code para los mismos estados.
 
 ### Fase 11 — Procesos hijos y sin TTY
 
-- [ ] T030 [US1] [US2] [US5] `tests/cli/validate-json-binary.test.ts` (binario real, `run-binary`, stdin cerrado).
+- [X] T030 [US1] [US2] [US5] `tests/cli/validate-json-binary.test.ts` (binario real, `run-binary`, stdin cerrado).
   - Done: n/a (test).
   - Test: matriz `valid→0/complete-invalid→3/partial→4/not-found→5/read-error→6`: stdout exactamente un JSON con `\n` final, sin ANSI, `formatVersion:"1.0.0"`, command/outcome correctos, stderr vacío, sin prompts, sin archivos nuevos.
-- [ ] T031 [US3] [US5] [US6] `tests/cli/inspect-json-binary.test.ts`.
+- [X] T031 [US3] [US5] [US6] `tests/cli/inspect-json-binary.test.ts`.
   - Done: n/a (test).
   - Test: misma matriz + `>200` (todos los paths); además política Commander: `validate/inspect --json --unknown`→3, `init --json`→3, `--json validate`→3.
 
 ### Fase 12 — No doble análisis, pureza y determinismo
 
-- [ ] T032 [US5] `tests/integration/json-output/single-analysis.test.ts` (spies reutilizados de 002).
+- [X] T032 [US5] `tests/integration/json-output/single-analysis.test.ts` (spies reutilizados de 002).
   - Done: n/a (test).
   - Test: `analyze` llamado **una** vez en validate `--json` e inspect `--json`; mappers/reporters/serializer no analizan ni reinterpretan DTCG.
-- [ ] T033 [P] [US5] `tests/unit/json/determinism.test.ts`.
+- [X] T033 [P] [US5] `tests/unit/json/determinism.test.ts`.
   - Done: n/a (test).
   - Test: misma entrada → bytes idénticos (validate e inspect); resultados/issues/identity/statistics/paths congelados no se mutan.
 

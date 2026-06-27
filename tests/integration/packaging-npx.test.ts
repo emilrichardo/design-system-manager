@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { ensureBuilt } from "../helpers/run-binary.js";
 
 const REPO_ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const REPO_NODE_MODULES = join(REPO_ROOT, "node_modules");
@@ -23,7 +24,7 @@ let packageDir: string; // <tmp>/package tras extraer el tarball
 let runnable = false; // true si pudimos enlazar node_modules para ejecutar el binario empaquetado
 
 beforeAll(() => {
-  execFileSync("npm", ["run", "build"], { cwd: REPO_ROOT, stdio: "ignore" });
+  ensureBuilt();
   work = mkdtempSync(join(tmpdir(), "neuraz-pack-"));
   if (!HAS_TAR) return;
   const out = execFileSync("npm", ["pack", "--pack-destination", work], { cwd: REPO_ROOT }).toString().trim();
