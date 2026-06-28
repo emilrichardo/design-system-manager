@@ -61,8 +61,11 @@ describe("T064 — empaquetado y ejecución del paquete", () => {
     expect(existsSync(join(packageDir, "dist", "application", "json", "format-version.js"))).toBe(true);
     expect(existsSync(join(packageDir, "dist", "application", "json", "map-validate.js"))).toBe(true);
     expect(existsSync(join(packageDir, "dist", "application", "json", "map-inspect.js"))).toBe(true);
+    expect(existsSync(join(packageDir, "dist", "application", "foundations", "json", "format-version.js"))).toBe(true);
+    expect(existsSync(join(packageDir, "dist", "application", "foundations", "json", "map-foundations.js"))).toBe(true);
     expect(existsSync(join(packageDir, "dist", "infrastructure", "reporter", "validate-json-reporter.js"))).toBe(true);
     expect(existsSync(join(packageDir, "dist", "infrastructure", "reporter", "inspect-json-reporter.js"))).toBe(true);
+    expect(existsSync(join(packageDir, "dist", "infrastructure", "reporter", "foundations-json-reporter.js"))).toBe(true);
     expect(existsSync(join(packageDir, "README.md"))).toBe(true);
     // Shebang preservado en el binario empaquetado.
     expect(readFileSync(join(packageDir, "dist", "cli", "index.js"), "utf8").startsWith("#!/usr/bin/env node")).toBe(true);
@@ -84,14 +87,16 @@ describe("T064 — empaquetado y ejecución del paquete", () => {
     expect(help).toContain("init");
     expect(help).toContain("validate");
     expect(help).toContain("inspect");
+    expect(help).toContain("foundations");
     const version = execFileSync(process.execPath, [cli, "--version"]).toString().trim();
     expect(version).toMatch(/^\d+\.\d+\.\d+/);
     expect(execFileSync(process.execPath, [cli, "init", "--help"]).toString()).not.toContain("--json");
     expect(execFileSync(process.execPath, [cli, "validate", "--help"]).toString()).toContain("--json");
     expect(execFileSync(process.execPath, [cli, "inspect", "--help"]).toString()).toContain("--json");
+    expect(execFileSync(process.execPath, [cli, "foundations", "--help"]).toString()).toContain("--json");
   });
 
-  it.skipIf(!HAS_TAR)("smoke del paquete: validate --json e inspect --json emiten JSON v1 sin depender de src", () => {
+  it.skipIf(!HAS_TAR)("smoke del paquete: validate/inspect/foundations JSON sin depender de src", () => {
     if (!ensureRunnable()) return;
     const cli = join(packageDir, "dist", "cli", "index.js");
     const host = mkdtempSync(join(tmpdir(), "neuraz-pack-smoke-"));
@@ -104,15 +109,20 @@ describe("T064 — empaquetado y ejecución del paquete", () => {
 
       const validate = spawnSync(process.execPath, [cli, "validate", "--json"], { cwd: host, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
       const inspect = spawnSync(process.execPath, [cli, "inspect", "--json"], { cwd: host, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+      const foundations = spawnSync(process.execPath, [cli, "foundations", "--json"], { cwd: host, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
       const validateJson = JSON.parse(validate.stdout) as { formatVersion: string; command: string; outcome: string };
       const inspectJson = JSON.parse(inspect.stdout) as { formatVersion: string; command: string; outcome: string; result: { tokens: { total: number } } };
+      const foundationsJson = JSON.parse(foundations.stdout) as { formatVersion: string; command: string; outcome: string };
 
       expect(validate.status).toBe(0);
       expect(inspect.status).toBe(0);
+      expect(foundations.status).toBe(4);
       expect(validate.stderr).toBe("");
       expect(inspect.stderr).toBe("");
+      expect(foundations.stderr).toBe("");
       expect(validateJson).toMatchObject({ formatVersion: "1.0.0", command: "validate", outcome: "valid" });
       expect(inspectJson).toMatchObject({ formatVersion: "1.0.0", command: "inspect", outcome: "valid" });
+      expect(foundationsJson).toMatchObject({ formatVersion: "1.0.0", command: "foundations", outcome: "partial" });
       expect(inspectJson.result.tokens.total).toBe(2);
     } finally {
       rmSync(host, { recursive: true, force: true });
@@ -127,8 +137,11 @@ describe("T064 — empaquetado y ejecución del paquete", () => {
     expect(paths).toContain("dist/application/json/format-version.js");
     expect(paths).toContain("dist/application/json/map-validate.js");
     expect(paths).toContain("dist/application/json/map-inspect.js");
+    expect(paths).toContain("dist/application/foundations/json/format-version.js");
+    expect(paths).toContain("dist/application/foundations/json/map-foundations.js");
     expect(paths).toContain("dist/infrastructure/reporter/validate-json-reporter.js");
     expect(paths).toContain("dist/infrastructure/reporter/inspect-json-reporter.js");
+    expect(paths).toContain("dist/infrastructure/reporter/foundations-json-reporter.js");
     expect(paths).toContain("package.json");
     expect(paths.some((p) => p === "README.md")).toBe(true);
     expect(paths.some((p) => p.startsWith("src/"))).toBe(false);

@@ -225,28 +225,28 @@
 
 ## Checkpoint J — Regresión, documentación, empaquetado y cierre
 
-- [ ] T050 [US6] `tests/integration/foundations/regression-flow.test.ts`: `init → foundations (partial/4) → init (unchanged/2)`.
+- [X] T050 [US6] `tests/integration/foundations/regression-flow.test.ts`: `init → foundations (partial/4) → init (unchanged/2)`.
   - Done: n/a (test).
   - Test: init genera 3 archivos; foundations → `color` partial (2 tokens unclassified), resto absent, outcome partial/exit 4; segundo init `unchanged`/2; tres documentos **byte-idénticos**; package.json sin cambios.
-- [ ] T051 [US14] Verificación de regresión `003` byte-idéntica en `tests/integration/foundations/json-v1-stability.test.ts`.
+- [X] T051 [US14] Verificación de regresión `003` byte-idéntica en `tests/integration/foundations/json-v1-stability.test.ts`.
   - Done: n/a (test).
   - Test: `validate --json` / `inspect --json` byte-idénticos a 003; `JSON_FORMAT_VERSION`/envelope/command union/mappers/serializer observable sin cambios.
-- [ ] T052 [US14] Confirmar regresión histórica 001 (274) + 002 (315) + 003 (177) verde; la pasada de metadata solo corre en `foundations` (no en validate/inspect).
+- [X] T052 [US14] Confirmar regresión histórica 001 (274) + 002 (315) + 003 (177) verde; la pasada de metadata solo corre en `foundations` (no en validate/inspect).
   - Done: suite histórica intacta; sin tocar reporters/outcomes/exit/cota 200/traversal de 002.
   - Test: `npm test` completo verde; aserción de que validate/inspect no invocan la proyección foundation.
-- [ ] T053 [P] [US1] [US14] Actualizar `README.md`: comando `foundations` (+ `--json`), metadata `$extensions`, primitive/semantic/unclassified, categorías canónicas, init→partial, tabla de exits, validación profunda solo color, relación con 005/006, limitaciones. No presentar 005/006 como disponibles.
+- [X] T053 [P] [US1] [US14] Actualizar `README.md`: comando `foundations` (+ `--json`), metadata `$extensions`, primitive/semantic/unclassified, categorías canónicas, init→partial, tabla de exits, validación profunda solo color, relación con 005/006, limitaciones. No presentar 005/006 como disponibles.
   - Done: coherente con contratos; sin prometer fuera de alcance.
   - Test: revisión manual; sin contradicciones con spec/contracts.
-- [ ] T054 [P] Alinear el texto de ayuda de `foundations` (descripción de `--json`) y verificar `quickstart.md`.
+- [X] T054 [P] Alinear el texto de ayuda de `foundations` (descripción de `--json`) y verificar `quickstart.md`.
   - Done: `foundations --help` menciona `--json`; quickstart coherente.
   - Test: child-process help → exit 0; `--json` listado.
-- [ ] T055 Empaquetado: `npm run build` + `npm pack --dry-run` (+ tarball real verificado/eliminado).
+- [X] T055 Empaquetado: `npm run build` + `npm pack --dry-run` (+ tarball real verificado/eliminado).
   - Done: nuevos módulos en `dist/` (domain/application/infrastructure/cli foundations); tarball solo `dist`+`package.json`+`README.md`; sin specs/tests/fixtures/`.agents`; **sin nuevas dependencias**.
   - Test: `tests/integration/packaging-npx.test.ts` verde; listado del tarball revisado.
-- [ ] T056 Smoke del paquete instalado: `neuraz-ds --help`, `foundations --help`, `foundations`, `foundations --json`.
+- [X] T056 Smoke del paquete instalado: `neuraz-ds --help`, `foundations --help`, `foundations`, `foundations --json`.
   - Done: binario emite JSON v1 de foundations válido; **no** publica.
   - Test: smoke (parse stdout, exit esperado).
-- [ ] T057 Cierre: crear `specs/004-foundations/audit.md` (matriz US/FR/SC, constitución 17/17, deuda aceptada) y verificar pipeline completo.
+- [X] T057 Cierre: crear `specs/004-foundations/audit.md` (matriz US/FR/SC, constitución 17/17, deuda aceptada) y verificar pipeline completo.
   - Done: 14/14 · 47/47 · 11/11; deuda documentada (pasada metadata O(nodes) sin I/O/reanálisis; solo color profundo; resto superficial; init→partial/4 intencional); typecheck/lint/test/build/pack verdes; working tree limpio.
   - Test: pipeline completo verde; sin desviaciones abiertas.
 

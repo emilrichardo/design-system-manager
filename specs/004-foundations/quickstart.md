@@ -1,7 +1,6 @@
 # Quickstart — Foundations (004)
 
-> **Target behaviour of feature 004 (not yet implemented).** Read-only; never modifies the Design
-> System. `neuraz-ds foundations` is not available until 004 ships.
+Read-only; never modifies the Design System.
 
 ## Requirements
 
@@ -9,7 +8,7 @@
 - A host project with `package.json` and a Design System (`neuraz-ds init`). See
   [001-ds-init/quickstart.md](../001-ds-init/quickstart.md).
 
-## Usage (target)
+## Usage
 
 ```bash
 npm install -D @neuraz/design-system-manager
@@ -60,7 +59,7 @@ Token **without metadata** → `level: unclassified` (preserved, never guessed).
 - Freshly `init`ed DS (no foundation metadata): `color` → **partial** (two `unclassified` tokens),
   all other categories → **absent**; global **partial**, exit 4.
 - After labelling the color primitives/semantics correctly: `color` → **complete** (if no errors);
-  others still **absent**; global **partial** (others absent/unclassified) until populated.
+  others still **absent**; global **valid** (absent categories do not make the result partial).
 - `spacing` with no tokens → **absent**.
 - A `primitive → semantic` alias → `color` **invalid**; global **complete-invalid**, exit 3.
 - Tokens under a non-category top-level group (e.g. `background.*`) → category **unresolved**
