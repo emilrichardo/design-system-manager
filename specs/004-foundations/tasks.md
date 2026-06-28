@@ -203,19 +203,19 @@
 
 ## Checkpoint I — Integración, filesystem y procesos hijos
 
-- [ ] T045 [US1] [US4] [US9] `tests/integration/foundations/foundations-fs.test.ts` (proyectos temporales reales, helpers existentes).
+- [X] T045 [US1] [US4] [US9] `tests/integration/foundations/foundations-fs.test.ts` (proyectos temporales reales, helpers existentes).
   - Done: n/a (test).
   - Test: not-found; init; metadata token primitive/semantic; metadata grupo; override; metadata inválida; categoría exacta; unresolved; type-mismatch; primitive→semantic; semantic→primitive; missing alias; cycle; alias-to-group; tipo desconocido/superficial; limits; UTF-8 inválido; structural partial; read-error; `$extensions` desconocido; Unicode; paths con espacios — verificando outcome/exit/category-state/issues/summary y **bytes idénticos** (no escritura).
-- [ ] T046 [P] [US3] `tests/integration/foundations/foundations-paths.test.ts` — >200 tokens.
+- [X] T046 [P] [US3] `tests/integration/foundations/foundations-paths.test.ts` — >200 tokens.
   - Done: n/a (test).
   - Test: 250 tokens en una categoría → JSON conserva todos (`paths.length===total`); sin mensaje de truncado.
-- [ ] T047 [US1] [US5] [US11] `tests/cli/foundations-binary.test.ts` (binario compilado real, stdin cerrado).
+- [X] T047 [US1] [US5] [US11] `tests/cli/foundations-binary.test.ts` (binario compilado real, stdin cerrado).
   - Done: n/a (test).
   - Test: matriz `valid→0/complete-invalid→3/partial→4/not-found→5/read-error→6`; sin TTY; stdout 1 JSON con `\n`, sin ANSI, `formatVersion:"1.0.0"`, `command:"foundations"`, outcome correcto; stderr vacío; help; usage errors→3; sin archivos nuevos.
-- [ ] T048 [US5] `tests/integration/foundations/single-analysis.test.ts` (spies sobre reader/parse/analyze/metadata-pass).
+- [X] T048 [US5] `tests/integration/foundations/single-analysis.test.ts` (spies sobre reader/parse/analyze/metadata-pass).
   - Done: n/a (test).
   - Test: `readCalls===1`, `parseCalls===1`, `analysisCalls===1`, `metadataProjectionCalls===1`; sin segunda resolución de alias/tipos; mapper/reporter no analizan.
-- [ ] T049 [P] [US9] [US10] `tests/integration/foundations/purity-determinism.test.ts`.
+- [X] T049 [P] [US9] [US10] `tests/integration/foundations/purity-determinism.test.ts`.
   - Done: n/a (test).
   - Test: bytes/contenido/listado del proyecto idénticos antes/después (sin `atime`); `$extensions`/contenido desconocido intactos; sin staging; mismo input → mismos bytes JSON; sin timestamps/UUID/locale/TTY/env.
 
