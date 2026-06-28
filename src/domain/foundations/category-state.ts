@@ -19,3 +19,20 @@ export const FOUNDATION_CATEGORY_STATE_PRECEDENCE: readonly FoundationCategorySt
   "partial",
   "invalid",
 ]);
+
+/** Señales mínimas para derivar el estado de una categoría sin acoplarla a la capa de aplicación. */
+export interface ComputeCategoryStateInput {
+  readonly tokenCount: number;
+  readonly invalid: boolean;
+  readonly partial: boolean;
+}
+
+/**
+ * Deriva el estado descriptivo de una categoría usando la precedencia canónica:
+ * `invalid > partial > complete > absent`.
+ */
+export function computeCategoryState(input: ComputeCategoryStateInput): FoundationCategoryState {
+  if (input.invalid) return "invalid";
+  if (input.partial) return "partial";
+  return input.tokenCount > 0 ? "complete" : "absent";
+}

@@ -3,3 +3,7 @@
 export * from "./foundations-ports.js";
 export * from "./metadata-pass.js";
 export * from "./project-foundation-token.js";
+export * from "./validate-dependencies.js";
+export * from "./summary.js";
+export * from "./project-foundations.js";
+export * from "./classify-foundations-outcome.js";

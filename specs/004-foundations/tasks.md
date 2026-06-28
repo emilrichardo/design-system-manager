@@ -90,28 +90,28 @@
 
 ## Checkpoint D — Estados, dependencias, validación y outcome
 
-- [ ] T019 [US4] [US7] Implementar la validación de dependencias en `src/application/foundations/validate-dependencies.ts`: reglas primitive→valor/primitive, semantic→primitive/semantic; **primitive→semantic = `foundation-forbidden-dependency`**.
+- [X] T019 [US4] [US7] Implementar la validación de dependencias en `src/application/foundations/validate-dependencies.ts`: reglas primitive→valor/primitive, semantic→primitive/semantic; **primitive→semantic = `foundation-forbidden-dependency`**.
   - Done: reutiliza `aliasTarget`/`aliasState`/`effectiveType`/`trust` y el grafo ya construido por `002` (sin re-resolver); niveles de ambos extremos vía índice (T011); cadenas (primitive→primitive→semantic) evaluadas sobre datos retenidos, sin segunda resolución.
   - Test: incluido en T020.
-- [ ] T020 [P] [US4] [US5] [US6] [US7] `tests/unit/foundations/validate-dependencies.test.ts`.
+- [X] T020 [P] [US4] [US5] [US6] [US7] `tests/unit/foundations/validate-dependencies.test.ts`.
   - Done: n/a (test).
   - Test: primitive concreto; primitive→primitive; semantic→primitive; semantic→semantic; **primitive→semantic** (forbidden); cadena transitiva; cycle; missing; alias-to-group; target unclassified/unresolved; NO duplica issues de `002` (missing/cycle/to-group surfaced por referencia).
-- [ ] T021 [US3] Implementar el reductor de estado de categoría en `src/domain/foundations/category-state.ts` (`computeCategoryState`): precedencia `invalid > partial > complete > absent`.
+- [X] T021 [US3] Implementar el reductor de estado de categoría en `src/domain/foundations/category-state.ts` (`computeCategoryState`): precedencia `invalid > partial > complete > absent`.
   - Done: absent = sin tokens; invalid = metadata inválida/forbidden/cycle/missing/to-group/type-mismatch invalidante; partial = unclassified/limits.partial/doc incompleto; complete = todos clasificados y válidos dentro de la profundidad soportada (sin roster de valores); categorías superficiales **pueden** ser complete.
   - Test: incluido en T022.
-- [ ] T022 [P] [US3] `tests/unit/foundations/category-state.test.ts`.
+- [X] T022 [P] [US3] `tests/unit/foundations/category-state.test.ts`.
   - Done: n/a (test).
   - Test: matriz de la spec/[foundations-result-v1](contracts/foundations-result-v1.contract.md) — sin tokens→absent; solo unclassified→partial; clasificados válidos→complete; mezcla→partial; metadata inválida/forbidden/type-mismatch→invalid; límite→partial; superficial completa→complete; unresolved no invalida otra categoría.
-- [ ] T023 [US3] Implementar `computeFoundationsSummary` en `src/application/foundations/summary.ts` (conteos deterministas de categorías por estado + tokens por nivel + unresolved + issues por severidad; reusa limits).
+- [X] T023 [US3] Implementar `computeFoundationsSummary` en `src/application/foundations/summary.ts` (conteos deterministas de categorías por estado + tokens por nivel + unresolved + issues por severidad; reusa limits).
   - Done: no recalcula estadísticas DTCG; orden estable; copias defensivas.
   - Test: `tests/unit/foundations/summary.test.ts` — vacío, solo-absent, mezcla, todos-complete, invalid dominante, con limits; determinismo.
-- [ ] T024 [US3] [US7] Implementar `projectFoundations` en `src/application/foundations/project-foundations.ts`: ensambla las 9 `FoundationCategoryInspection` (orden canónico) + `unresolved` + summary + validation a partir del análisis + índice de metadata.
+- [X] T024 [US3] [US7] Implementar `projectFoundations` en `src/application/foundations/project-foundations.ts`: ensambla las 9 `FoundationCategoryInspection` (orden canónico) + `unresolved` + summary + validation a partir del análisis + índice de metadata.
   - Done: pura; todas las categorías presentes (incl. absent); tokens en orden de `002`; issues estables; reutiliza `validation.limits` de `002`.
   - Test: incluido en T026.
-- [ ] T025 [US2] [US7] Implementar el clasificador de outcome global en `src/application/foundations/classify-foundations-outcome.ts`: precedencia `not-found > read-error > structural-partial > foundations-invalid > foundations-partial > valid`; reutiliza `exitCodeForOutcome` en la capa CLI (no aquí).
+- [X] T025 [US2] [US7] Implementar el clasificador de outcome global en `src/application/foundations/classify-foundations-outcome.ts`: precedencia `not-found > read-error > structural-partial > foundations-invalid > foundations-partial > valid`; reutiliza `exitCodeForOutcome` en la capa CLI (no aquí).
   - Done: reusa los 5 outcomes de `002`; `unclassified`/type-mismatch → partial (no complete-invalid); sin nueva tabla.
   - Test: incluido en T026.
-- [ ] T026 [P] [US2] [US3] [US4] `tests/unit/foundations/foundations-outcome.test.ts`.
+- [X] T026 [P] [US2] [US3] [US4] `tests/unit/foundations/foundations-outcome.test.ts`.
   - Done: n/a (test).
   - Test: valid completo; todas absent (valid); partial por unclassified; partial por limits; foundations-invalid; structural-partial + invalid (gana structural-partial); read-error + recuperable; not-found; init→partial. Distinción estructural vs foundations preservada (structuralState + category states + issues).
 
