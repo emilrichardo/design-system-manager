@@ -79,7 +79,7 @@ src/application/foundations/             # pure projection + use case
 ├── project-foundations.ts              # analysis → FoundationsInspection (pure)
 ├── inspect-foundations.ts              # headless use case (reuses AnalyzeUseCase)
 ├── foundations-ports.ts                # FoundationsResult, reporter port
-└── json/ (dto, map-foundations, format-version)   # only if --json (separate from 003)
+└── json/ (dto, map-foundations, map-internal-error, format-version)   # --json; SEPARATE from 003
 
 src/infrastructure/reporter/
 ├── foundations-terminal-reporter.ts
@@ -157,6 +157,11 @@ order, 002 token order (no re-sort), stable issues, no timestamps/UUID/locale/TT
 Dedicated `neuraz-ds foundations` (+ local `--json`); separate `FoundationsJsonEnvelopeV1`
 (`FOUNDATIONS_JSON_FORMAT_VERSION="1.0.0"`, independent of 003). Streams/exit per
 [foundations-command-v1](contracts/foundations-command-v1.contract.md). 003 byte-stable (regression).
+**Foundations owns its JSON machinery**: 003's `serializeJsonV1` and `toJsonInternalErrorEnvelope` are
+typed to `JsonEnvelopeV1` / `JsonCommand = "validate"|"inspect"`, so foundations MUST NOT reuse or cast
+them — it provides its own `serializeFoundationsJsonV1` (or a byte-neutral shared low-level formatter)
+and its own internal-error envelope/mapper with `command: "foundations"`. `JsonEnvelopeV1`,
+`JSON_FORMAT_VERSION`, mappers, and the validate/inspect payloads stay untouched.
 
 ## Test strategy (for /speckit-tasks)
 

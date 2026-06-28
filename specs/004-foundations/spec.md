@@ -22,8 +22,10 @@ observable states and headless query capabilities — **without** defining concr
   `$extensions` metadata under the vendor namespace `ar.neuraz.design-system-manager`
   (`foundation.level` = `primitive | semantic`), applicable to a token or a group, with precedence
   *token own → nearest ancestor group → `unclassified`*. No inference from names, paths, prefixes,
-  `$type`, alias target, or any external/duplicated registry. `base.tokens.json` stays the single
-  source of truth. (Resolves FR-003; see FR-037..FR-046.)
+  `$type`, alias target, or any external/duplicated registry. **This prohibition applies to the
+  `level` only**; the foundation **category** is resolved separately by the exact canonical top-level
+  path segment (a fixed bucket id, not an inferred role — FR-047/ADR-0015). `base.tokens.json` stays
+  the single source of truth. (Resolves FR-003; see FR-037..FR-047.)
 
 ---
 
@@ -339,6 +341,18 @@ unchanged unless a versioning decision is made explicitly.
   remain separate concerns. This clarification resolves **only** `primitive | semantic`; it MUST NOT
   expand the contract further.
 
+### Category resolution
+
+- **FR-047**: A token's foundation **category** MUST be resolved by its **first canonical path
+  segment** when that segment exactly equals a recognized category id (`color | spacing | typography |
+  radius | border | shadow | opacity | sizing | motion`); otherwise the token's category is
+  `unresolved`. Resolution is exact-match only — **no** plurals/synonyms (`colors`, `space`), no
+  normalization, no case-folding, no locale, no `$type`/alias/role inference. `unresolved` tokens are
+  preserved and surfaced separately; they never invalidate another category. This is **distinct** from
+  level resolution (FR-037..FR-046): category is a fixed bucket id derived from the canonical segment,
+  not an inferred architectural role, so the FR-041 path/name prohibition (which governs `level`) does
+  not apply to category. See [ADR-0015](../../docs/adr/0015-foundation-category-resolution.md).
+
 ### Alias / dependency rules
 
 - **FR-005**: `primitive → concrete value` MUST be allowed.
@@ -389,7 +403,15 @@ unchanged unless a versioning decision is made explicitly.
   (`valid | complete-invalid | partial | not-found | read-error`) for analysis-level results; `004`
   MUST NOT introduce a second, incompatible top-level classification.
 - **FR-024**: Foundations MUST be derived from the existing `DesignSystemAnalysis` produced once by
-  `002`; `004` MUST NOT add a second read, parse, or token traversal.
+  `002`. "Single analysis" means: **one** file read, **one** `JSON.parse`, and **one** DTCG
+  *analysis* (alias resolution, effective-type resolution, statistics) — none of these may be
+  repeated. Because `TokenNodeSummary` does not carry `$extensions` nor group provenance, `004` is
+  permitted **one bounded, read-only metadata projection pass** over the already-parsed tokens object
+  (`analysis.documents[<tokens>].parsed`) to read foundation `$extensions` and resolve nearest-group
+  level. That pass performs **no** I/O, **no** re-parse, and **no** alias/type/statistics
+  recomputation, so it is **not** a second analysis; it is an `O(nodes)` projection joined by
+  canonical path with the existing node summaries. `004` MUST NOT add a second file read, a second
+  `JSON.parse`, or a second DTCG analysis.
 
 ### Headless capabilities
 
