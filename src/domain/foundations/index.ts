@@ -5,3 +5,5 @@ export * from "./category-state.js";
 export * from "./foundation-issue.js";
 export * from "./parse-foundation-extension.js";
 export * from "./resolve-foundation-level.js";
+export * from "./resolve-foundation-category.js";
+export * from "./foundation-type-compatibility.js";

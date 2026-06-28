@@ -65,22 +65,22 @@
 
 ## Checkpoint C — Proyección de tokens y categorías
 
-- [ ] T013 [US1] [US3] Implementar `resolveFoundationCategory(path)` en `src/application/foundations/resolve-category.ts`: primer segmento canónico exacto == `FoundationCategoryId`, si no `"unresolved"`.
+- [X] T013 [US1] [US3] Implementar `resolveFoundationCategory(path)` en `src/application/foundations/resolve-category.ts`: primer segmento canónico exacto == `FoundationCategoryId`, si no `"unresolved"`.
   - Done: match exacto; sin plurales/sinónimos/normalización/case-folding/locale; sin inferencia por `$type`; función pura; por [foundation-category-definition-v1](contracts/foundation-category-definition-v1.contract.md).
   - Test: incluido en T014.
-- [ ] T014 [P] [US1] [US3] `tests/unit/foundations/resolve-category.test.ts`.
+- [X] T014 [P] [US1] [US3] `tests/unit/foundations/resolve-category.test.ts`.
   - Done: n/a (test).
   - Test: las 9 ids; `colors`/`space`/`font`/`size`/`Color` → unresolved; primer segmento vacío/path malformado → unresolved; case-sensitive; determinismo; sin mutación.
-- [ ] T015 [US1] Implementar la compatibilidad categoría/tipo en `src/application/foundations/type-compatibility.ts`: `(category, effectiveType) → "compatible"|"mismatch"|"unknown"` usando el `effectiveType` ya calculado por `002` (sin re-resolver `$type`).
+- [X] T015 [US1] Implementar la compatibilidad categoría/tipo en `src/application/foundations/type-compatibility.ts`: `(category, effectiveType) → "compatible"|"mismatch"|"unknown"` usando el `effectiveType` ya calculado por `002` (sin re-resolver `$type`).
   - Done: compatible si `effectiveType ∈ supportedTypes`; `unknown` si tipo ausente/no reconocido; mismatch en otro caso; emite `foundation-type-mismatch` (warning) sin duplicar issues DTCG de `002`.
   - Test: incluido en T016.
-- [ ] T016 [P] [US1] `tests/unit/foundations/type-compatibility.test.ts`.
+- [X] T016 [P] [US1] `tests/unit/foundations/type-compatibility.test.ts`.
   - Done: n/a (test).
   - Test: tabla completa (spacing/radius/sizing+dimension, opacity+number, color+color = compatible; spacing+color, color+dimension = mismatch); tipo ausente/desconocido → unknown; tipo recuperado por alias; no duplica `dtcg-type-not-deeply-inspected`.
-- [ ] T017 [US1] [US7] Implementar `projectFoundationToken` en `src/application/foundations/project-token.ts`: une `TokenNodeSummary` (de `analysis.nodes`, por path) + nivel efectivo (T011) + categoría (T013) → `FoundationTokenInspection`.
+- [X] T017 [US1] [US7] Implementar `projectFoundationToken` en `src/application/foundations/project-token.ts`: une `TokenNodeSummary` (de `analysis.nodes`, por path) + nivel efectivo (T011) + categoría (T013) → `FoundationTokenInspection`.
   - Done: conserva solo campos aprobados (path/category/level/levelSource/levelSourcePath/effectiveType/kind/aliasTarget/aliasState/trust); copias defensivas; sin AST/`$extensions`/`$value`/Error/Map; no muta el nodo.
   - Test: incluido en T018.
-- [ ] T018 [P] [US1] [US7] `tests/unit/foundations/project-token.test.ts`.
+- [X] T018 [P] [US1] [US7] `tests/unit/foundations/project-token.test.ts`.
   - Done: n/a (test).
   - Test: primitive/semantic/unclassified; categoría resuelta y unresolved; alias (target/state/effectiveType/trust reutilizados); input congelado; copias defensivas; determinismo; sin campos prohibidos.
 
