@@ -7,3 +7,4 @@ export * from "./validate-dependencies.js";
 export * from "./summary.js";
 export * from "./project-foundations.js";
 export * from "./classify-foundations-outcome.js";
+export * from "./inspect-foundations.js";

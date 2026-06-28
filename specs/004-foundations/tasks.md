@@ -121,13 +121,13 @@
 
 ## Checkpoint E — Caso de uso headless
 
-- [ ] T027 [US12] [US13] Definir el puerto de reporter mínimo `FoundationsReporter` en `src/application/foundations/foundations-ports.ts` centrado en `completed(result)` (más eventos solo si la presentación los necesita), coherente con `002`.
+- [X] T027 [US12] [US13] Definir el puerto de reporter mínimo `FoundationsReporter` en `src/application/foundations/foundations-ports.ts` centrado en `completed(result)` (más eventos solo si la presentación los necesita), coherente con `002`.
   - Done: sin eventos inútiles; type-only.
   - Test: cubierto por reporters T040/T049.
-- [ ] T028 [US1] [US3] [US4] Implementar `inspectFoundations(input, deps)` en `src/application/foundations/inspect-foundations.ts`: invoca `analyze(input)` **una vez** (AnalyzeUseCase enlazado), ejecuta la pasada de metadata + proyección, produce `FoundationsResult` (unión discriminada), notifica `reporter.completed`.
+- [X] T028 [US1] [US3] [US4] Implementar `inspectFoundations(input, deps)` en `src/application/foundations/inspect-foundations.ts`: invoca `analyze(input)` **una vez** (AnalyzeUseCase enlazado), ejecuta la pasada de metadata + proyección, produce `FoundationsResult` (unión discriminada), notifica `reporter.completed`.
   - Done: sin fs/parse/alias/type/escritura/CLI/ANSI/JSON/exit-codes; `not-found` sin inspección; recuperables conservan inspección.
   - Test: incluido en T029.
-- [ ] T029 [P] [US1] [US4] `tests/unit/foundations/inspect-foundations.test.ts` (analyzer fake/spy).
+- [X] T029 [P] [US1] [US4] `tests/unit/foundations/inspect-foundations.test.ts` (analyzer fake/spy).
   - Done: n/a (test).
   - Test: 5 outcomes; init; metadata válida/ inválida; categorías; aliases; limits; **analyze llamado una vez**; sin mutación; determinismo.
 
