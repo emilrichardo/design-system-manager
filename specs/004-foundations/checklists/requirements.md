@@ -13,8 +13,8 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain — **1 remains** (FR-003, classification mechanism)
-- [X] Requirements are testable and unambiguous (except the single flagged classification rule)
+- [X] No [NEEDS CLARIFICATION] markers remain — resolved (FR-003 → FR-037..FR-046, session 2026-06-28)
+- [X] Requirements are testable and unambiguous
 - [X] Success criteria are measurable
 - [X] Success criteria are technology-agnostic
 - [X] All acceptance scenarios are defined
@@ -43,15 +43,15 @@
 - [X] foundations / presets separation — `004` = structure/rules; `005` = values
 - [X] Out of scope — explicit and broad
 - [X] Success criteria — measurable (SC-001..011)
-- [X] Clarifications — limited to the single materially-blocking public-contract decision
+- [X] Clarifications — resolved; 0 markers remain
 
 ## Notes
 
-- The remaining `[NEEDS CLARIFICATION]` (FR-003) is the **only** genuinely blocking decision: how a
-  token's `primitive | semantic` level is signalled (explicit `$extensions` metadata vs naming
-  convention vs fixed role registry). It materially shapes the public contract and the
-  "no ambiguous guessing" success criterion (SC-002), and reasonable designers would differ.
-  Recommended default: explicit `$extensions` metadata, with unlabeled tokens reported as
-  `unclassified` (preserved). Resolve via `/speckit-clarify` before `/speckit-plan`.
+- The classification clarification (FR-003) is **resolved** (session 2026-06-28): explicit DTCG
+  `$extensions` metadata under `ar.neuraz.design-system-manager` (`foundation.level` ∈
+  {`primitive`,`semantic`}), on token or group, precedence token→group→`unclassified`; no name/path/
+  `$type`/alias/registry inference. Detailed in FR-037..FR-046; rejected alternatives recorded in
+  Assumptions & Decisions. **0 `[NEEDS CLARIFICATION]` remain.**
 - All other decisions (persistence A, dedicated CLI, derived states, single analysis, motion bounded)
-  are decided in the spec using the simplest/most-reversible/closed-feature-compatible criteria.
+  were decided in the spec using the simplest/most-reversible/closed-feature-compatible criteria.
+- Checklist fully approved; ready for `/speckit-plan`.

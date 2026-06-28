@@ -14,6 +14,19 @@ observable states and headless query capabilities — **without** defining concr
 
 ---
 
+## Clarifications
+
+### Session 2026-06-28
+
+- Q: How is a foundation token classified as `primitive` vs `semantic`? → A: Explicit DTCG
+  `$extensions` metadata under the vendor namespace `ar.neuraz.design-system-manager`
+  (`foundation.level` = `primitive | semantic`), applicable to a token or a group, with precedence
+  *token own → nearest ancestor group → `unclassified`*. No inference from names, paths, prefixes,
+  `$type`, alias target, or any external/duplicated registry. `base.tokens.json` stays the single
+  source of truth. (Resolves FR-003; see FR-037..FR-046.)
+
+---
+
 ## User Scenarios & Testing *(mandatory)*
 
 > Foundations is, in this feature, a **read-only descriptive + validation** capability derived from
@@ -274,15 +287,57 @@ unchanged unless a versioning decision is made explicitly.
 - **FR-002**: The system MUST define three conceptual **token levels** — `primitive`, `semantic`,
   `component` — and MUST treat `component` as **out of scope** for `004` (documented relationship
   only; never classified or validated here).
-- **FR-003**: Each foundation token MUST be classifiable as `primitive`, `semantic`, or
-  `unclassified` using a **deterministic, non-heuristic** rule (the exact signal is
-  [NEEDS CLARIFICATION: classification mechanism — explicit `$extensions` metadata vs naming
-  convention vs fixed role registry]; default proposal: explicit `$extensions` metadata, with tokens
-  lacking it reported as `unclassified` and preserved).
+- **FR-003**: Each foundation token MUST resolve to exactly one `level` — `primitive`, `semantic`, or
+  the derived `unclassified` — using a **deterministic, non-heuristic** rule: explicit DTCG
+  `$extensions` metadata (see *Token level classification*, FR-037..FR-046). Names, paths, prefixes,
+  `$type`, alias targets, and external/duplicated registries MUST NOT be used to infer the level.
 - **FR-004**: The system MUST clearly distinguish, and never conflate, the following concepts:
   *foundation category*, DTCG `$type`, DTCG *group*, *token level* (primitive/semantic), *visual
   role*, and *token name/path*. (E.g. `color.primary` may be a semantic token of category `color`
   whose DTCG `$type` is `color`.)
+
+### Token level classification
+
+- **FR-037**: The `level` of a foundation token/group MUST be declared via explicit DTCG
+  `$extensions` metadata under the vendor namespace `ar.neuraz.design-system-manager`, with shape
+  `{ "foundation": { "level": "primitive" | "semantic" } }`. `design-system/tokens/base.tokens.json`
+  remains the single source of truth (no metadata is read from `design-system.json` or `config`).
+- **FR-038**: In v1, `level` MUST admit **only** `primitive` or `semantic`. `component` (out of scope
+  for `004`) and any other token (`alias`, `base`, `core`, `reference`, `theme`, `preset`, …) MUST NOT
+  be accepted as a `level` value.
+- **FR-039**: The metadata MAY appear on an individual **token** or on a **group**. Group metadata
+  declares a default level for that branch, so a level need not be repeated on every descendant token.
+- **FR-040**: The **effective level** MUST resolve in this precedence: (1) the token's own metadata;
+  (2) the nearest ancestor group's metadata; (3) `unclassified`. A token's own metadata MUST override
+  an inherited group level (e.g. a `primitive` token inside a `semantic` group resolves to
+  `primitive`). This `$extensions` inheritance is a **Neuraz foundation convention**, not standard
+  DTCG inheritance, and MUST be documented as such.
+- **FR-041**: Level resolution MUST NOT inherit from sibling groups, alias targets, the manifest, the
+  config, or path/name segments.
+- **FR-042**: A token with neither own nor inherited metadata MUST resolve to `unclassified`.
+  `unclassified` is a **derived inspection state, never a persisted `level` value** (a persisted
+  `"level": "unclassified"` is itself invalid metadata, see FR-043). An `unclassified` token: remains
+  a valid DTCG token; is never removed, modified, or heuristically classified; appears in the
+  foundations view marked as unmanaged; and is never auto-promoted to `primitive`/`semantic`. It MUST
+  be surfaced as a stable structured warning (non-invalidating by itself) and contributes to a
+  category being `partial` rather than `complete` when present.
+- **FR-043**: Metadata MUST be treated as **invalid** when: `foundation` is not an object; `level` is
+  not a string; `level` is a string other than `primitive`/`semantic`; or the namespace exists with
+  an incompatible shape. Invalid metadata MUST produce a stable-coded foundation issue carrying the
+  logical token/group path, with no stack trace and no raw library error; the original content MUST be
+  preserved (never auto-corrected or normalized); the derived level MUST be `unclassified`; and the
+  owning category MAY become `invalid`/`partial` per the global status rules.
+- **FR-044**: A token's level MUST be determined **solely** by its effective metadata, never inherited
+  from its alias target. A `semantic` alias to a primitive stays `semantic`; an `unclassified` token
+  aliasing a primitive stays `unclassified`. The allowed dependency direction (FR-005..FR-009) MUST be
+  validated **only after** both endpoints' levels are determined independently.
+- **FR-045**: `foundation.level` MUST NOT be inferred from `$type` (`$type: color` does not imply
+  `primitive`) nor from a token being an alias (an alias does not imply `semantic`). `level`
+  (architectural function) and `$type` (DTCG value type) are orthogonal.
+- **FR-046**: `foundation.level` metadata MUST NOT duplicate the foundation category (no persisted
+  `category` alongside `level`); category, level, effective `$type`, token path, and visual role
+  remain separate concerns. This clarification resolves **only** `primitive | semantic`; it MUST NOT
+  expand the contract further.
 
 ### Alias / dependency rules
 
@@ -359,7 +414,10 @@ unchanged unless a versioning decision is made explicitly.
 ### Preservation (non-destruction)
 
 - **FR-029**: Queries MUST preserve unknown tokens, unknown categories, and DTCG `$extensions`
-  exactly; nothing is dropped, normalized, or reordered destructively.
+  exactly; nothing is dropped, normalized, or reordered destructively. Any **future** write operation
+  MUST preserve unknown `$extensions` namespaces and unknown properties within the Neuraz namespace,
+  MUST NOT replace the whole `$extensions` object, and MUST modify only the fields it explicitly
+  manages. In `004` all operations are read-only, so this is guaranteed trivially.
 - **FR-030**: The reported model MUST mark unmanaged/unknown content as such (e.g. `unclassified` /
   `unmanaged`) rather than omitting it, so future edit operations cannot silently erase it.
 
@@ -457,6 +515,15 @@ deferred (out of scope) where they are not a single token value.
 - **Persistence = Option A** (FR-020): foundations live as DTCG structure in the existing
   `base.tokens.json`. Rejected: Option B (duplicate metadata in `design-system.json` — duplication),
   Option C (new file — extra source of truth), Option D (combination — unnecessary complexity now).
+- **Level classification = explicit `$extensions` metadata** (FR-037..FR-046; resolves FR-003):
+  namespace `ar.neuraz.design-system-manager`, `foundation.level` ∈ {`primitive`,`semantic`}, on token
+  or group, precedence token→group→`unclassified`. **Rejected — naming convention** (`base.*`,
+  `semantic.*`, `background.*`, …): names are user-owned, renames would silently change meaning,
+  conventions differ per org, ambiguous, hard to version, and hostile to preserving unknown content;
+  names may still organize the file visually but are never the contractual source of classification.
+  **Rejected — external role registry** in `design-system.json`: duplicates information, creates two
+  sources of truth, can desync, complicates renames, reduces DTCG portability, and contradicts
+  Persistence Option A.
 - **CLI = dedicated read-only `neuraz-ds foundations`** (FR-027): preserves the frozen `validate`/
   `inspect` + JSON v1 contracts. Rejected: folding into `inspect`/`validate` (would pressure a
   `formatVersion` bump on a frozen contract).
