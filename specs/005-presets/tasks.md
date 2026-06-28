@@ -23,18 +23,18 @@ Every implementation task uses:
 
 **Independent test**: domain tests can instantiate preset metadata, validation results, conflicts, generic token changes, and preset-specific wrappers without filesystem, Commander, ANSI, streams, numeric exit codes, JSON serializers, prompts, or bundled assets.
 
-- [ ] T001 [US10] Add failing architecture tests proving preset domain modules expose no filesystem, CLI, JSON serializer, ANSI, streams, prompts, or numeric exit dependencies in `tests/unit/presets/architecture.test.ts`.
-- [ ] T002 [P] [US1] Add failing unit tests for `PresetId`, exact catalog uniqueness, lowercase ASCII kebab-case, case sensitivity, and rejected collisions in `tests/unit/presets/preset-id.test.ts`.
-- [ ] T003 [P] [US1] Add failing unit tests for `PresetVersion` SemVer parsing and invalid version rejection in `tests/unit/presets/preset-version.test.ts`.
-- [ ] T004 [P] [US2] Add failing unit tests for immutable `PresetMetadata`, `PresetEnvelope`, `PresetCatalogEntry`, `PresetInspection`, and `PresetValidation` DTO invariants and null policy in `tests/unit/presets/preset-models.test.ts`.
-- [ ] T005 [P] [US10] Add failing unit tests for source-agnostic `TokenChange`, `TokenChangeSet`, `ApplicationConflict`, `ApplicationPlan`, and `ApplicationSummary` with no `presetId`, `presetName`, catalog, CLI, reporter, JSON, Figma, URL, image, evidence, confidence, AI, or visual-review fields in `tests/unit/changes/token-change-set.test.ts`.
-- [ ] T006 [US10] Implement pure preset id and version value helpers in `src/domain/presets/preset-id.ts` and `src/domain/presets/preset-version.ts`.
-- [ ] T007 [US2] Implement pure preset envelope, metadata, catalog entry, inspection, and validation types in `src/domain/presets/preset-envelope.ts` and `src/domain/presets/preset-validation.ts`.
-- [ ] T008 [US10] Implement the reusable source-agnostic change model in `src/domain/changes/token-change.ts`, `src/domain/changes/application-conflict.ts`, `src/domain/changes/application-plan.ts`, and `src/domain/changes/index.ts`.
-- [ ] T009 [US3] Implement preset-specific wrappers `PresetApplicationPlan`, `PresetApplicationSummary`, and `PresetApplyResult` in `src/domain/presets/preset-application-plan.ts` and `src/domain/presets/preset-apply-result.ts`.
-- [ ] T010 [US10] Export the new pure domain modules from `src/domain/presets/index.ts` and `src/domain/index.ts`.
-- [ ] T011 [US10] Add failing headless port boundary tests for list, inspect, validate, plan, and apply dependencies in `tests/unit/presets/preset-ports.test.ts`.
-- [ ] T012 [US10] Define application-layer preset ports and result types without filesystem implementation details in `src/application/presets/preset-ports.ts` and export them from `src/application/presets/index.ts`.
+- [X] T001 [US10] Add failing architecture tests proving preset domain modules expose no filesystem, CLI, JSON serializer, ANSI, streams, prompts, or numeric exit dependencies in `tests/unit/presets/architecture.test.ts`.
+- [X] T002 [P] [US1] Add failing unit tests for `PresetId`, exact catalog uniqueness, lowercase ASCII kebab-case, case sensitivity, and rejected collisions in `tests/unit/presets/preset-id.test.ts`.
+- [X] T003 [P] [US1] Add failing unit tests for `PresetVersion` SemVer parsing and invalid version rejection in `tests/unit/presets/preset-version.test.ts`.
+- [X] T004 [P] [US2] Add failing unit tests for immutable `PresetMetadata`, `PresetEnvelope`, `PresetCatalogEntry`, `PresetInspection`, and `PresetValidation` DTO invariants and null policy in `tests/unit/presets/preset-models.test.ts`.
+- [X] T005 [P] [US10] Add failing unit tests for source-agnostic `TokenChange`, `TokenChangeSet`, `ApplicationConflict`, `ApplicationPlan`, and `ApplicationSummary` with no `presetId`, `presetName`, catalog, CLI, reporter, JSON, Figma, URL, image, evidence, confidence, AI, or visual-review fields in `tests/unit/changes/token-change-set.test.ts`.
+- [X] T006 [US10] Implement pure preset id and version value helpers in `src/domain/presets/preset-id.ts` and `src/domain/presets/preset-version.ts`.
+- [X] T007 [US2] Implement pure preset envelope, metadata, catalog entry, inspection, and validation types in `src/domain/presets/preset-envelope.ts` and `src/domain/presets/preset-validation.ts`.
+- [X] T008 [US10] Implement the reusable source-agnostic change model in `src/domain/changes/token-change.ts`, `src/domain/changes/application-conflict.ts`, `src/domain/changes/application-plan.ts`, and `src/domain/changes/index.ts`.
+- [X] T009 [US3] Implement preset-specific wrappers `PresetApplicationPlan`, `PresetApplicationSummary`, and `PresetApplyResult` in `src/domain/presets/preset-application-plan.ts` and `src/domain/presets/preset-apply-result.ts`.
+- [X] T010 [US10] Export the new pure domain modules from `src/domain/presets/index.ts` and `src/domain/index.ts`.
+- [X] T011 [US10] Add failing headless port boundary tests for list, inspect, validate, plan, and apply dependencies in `tests/unit/presets/preset-ports.test.ts`.
+- [X] T012 [US10] Define application-layer preset ports and result types without filesystem implementation details in `src/application/presets/preset-ports.ts` and export them from `src/application/presets/index.ts`.
 
 **Checkpoint gate**: `npm run typecheck`, `npm run lint`, targeted preset/changes unit tests, accumulated `npm test`, `npm run build`.
 **Recommended checkpoint commit**: `feat: add preset domain contracts`

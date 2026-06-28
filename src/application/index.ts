@@ -13,3 +13,5 @@ export { inspectDesignSystem } from "./inspect-design-system.js";
 export * from "./json/index.js";
 // Feature 004 — tipos del resultado de foundations (headless; Checkpoint A).
 export * from "./foundations/index.js";
+// Feature 005 — puertos headless de presets.
+export * from "./presets/index.js";

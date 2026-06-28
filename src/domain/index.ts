@@ -21,3 +21,6 @@ export * from "./traversal/index.js";
 export * from "./dtcg/index.js";
 // Feature 004 — modelos puros de foundations + registro canónico de categorías.
 export * from "./foundations/index.js";
+// Feature 005 — modelos puros de presets y cambios aplicables.
+export * from "./presets/index.js";
+export * from "./changes/index.js";
