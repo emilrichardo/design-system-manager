@@ -137,10 +137,10 @@
 
 ## Checkpoint F — Presentación humana
 
-- [ ] T030 [US1] [US3] Implementar `FoundationsTerminalReporter` en `src/infrastructure/reporter/foundations-terminal-reporter.ts` (implementa `FoundationsReporter`, usa `OutputWriter`).
+- [X] T030 [US1] [US3] Implementar `FoundationsTerminalReporter` en `src/infrastructure/reporter/foundations-terminal-reporter.ts` (implementa `FoundationsReporter`, usa `OutputWriter`).
   - Done: escribe en `completed`; muestra resumen, 9 categorías en orden canónico con estado + conteos (primitive/semantic/unclassified), unresolved, issues, limits; sin prompts/colores obligatorios; stdout/stderr por outcome; cota visual de tokens opcional documentada (modelo headless sin truncar).
   - Test: incluido en T031.
-- [ ] T031 [P] [US1] [US3] [US11] `tests/unit/cli/foundations-terminal-reporter.test.ts` (IO falso).
+- [X] T031 [P] [US1] [US3] [US11] `tests/unit/cli/foundations-terminal-reporter.test.ts` (IO falso).
   - Done: n/a (test).
   - Test: valid/complete-invalid/partial/not-found/read-error; init; 9 categorías presentes; unresolved; issues; limits; sin TTY; determinismo; cota (si existe) sin truncar el modelo.
 
