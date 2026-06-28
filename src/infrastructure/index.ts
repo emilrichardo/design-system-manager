@@ -32,3 +32,16 @@ export type { OutputWriter } from "./reporter/terminal-reporter.js";
 export { serializeJsonV1 } from "./reporter/json-serializer.js";
 export { ValidateJsonReporter } from "./reporter/validate-json-reporter.js";
 export { InspectJsonReporter } from "./reporter/inspect-json-reporter.js";
+// Feature 005 — catálogo de presets empaquetado (assets inertes resueltos vía import.meta.url).
+export {
+  bundledPresetsBaseUrl,
+  loadBundledPresetCatalog,
+  createBundledPresetCatalog,
+} from "./presets/bundled-preset-catalog.js";
+export type {
+  CatalogInvalidReason,
+  CatalogLoadResult,
+  BundledCatalogOptions,
+} from "./presets/bundled-preset-catalog.js";
+export { readJsonAsset } from "./presets/preset-asset-reader.js";
+export type { AssetReadResult } from "./presets/preset-asset-reader.js";

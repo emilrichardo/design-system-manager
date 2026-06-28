@@ -38,4 +38,15 @@ describe("package.json (bootstrap)", () => {
       expect(pkg.devDependencies[dep], `falta devDependency ${dep}`).toBeTypeOf("string");
     }
   });
+
+  // T015 (005): el tarball publica `dist` y los assets de presets, y excluye fuentes/pruebas/specs.
+  it("incluye `dist` y `presets` en files y excluye fuentes/pruebas/specs/.agents", async () => {
+    const pkg = await readPkg();
+    expect(Array.isArray(pkg.files)).toBe(true);
+    expect(pkg.files).toContain("dist");
+    expect(pkg.files).toContain("presets");
+    for (const excluded of ["src", "tests", "specs", ".agents", ".specify"]) {
+      expect(pkg.files, `files no debe listar ${excluded}`).not.toContain(excluded);
+    }
+  });
 });

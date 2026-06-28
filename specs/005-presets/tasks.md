@@ -47,18 +47,18 @@ Every implementation task uses:
 
 **Independent test**: catalog list and inspect can read immutable package assets in deterministic order from development, `dist`, dry-run tarball, and installed tarball contexts; missing/corrupt assets fail safely.
 
-- [ ] T013 [P] [US1] Add failing catalog asset tests for `presets/catalog.json` shape, deterministic order, duplicate id rejection, envelope id mismatch, missing asset, corrupt asset, invalid file path, and no absolute asset exposure in `tests/unit/presets/bundled-preset-catalog.test.ts`.
-- [ ] T014 [P] [US15] Add failing tests that `includedCategories` uses only the 9 canonical `004` categories, is unique, non-empty, and sorted by canonical category order in `tests/unit/presets/preset-categories.test.ts`.
-- [ ] T015 [P] [US1] Add failing package manifest tests proving `package.json.files` includes `dist` and `presets`, and still excludes `src`, `tests`, `specs`, `.agents`, temporaries, and backups in `tests/unit/package-manifest.test.ts`.
-- [ ] T016 [US1] Create inert package asset structure `presets/catalog.json` and one minimal approved preset envelope in `presets/neutral-base.preset.json` containing only values needed for v1 foundation coverage; do not add brand palettes, themes, dark mode, component tokens, proprietary fonts, remote URLs, scripts, dependencies, CSS, SCSS, Style Dictionary outputs, or executable code.
-- [ ] T017 [US1] Update `package.json` `files` to include `presets` alongside `dist` and no source/test/spec directories.
-- [ ] T018 [US1] Implement package-relative catalog resolution with `import.meta.url` in `src/infrastructure/presets/bundled-preset-catalog.ts`; never resolve assets from `process.cwd()`.
-- [ ] T019 [US1] Implement inert asset reading and safe parse for `presets/catalog.json` and referenced envelopes in `src/infrastructure/presets/preset-asset-reader.ts`.
-- [ ] T020 [US1] Implement catalog validation for unique ids, deterministic order, id/file matching, relative file names, missing assets, corrupt assets, and no executable code in `src/infrastructure/presets/bundled-preset-catalog.ts`.
-- [ ] T021 [US1] Add list projection from validated envelopes to `PresetCatalogEntry` without exposing absolute paths in `src/application/presets/list-presets.ts`.
-- [ ] T022 [US2] Add inspect projection from validated envelopes to `PresetInspection` token summaries in `src/application/presets/inspect-preset.ts`.
-- [ ] T023 [US1] Add development, `dist`, `npm pack --dry-run --json`, real tarball, and installed-package asset resolution tests in `tests/integration/presets/presets-packaging.test.ts`.
-- [ ] T024 [US1] Add tests proving list/inspect work offline and do not reach network, environment variables, or host cwd in `tests/integration/presets/catalog-offline.test.ts`.
+- [X] T013 [P] [US1] Add failing catalog asset tests for `presets/catalog.json` shape, deterministic order, duplicate id rejection, envelope id mismatch, missing asset, corrupt asset, invalid file path, and no absolute asset exposure in `tests/unit/presets/bundled-preset-catalog.test.ts`.
+- [X] T014 [P] [US15] Add failing tests that `includedCategories` uses only the 9 canonical `004` categories, is unique, non-empty, and sorted by canonical category order in `tests/unit/presets/preset-categories.test.ts`.
+- [X] T015 [P] [US1] Add failing package manifest tests proving `package.json.files` includes `dist` and `presets`, and still excludes `src`, `tests`, `specs`, `.agents`, temporaries, and backups in `tests/unit/package-manifest.test.ts`.
+- [X] T016 [US1] Create inert package asset structure `presets/catalog.json` and one minimal approved preset envelope in `presets/neutral-base.preset.json` containing only values needed for v1 foundation coverage; do not add brand palettes, themes, dark mode, component tokens, proprietary fonts, remote URLs, scripts, dependencies, CSS, SCSS, Style Dictionary outputs, or executable code.
+- [X] T017 [US1] Update `package.json` `files` to include `presets` alongside `dist` and no source/test/spec directories.
+- [X] T018 [US1] Implement package-relative catalog resolution with `import.meta.url` in `src/infrastructure/presets/bundled-preset-catalog.ts`; never resolve assets from `process.cwd()`.
+- [X] T019 [US1] Implement inert asset reading and safe parse for `presets/catalog.json` and referenced envelopes in `src/infrastructure/presets/preset-asset-reader.ts`.
+- [X] T020 [US1] Implement catalog validation for unique ids, deterministic order, id/file matching, relative file names, missing assets, corrupt assets, and no executable code in `src/infrastructure/presets/bundled-preset-catalog.ts`.
+- [X] T021 [US1] Add list projection from validated envelopes to `PresetCatalogEntry` without exposing absolute paths in `src/application/presets/list-presets.ts`.
+- [X] T022 [US2] Add inspect projection from validated envelopes to `PresetInspection` token summaries in `src/application/presets/inspect-preset.ts`.
+- [X] T023 [US1] Add development, `dist`, `npm pack --dry-run --json`, real tarball, and installed-package asset resolution tests in `tests/integration/presets/presets-packaging.test.ts`.
+- [X] T024 [US1] Add tests proving list/inspect work offline and do not reach network, environment variables, or host cwd in `tests/integration/presets/catalog-offline.test.ts`.
 
 **Checkpoint gate**: `npm run typecheck`, `npm run lint`, targeted catalog/package tests, accumulated `npm test`, `npm run build`.
 **Recommended checkpoint commit**: `feat: add bundled preset catalog`

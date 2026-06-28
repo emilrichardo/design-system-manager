@@ -11,7 +11,8 @@
     "neuraz-ds": "dist/cli/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "presets"
   ],
   "exports": {
     ".": {
