@@ -19,3 +19,5 @@ export * from "./validation/validation-result.js";
 export * from "./analysis/index.js";
 export * from "./traversal/index.js";
 export * from "./dtcg/index.js";
+// Feature 004 — modelos puros de foundations + registro canónico de categorías.
+export * from "./foundations/index.js";

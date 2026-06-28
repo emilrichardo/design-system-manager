@@ -15,28 +15,28 @@
 
 ## Checkpoint A — Modelos y registro foundation (dominio + tipos de result)
 
-- [ ] T001 [P] [US2] Definir `FoundationLevel` (`primitive|semantic|unclassified`), `FoundationLevelSource` (`token|group|none|invalid`) y `FoundationLevelResolution` (`level/source/sourcePath/valid`) en `src/domain/foundations/foundation-level.ts` (tipos puros).
+- [X] T001 [P] [US2] Definir `FoundationLevel` (`primitive|semantic|unclassified`), `FoundationLevelSource` (`token|group|none|invalid`) y `FoundationLevelResolution` (`level/source/sourcePath/valid`) en `src/domain/foundations/foundation-level.ts` (tipos puros).
   - Done: tipos type-only; `unclassified` documentado como estado derivado (no persistible); sin Node/CLI.
   - Test: `tests/unit/foundations/foundation-level.test.ts` — invariantes (source token/group ⇒ level∈{primitive,semantic}; none ⇒ unclassified/null; invalid ⇒ unclassified/valid=false).
-- [ ] T002 [US2] [US7] Crear el registro inmutable de categorías en `src/domain/foundations/foundation-category.ts`: `FoundationCategoryId` (9 ids), `FoundationCategoryDefinition` (`id/displayOrder/supportedTypes/validationDepth/allowsPrimitive/allowsSemantic`) y `FOUNDATION_CATEGORIES` en orden canónico (color..motion, displayOrder 0–8). Sin valores/escala/preset/CSS/componentes.
+- [X] T002 [US2] [US7] Crear el registro inmutable de categorías en `src/domain/foundations/foundation-category.ts`: `FoundationCategoryId` (9 ids), `FoundationCategoryDefinition` (`id/displayOrder/supportedTypes/validationDepth/allowsPrimitive/allowsSemantic`) y `FOUNDATION_CATEGORIES` en orden canónico (color..motion, displayOrder 0–8). Sin valores/escala/preset/CSS/componentes.
   - Done: 9 definiciones; supportedTypes según [foundation-category-definition-v1](contracts/foundation-category-definition-v1.contract.md); solo `color` `validationDepth:"deep"`; `Object.freeze` (registro y arrays).
   - Test: incluido en T005.
-- [ ] T003 [P] [US3] Definir `FoundationCategoryState` (`absent|partial|complete|invalid`) y `FoundationCategoryRef` (`FoundationCategoryId|"unresolved"`) en `src/domain/foundations/category-state.ts`.
+- [X] T003 [P] [US3] Definir `FoundationCategoryState` (`absent|partial|complete|invalid`) y `FoundationCategoryRef` (`FoundationCategoryId|"unresolved"`) en `src/domain/foundations/category-state.ts`.
   - Done: type-only; precedencia documentada `invalid>partial>complete>absent`.
   - Test: cubierto por T005 + reducer T028.
-- [ ] T004 [P] [US7] [US8] Definir códigos de issue foundation en `src/domain/foundations/foundation-issue.ts` (constantes estables: `foundation-level-invalid`, `foundation-forbidden-dependency`, `foundation-token-unclassified`, `foundation-category-unresolved`, `foundation-type-mismatch`) reutilizando la forma `AnalysisIssue` de `002` (sin duplicar tipo).
+- [X] T004 [P] [US7] [US8] Definir códigos de issue foundation en `src/domain/foundations/foundation-issue.ts` (constantes estables: `foundation-level-invalid`, `foundation-forbidden-dependency`, `foundation-token-unclassified`, `foundation-category-unresolved`, `foundation-type-mismatch`) reutilizando la forma `AnalysisIssue` de `002` (sin duplicar tipo).
   - Done: solo constantes/estructura; sin `context`/stack; severidades documentadas.
   - Test: `tests/unit/foundations/foundation-issue.test.ts` — códigos estables y únicos; severidades correctas.
-- [ ] T005 [P] [US1] [US7] `tests/unit/foundations/foundation-category.test.ts` — registro.
+- [X] T005 [P] [US1] [US7] `tests/unit/foundations/foundation-category.test.ts` — registro.
   - Done: n/a (test).
   - Test: 9 ids únicos; orden 0–8 continuo y canónico; solo color deep; supportedTypes esperados; registro/arrays congelados (mutación lanza); sin claves de valor/preset.
-- [ ] T006 [US7] Definir los tipos del resultado público en `src/application/foundations/foundations-ports.ts`: `FoundationTokenInspection`, `FoundationCategoryInspection`, `FoundationsSummary`, `FoundationsValidation`, `FoundationsInspection`, `FoundationsResult` (unión discriminada por outcome) — por [data-model.md](data-model.md) §4–§7.
+- [X] T006 [US7] Definir los tipos del resultado público en `src/application/foundations/foundations-ports.ts`: `FoundationTokenInspection`, `FoundationCategoryInspection`, `FoundationsSummary`, `FoundationsValidation`, `FoundationsInspection`, `FoundationsResult` (unión discriminada por outcome) — por [data-model.md](data-model.md) §4–§7.
   - Done: capa aplicación; JSON-safe; sin AST/`$extensions`/Error; reutiliza `AnalysisIssue`/`AnalysisLimitsResult`/`AnalysisHost`/`HostError`/`StructuralState` de dominio.
   - Test: cubierto por los mappers/use-case (T020/T034) que tipan contra estos tipos.
-- [ ] T007 [P] [US7] Barrels `src/domain/foundations/index.ts` y `src/application/foundations/index.ts`; reexport mínimo en `src/application/index.ts` (tipos + registro + use case a medida que existan).
+- [X] T007 [P] [US7] Barrels `src/domain/foundations/index.ts` y `src/application/foundations/index.ts`; reexport mínimo en `src/application/index.ts` (tipos + registro + use case a medida que existan).
   - Done: API headless disponible; arch-guard OK (dominio/aplicación sin Node/CLI/infra).
   - Test: `tests/unit/foundations/exports.test.ts` — importa el registro y un tipo desde el índice público.
-- [ ] T008 [US7] `tests/unit/foundations/dto-invariants.test.ts` — invariantes runtime que TS no garantiza.
+- [X] T008 [US7] `tests/unit/foundations/dto-invariants.test.ts` — invariantes runtime que TS no garantiza.
   - Done: n/a (test).
   - Test: sobre literales de muestra (`FoundationsResult` por outcome) valida ausencia recursiva de `undefined` y presencia de campos estables.
 
