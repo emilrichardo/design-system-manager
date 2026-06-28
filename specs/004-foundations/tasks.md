@@ -46,16 +46,16 @@
 
 ## Checkpoint B — Lectura y resolución de metadata (`$extensions`)
 
-- [ ] T009 [US2] [US8] Implementar el parser de declaración foundation en `src/application/foundations/parse-foundation-extension.ts`: lee `$extensions["ar.neuraz.design-system-manager"].foundation.level` de **un nodo** y devuelve `{ kind: "primitive"|"semantic"|"absent"|"invalid", reason? }`.
+- [X] T009 [US2] [US8] Implementar el parser de declaración foundation en `src/application/foundations/parse-foundation-extension.ts`: lee `$extensions["ar.neuraz.design-system-manager"].foundation.level` de **un nodo** y devuelve `{ kind: "primitive"|"semantic"|"absent"|"invalid", reason? }`.
   - Done: detecta ausente / namespace no-objeto / `foundation` no-objeto / `level` no-string / valor no permitido / `"unclassified"` persistido (inválido); preserva propiedades desconocidas (no muta); por [foundation-extension-v1](contracts/foundation-extension-v1.contract.md).
   - Test: incluido en T012.
-- [ ] T010 [US2] Implementar `resolveFoundationLevel` en `src/application/foundations/resolve-level.ts`: precedencia *token propio → grupo ancestro más cercano → `unclassified`*, devolviendo `FoundationLevelResolution`.
+- [X] T010 [US2] Implementar `resolveFoundationLevel` en `src/application/foundations/resolve-level.ts`: precedencia *token propio → grupo ancestro más cercano → `unclassified`*, devolviendo `FoundationLevelResolution`.
   - Done: el token sobrescribe al grupo; convención Neuraz (no DTCG); no infiere por path/nombre/`$type`/alias/manifest/config; declaración inválida ⇒ `unclassified`/`source:"invalid"`/`sourcePath` del declarante; por [foundation-level-resolution-v1](contracts/foundation-level-resolution-v1.contract.md).
   - Test: incluido en T012.
-- [ ] T011 [US8] Implementar la **pasada de metadata `O(nodes)`** en `src/application/foundations/metadata-pass.ts`: recorre **una vez** `analysis.documents["design-system/tokens/base.tokens.json"].parsed`, construye un índice `path → FoundationLevelResolution` (+ declaraciones inválidas con su path) y deduplica las inválidas por declaración.
+- [X] T011 [US8] Implementar la **pasada de metadata `O(nodes)`** en `src/application/foundations/metadata-pass.ts`: recorre **una vez** `analysis.documents["design-system/tokens/base.tokens.json"].parsed`, construye un índice `path → FoundationLevelResolution` (+ declaraciones inválidas con su path) y deduplica las inválidas por declaración.
   - Done: sin filesystem, sin segundo `JSON.parse`, sin re-resolver alias/tipos/estadísticas, sin mutar `parsed`; orden por inserción del objeto (determinista); **una** `foundation-level-invalid` por declaración (no por descendiente).
   - Test: incluido en T012 + spies en T037.
-- [ ] T012 [P] [US2] [US8] `tests/unit/foundations/metadata-resolution.test.ts`.
+- [X] T012 [P] [US2] [US8] `tests/unit/foundations/metadata-resolution.test.ts`.
   - Done: n/a (test).
   - Test: metadata en token; en grupo; varios ancestros (más cercano gana); override de token sobre grupo; sin metadata → unclassified; cada forma inválida; **grupo inválido con 500 descendientes → 1 issue**; descendientes no inventan nivel; `$extensions` desconocido intacto; input congelado; determinismo.
 
