@@ -18,6 +18,7 @@ type PresetOperationKindV1 =
 ```ts
 interface PresetChangeV1 {
   readonly path: string;
+  readonly nodeKind: "group" | "token";
   readonly category: string;
   readonly level: "primitive" | "semantic" | "unclassified";
   readonly operation: PresetOperationKindV1;
@@ -27,8 +28,9 @@ interface PresetChangeV1 {
 }
 ```
 
-`path` is a logical token path, never an absolute filesystem path. `update` is limited to adding a
-missing `$description` to an otherwise equivalent existing token.
+`path` is a logical token/group path, never an absolute filesystem path. `nodeKind` distinguishes
+required parent groups from final token nodes. `update` is limited to adding a missing `$description`
+to an otherwise equivalent existing token; groups are not updated in v1.
 
 ## Conflict
 
@@ -50,6 +52,7 @@ preset-value-differs
 preset-type-differs
 preset-level-differs
 preset-alias-differs
+preset-description-differs
 preset-token-vs-group
 preset-group-vs-token
 preset-envelope-invalid

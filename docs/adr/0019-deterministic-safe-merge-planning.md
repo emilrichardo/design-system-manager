@@ -12,14 +12,18 @@
    reutilizarlo.
 2. Operaciones v1:
    - `create`: path ausente y agregable.
-   - `update`: **solo** agrega `$description` faltante en un token existente ya equivalente.
+   - `update`: **solo** agrega `$description` faltante en un token existente ya equivalente; no aplica
+     a grupos.
    - `unchanged`: token equivalente; no write.
    - `conflict`: diferencia bloqueante.
    - `skip`: regla explícita de no aplicación.
 3. Diferencias en `$value`, `$type`, alias o foundation level son conflictos bloqueantes. `delete`
    queda fuera de alcance.
-4. Equivalencia = igualdad estructural de campos gestionados tras parse JSON; propiedad order y
+4. Equivalencia = igualdad estructural de campos gestionados tras parse JSON; property order y
    spelling numérico no importan. Unknown fields/extensions se ignoran para comparar y se preservan.
+   Tipo y level se comparan por valor efectivo; no se completa `$type` ni `foundation.level` en nodos
+   existentes.
+5. Parent groups son cambios explícitos (`nodeKind: "group"`). Colisiones token/grupo son conflictos.
 5. Orden: categorías 004, luego orden de inserción del preset; conflictos asociados siguen el orden
    del cambio.
 

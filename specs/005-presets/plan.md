@@ -215,8 +215,20 @@ BundledPresetCatalog
 V1 uses immutable, package-bundled presets. Static JSON assets live under package-root `presets/`,
 with `presets/catalog.json` listing ids and file names in canonical order. `package.json.files` must
 include both `dist` and `presets`; `npm pack --dry-run` and an installed-tarball smoke test must prove
-assets are present and resolvable. Runtime resolution uses `import.meta.url` from compiled `dist`
-code to locate package-root `presets/`, never `process.cwd()`.
+assets are present and resolvable. Runtime resolution uses `import.meta.url` from the concrete
+compiled module that owns the catalog reader (planned location
+`dist/infrastructure/presets/bundled-preset-catalog.js`) and resolves `../../../presets/catalog.json`
+from that module URL. A unit test must assert the exact URL relation, and a tarball smoke test must
+run from outside the repo so `process.cwd()` cannot accidentally satisfy the lookup.
+
+Path states to test separately:
+
+| State | Expected relationship |
+|---|---|
+| Development source | `presets/` exists at repo/package root, not under `src/` |
+| After `tsc` build | `dist/**` exists; `presets/` remains at package root |
+| `npm pack` tarball | tarball includes both `package/dist/**` and `package/presets/**` |
+| Installed package / `npx` | compiled reader resolves from `package/dist/...` up to `package/presets/` |
 
 ### Preset Envelope
 
@@ -266,7 +278,7 @@ preset catalog concepts.
 
 | Operation | Meaning in v1 | Writes? |
 |---|---|---|
-| `create` | path absent; create token/group path needed by preset | apply writes |
+| `create` | path absent; create token or required parent group path needed by preset | apply writes |
 | `update` | existing token is equivalent in value/type/alias/level and lacks only `$description` that the preset supplies | apply may write |
 | `unchanged` | existing token is structurally equivalent for managed fields; no write needed | no |
 | `conflict` | existing content differs in value/type/alias/level, path kind, category, limits or safety | blocks |
@@ -274,17 +286,41 @@ preset catalog concepts.
 
 `delete` is out of scope. `update` is deliberately narrow and non-destructive; it never changes
 `$value`, `$type`, alias target, foundation level, unknown `$extensions`, existing `$description`, or
-unknown properties. If this narrow meaning proves insufficient, `/speckit-clarify` must revisit it
-before tasks broaden the contract.
+unknown properties. It applies only to token nodes, not groups. If this narrow meaning proves
+insufficient, `/speckit-clarify` must revisit it before tasks broaden the contract.
 
 ### Equivalence
 
 `unchanged` uses structural equivalence of managed fields after JSON parse:
-`$value`, `$type`/effective type, alias target, and foundation effective level. Object property order
-does not matter; JSON numeric forms such as `1` and `1.0` are equivalent after parse. Unknown
-properties and unknown `$extensions` are ignored for equivalence but preserved. Existing
-`$description` is preserved: same description is equivalent, absent description can be `update`,
-different description produces `skip` for description only if other managed fields match.
+`$value`, alias target, effective `$type`, and effective foundation level. Object property order does
+not matter; JSON numeric forms such as `1` and `1.0` are equivalent after parse. Unknown properties
+and unknown `$extensions` are ignored for equivalence but preserved. Existing `$description` is
+preserved: same description is equivalent, absent description on a token can be `update`, different
+description produces `skip` for the description only if other managed fields match.
+
+Type and level equivalence use the **effective** values from `002`/`004`, not only persisted local
+fields. A host token whose effective type or foundation level is inherited from a group is equivalent
+to a preset token with the same effective value; v1 does not complete `$type` or foundation metadata on
+existing nodes. If the host effective level is `unclassified` and the preset requires `primitive` or
+`semantic`, the operation is `conflict` (`preset-level-differs`). Completing missing
+`foundation.level` is not an `update` path in v1.
+
+Managed-field policy:
+
+| Field | Preset can create | Can complete | Can replace | Preservation rule |
+|---|---:|---:|---:|---|
+| `$value` | yes on new token | no | no | existing value preserved; difference conflicts |
+| `$type` | yes on new node | no | no | effective match is unchanged; difference conflicts |
+| `$description` | yes on new token/group | yes, token only if missing | no | existing description preserved; different description skipped |
+| foundation level | yes on new token/group | no | no | effective match is unchanged; missing/different effective level conflicts |
+| known Neuraz `$extensions` | yes on new node | no | no | never wholesale-replaced |
+| unknown `$extensions` | no | no | no | always preserved |
+| unknown properties | no | no | no | always preserved |
+
+Parent groups are first-class changes: creating `color.gray.100` may require `create` changes for
+`color` and `color.gray` groups before the token. Existing groups are reused and can contribute
+effective `$type`/foundation level. If a token occupies a required parent path, the plan emits
+`preset-token-vs-group`; if a group occupies the final token path, it emits `preset-group-vs-token`.
 
 ### Conflicts
 
@@ -295,6 +331,7 @@ preset-value-differs
 preset-type-differs
 preset-level-differs
 preset-alias-differs
+preset-description-differs
 preset-token-vs-group
 preset-group-vs-token
 preset-envelope-invalid
@@ -313,20 +350,31 @@ token documents, or arbitrary token values.
 
 ### Safe Merge, Atomicity and Concurrency
 
-Apply builds the full new `base.tokens.json` in memory, preserving unrelated content and stable order.
-New top-level category groups are inserted in the canonical 004 order; new sibling keys within an
-existing group are appended in preset order after existing keys. Existing unknown fields and
-`$extensions` namespaces are copied through unchanged.
+Apply builds the full new `base.tokens.json` in memory, preserving unrelated parsed content and stable
+object insertion order. New top-level category groups are inserted in the canonical 004 order; new
+sibling keys within an existing group are appended in preset order after existing keys. Existing
+unknown fields and `$extensions` namespaces are copied through unchanged.
+
+Serialization is canonical for writes: `JSON.stringify(document, null, 2) + "\n"`. This means a
+successful write preserves data and relative key order, but does **not** promise file-wide
+byte-identical whitespace, comments (JSON has none), escape style, or original formatting. Preview,
+blocked apply, unchanged apply and write-error before replacement must leave the target file
+byte-identical. Successful applies must produce byte-identical output for identical parsed input and
+same preset.
 
 The single-file writer uses a temp file in the same directory as `base.tokens.json`, writes complete
 UTF-8 content, verifies the temp content, re-checks path containment and symlink state, performs an
-optimistic concurrency check against the original bytes/hash immediately before rename, then renames
-atomically where the platform allows. Failure cleans the temp and preserves the original. A concurrent
+optimistic concurrency check against the original bytes/hash immediately before rename, then keeps a
+same-directory backup of the original bytes until post-write verification completes. The backup uses a
+reserved `.neuraz-ds-backup-*` name, is never loaded from preset data, and is deleted on successful
+verification. Failure before replacement cleans temp/backup and preserves the original. A concurrent
 change returns `conflict`/`preset-concurrent-modification` with `wrote: false`.
 
-If write succeeds but post-write verification fails, result is `verification-error`, `wrote: true`.
-The writer does not attempt an implicit second destructive write. The result includes enough
-sanitized information for the user to restore from VCS or rerun after inspection.
+Before rename, the candidate document is validated in memory and by rereading the temp file. If rename
+succeeds but post-write verification fails, result is `verification-error`, `wrote: true`, and the
+backup is retained with a relative path in the result so the user can recover manually. The writer does
+not attempt an implicit second destructive write. The result includes sanitized information for the
+user to restore from the retained backup or VCS after inspection.
 
 ### Headless Use Cases
 
@@ -371,12 +419,14 @@ stdout and empty stderr; internal CLI errors write one JSON document to stderr a
 | `invalid-preset` | inspect/plan/apply | yes | false | 3 | stdout |
 | `not-found` | all | yes | false | 5 | stdout |
 | `read-error` | plan/apply | yes | false | 6 | stdout |
-| `write-error` | apply | yes | false | 6 | stdout/stderr per mode |
+| `write-error` | apply | yes | false | 6 | stdout for expected result; stderr empty in JSON mode |
 | `verification-error` | apply | yes | true | 7 | stdout |
 | `internal-error` | CLI only | no | unknown | 70 | stderr in JSON mode |
 
 `partial` is not reused for presets. Host analysis can be partial, but preset command outcomes report
-`read-error`, `conflict`, or `invalid-preset` as appropriate.
+`read-error`, `conflict`, or `invalid-preset` as appropriate. `not-found` results must include
+`resource: "preset" | "design-system"` (or equivalent typed discriminator) so consumers never parse
+messages to distinguish an unknown preset id from a missing host Design System.
 
 ## Data Model
 
@@ -412,7 +462,11 @@ The contracts are split by consumer surface:
 | non-deterministic order | canonical category/catalog/order rules | determinism tests |
 | partial write | same-dir temp + rename + cleanup | writer failure tests |
 | concurrent modification | original hash/bytes re-check | concurrency test |
-| verification failure | explicit `verification-error` with `wrote:true` | verifier test |
+| verification failure | explicit `verification-error` with `wrote:true` + retained backup | verifier test |
+| missing foundation level | not updatable; effective mismatch conflicts | planner tests |
+| different description | skip description, never overwrite | planner tests |
+| reserialization destructive | canonical writer contract; no byte-identity promise after writes | serialization tests |
+| preset vs DS not-found | typed `resource` discriminator | JSON/outcome tests |
 | orphan temp | cleanup and safe temp prefix | failure tests |
 | symlink escape | path guard + lstat checks | symlink tests |
 | external alias | invalid preset/conflict | validator tests |

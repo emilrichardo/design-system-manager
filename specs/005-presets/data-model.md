@@ -66,6 +66,7 @@ Generic, source-agnostic change candidate:
 | Field | Type | Rule |
 |---|---|---|
 | `path` | logical token path | no absolute paths |
+| `nodeKind` | `group \| token` | distinguishes parent group creation from final token creation |
 | `category` | FoundationCategoryId | derived from top-level path |
 | `level` | `primitive \| semantic` | from preset metadata |
 | `operation` | PresetOperationKind | create/update/unchanged/conflict/skip |
@@ -90,7 +91,7 @@ skip
 ```
 
 `delete` is absent. `update` is limited to adding missing `$description` to an otherwise equivalent
-token.
+token. Parent groups use `create`, `unchanged`, `conflict`, or `skip`; groups are not updated in v1.
 
 ## PresetConflict
 
@@ -122,6 +123,7 @@ Preset wrapper:
 - `targetFile`: `"design-system/tokens/base.tokens.json"`.
 - `plan`: ApplicationPlan.
 - `hostState`: minimal structural state from analysis.
+- `notFoundResource`: `"preset" | "design-system" | null` for `not-found` projections.
 
 ## ApplicationSummary / PresetApplicationSummary
 
@@ -161,6 +163,8 @@ Fields:
 - `targetFile`: relative path or null.
 - `verification`: post-write verification summary or null.
 - `error`: sanitized error or null.
+- `backup`: `{ relativePath: string } | null` only when verification failed after a write and a
+  retained recovery copy exists.
 
 ## PresetCommandOutcome
 

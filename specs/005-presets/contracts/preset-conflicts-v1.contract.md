@@ -21,6 +21,7 @@ interface PresetConflictV1 {
 | `preset-type-differs` | yes | existing `$type`/effective type differs |
 | `preset-level-differs` | yes | foundation level differs |
 | `preset-alias-differs` | yes | alias target differs |
+| `preset-description-differs` | no | preset description differs; host description is preserved and skipped |
 | `preset-token-vs-group` | yes | preset token collides with existing group |
 | `preset-group-vs-token` | yes | preset group collides with existing token |
 | `preset-envelope-invalid` | yes | envelope or metadata invalid |

@@ -17,8 +17,9 @@
 
 2. La implementación deberá incluir `presets` en `package.json.files`, además de `dist`, y cubrir
    `npm pack --dry-run` más un smoke desde tarball instalado.
-3. La resolución de assets se hace desde ESM compilado con `import.meta.url`, nunca desde
-   `process.cwd()`, red, variables de entorno ni rutas del preset.
+3. La resolución de assets se hace desde el módulo ESM compilado que implementa el catálogo
+   (`dist/infrastructure/presets/bundled-preset-catalog.js`) con `new URL("../../../presets/catalog.json",
+   import.meta.url)`. Nunca usa `process.cwd()`, red, variables de entorno ni rutas del preset.
 4. Cada preset usa `PresetEnvelopeV1`: `id`, `name`, `description`, `version`,
    `includedCategories`, `tokens`. No hay campos desconocidos en v1.
 5. El token block es DTCG y se valida en memoria con las funciones puras de `002`/`004`; no se

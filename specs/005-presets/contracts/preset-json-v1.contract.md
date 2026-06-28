@@ -57,3 +57,11 @@ exit   → 70
 
 This contract does not extend or cast to `JsonEnvelopeV1` from 003 or `FoundationsJsonEnvelopeV1` from
 004. It has independent DTOs, mappers, format-version constant and serializer.
+
+Preset JSON result payloads must include:
+
+- `wrote` for apply-like results;
+- `targetFile` as a relative path only;
+- `notFoundResource: "preset" | "design-system" | null`;
+- `backup: { relativePath } | null` for `verification-error` with retained backup;
+- conflicts with stable codes and no full token values.

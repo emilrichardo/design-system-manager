@@ -27,6 +27,8 @@
    - `read-error`/`write-error` → 6
    - `verification-error` → 7
    - `internal-error` → 70
+   `not-found` incluye un discriminante `resource` (`preset` o `design-system`). `read-error` y
+   `write-error` comparten exit 6 pero son outcomes distintos.
 4. Presets define `PresetsJsonEnvelopeV1` y `PRESETS_JSON_FORMAT_VERSION = "1.0.0"` independientes.
    Serialización: `JSON.stringify(envelope, null, 2) + "\n"`.
 5. Expected outcomes en JSON escriben un envelope en stdout y stderr vacío. Internal error CLI
@@ -35,7 +37,8 @@
 ## Consecuencias
 
 - 003/004 siguen byte-estables.
-- Scripts/CI pueden distinguir preview bloqueada, unchanged, errores de escritura y verification.
+- Scripts/CI pueden distinguir preview bloqueada, unchanged, preset-vs-DS not-found, read-vs-write
+  error y verification.
 - `partial` no se sobrecarga como outcome de presets.
 
 ## Alternativas rechazadas

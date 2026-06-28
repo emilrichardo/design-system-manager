@@ -47,3 +47,9 @@ Human output must be deterministic and safe without TTY.
 
 Commander usage errors keep the existing policy: exit 3, no JSON conversion before arguments are
 accepted.
+
+`not-found` results must carry a typed resource discriminator (`preset` or `design-system`).
+`read-error` and `write-error` share exit 6 but remain distinct outcomes and distinct JSON/human
+summaries. Expected outcomes, including invalid presets, conflicts, write errors and verification
+errors, write their normal result to stdout; stderr is reserved for Commander usage errors and
+unexpected internal errors.

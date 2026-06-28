@@ -17,9 +17,10 @@
    → analizar host
    → planificar
    → construir documento nuevo en memoria
-   → re-chequear path/symlink/concurrencia
    → escribir temporal en el mismo directorio
    → verificar temporal
+   → re-chequear path/symlink/concurrencia por bytes/hash
+   → crear backup mismo-directorio del original
    → rename atómico donde el filesystem lo permita
    → analizar/verificar resultado
    ```
@@ -27,15 +28,16 @@
 3. La protección de concurrencia es optimista: comparar bytes/hash/stat seguro del original
    inmediatamente antes del reemplazo. Cambio concurrente ⇒ conflicto `preset-concurrent-modification`
    y `wrote:false`.
-4. Si el write falla antes de reemplazar, outcome `write-error`, original preservado y temporales
-   limpiados.
+4. Si el write falla antes de reemplazar, outcome `write-error`, original preservado y temporales/
+   backup limpiados.
 5. Si el rename tuvo éxito pero post-write verification falla, outcome `verification-error`,
-   `wrote:true`; no se intenta rollback automático.
+   `wrote:true`; no se intenta rollback automático y se retiene el backup con path relativo.
 
 ## Consecuencias
 
 - El usuario obtiene una respuesta honesta sobre qué quedó en disco.
-- VCS sigue siendo el mecanismo de recuperación ante verification failure.
+- VCS sigue siendo el mecanismo preferido de auditoría; el backup retenido habilita recuperación
+  manual inmediata ante verification failure.
 - Las pruebas deben cubrir permisos, symlinks, temporales, rename failure, concurrencia, reapply y
   verificación posterior.
 

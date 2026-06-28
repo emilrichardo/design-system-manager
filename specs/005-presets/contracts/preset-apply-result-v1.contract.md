@@ -26,6 +26,8 @@ interface PresetApplyResultV1 {
   readonly plan: PresetApplicationPlanV1 | null;
   readonly wrote: boolean;
   readonly verification: PresetVerificationV1 | null;
+  readonly notFoundResource: "preset" | "design-system" | null;
+  readonly backup: { readonly relativePath: string } | null;
   readonly error: { readonly code: string; readonly message: string } | null;
 }
 
@@ -45,7 +47,7 @@ interface PresetVerificationV1 {
 | `unchanged` | false | plan has no creates/updates; no write attempted |
 | `conflict` | false | blocking conflict or concurrent modification |
 | `invalid-preset` | false | bundled preset failed validation |
-| `not-found` | false | preset or host DS target not found |
+| `not-found` | false | preset or host DS target not found; `notFoundResource` distinguishes which |
 | `read-error` | false | host target could not be safely read/analyzed |
 | `write-error` | false | write failed before replacement completed; original preserved |
 | `verification-error` | true | replacement happened but post-write verification failed |
@@ -53,5 +55,6 @@ interface PresetVerificationV1 {
 ## Verification Failure
 
 V1 does not automatically restore the original after a successful replacement followed by failed
-verification. The result must report `verification-error`, `wrote: true`, sanitized details, and the
-target file remains on disk for user/VCS inspection.
+verification. The result must report `verification-error`, `wrote: true`, sanitized details, and a
+retained same-directory backup path in `backup`. The target file remains on disk for user inspection;
+the backup exists for manual recovery and is deleted on successful verification.
