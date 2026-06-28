@@ -8,3 +8,4 @@ export * from "./summary.js";
 export * from "./project-foundations.js";
 export * from "./classify-foundations-outcome.js";
 export * from "./inspect-foundations.js";
+export * from "./json/index.js";

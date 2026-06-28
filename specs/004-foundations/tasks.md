@@ -150,28 +150,28 @@
 
 ## Checkpoint G — Contrato y presentación JSON (separado de 003)
 
-- [ ] T032 [P] [US5] Crear `FOUNDATIONS_JSON_FORMAT_VERSION = "1.0.0"` en `src/application/foundations/json/format-version.ts` (independiente del de 003).
+- [X] T032 [P] [US5] Crear `FOUNDATIONS_JSON_FORMAT_VERSION = "1.0.0"` en `src/application/foundations/json/format-version.ts` (independiente del de 003).
   - Done: literal inmutable; sin lectura dinámica.
   - Test: `tests/unit/foundations/json/format-version.test.ts` — valor exacto.
-- [ ] T033 [US5] [US7] Definir los DTO JSON en `src/application/foundations/json/dto.ts`: `FoundationsJsonEnvelopeV1` (+ `JsonFoundationsResultV1`, `JsonFoundationTokenV1`, `JsonFoundationIssueV1`) por [foundations-json-result-v1](contracts/foundations-json-result-v1.contract.md). NO amplía `JsonEnvelopeV1`/`JsonCommand`/`JSON_FORMAT_VERSION` de 003.
+- [X] T033 [US5] [US7] Definir los DTO JSON en `src/application/foundations/json/dto.ts`: `FoundationsJsonEnvelopeV1` (+ `JsonFoundationsResultV1`, `JsonFoundationTokenV1`, `JsonFoundationIssueV1`) por [foundations-json-result-v1](contracts/foundations-json-result-v1.contract.md). NO amplía `JsonEnvelopeV1`/`JsonCommand`/`JSON_FORMAT_VERSION` de 003.
   - Done: 4 campos base; `error` solo en not-found/internal-error; null-policy; sin `undefined`.
   - Test: cubierto por mappers T035/T036.
-- [ ] T034 [US5] Implementar los mappers JSON en `src/application/foundations/json/map-foundations.ts`: `FoundationsResult → FoundationsJsonEnvelopeV1` (host/result/categories/tokens/summary/validation/limits/issues/unresolved) — puros, JSON-safe, no serializan dominio.
+- [X] T034 [US5] Implementar los mappers JSON en `src/application/foundations/json/map-foundations.ts`: `FoundationsResult → FoundationsJsonEnvelopeV1` (host/result/categories/tokens/summary/validation/limits/issues/unresolved) — puros, JSON-safe, no serializan dominio.
   - Done: todos los token paths (sin cota 200); null-policy; sin AST/`$extensions`/Error.
   - Test: incluido en T037.
-- [ ] T035 [P] [US8] Implementar `toFoundationsInternalErrorEnvelope(command="foundations")` en `src/application/foundations/json/map-internal-error.ts` (propio; NO reutiliza el de 003 typed a `validate|inspect`).
+- [X] T035 [P] [US8] Implementar `toFoundationsInternalErrorEnvelope(command="foundations")` en `src/application/foundations/json/map-internal-error.ts` (propio; NO reutiliza el de 003 typed a `validate|inspect`).
   - Done: `{formatVersion, command:"foundations", outcome:"internal-error", result:null, error:{code:"internal-cli-error", message}}`; mensaje fijo seguro.
   - Test: incluido en T037.
-- [ ] T036 [US5] Implementar `serializeFoundationsJsonV1(envelope)` en `src/infrastructure/reporter/foundations-json-serializer.ts` (`JSON.stringify(env,null,2)+"\n"`); NO cambia la firma de `serializeJsonV1` ni hace cast.
+- [X] T036 [US5] Implementar `serializeFoundationsJsonV1(envelope)` en `src/infrastructure/reporter/foundations-json-serializer.ts` (`JSON.stringify(env,null,2)+"\n"`); NO cambia la firma de `serializeJsonV1` ni hace cast.
   - Done: función pura; 2 espacios + 1 newline; sin BOM/ANSI; determinista.
   - Test: incluido en T037.
-- [ ] T037 [P] [US5] [US8] `tests/unit/foundations/json/foundations-json.test.ts` (serializer + mappers).
+- [X] T037 [P] [US5] [US8] `tests/unit/foundations/json/foundations-json.test.ts` (serializer + mappers).
   - Done: n/a (test).
   - Test: envelope parseable por outcome; 2 espacios; 1 newline; sin BOM/ANSI; Unicode; determinista; input congelado; excepción de `JSON.stringify` propagada; internal-error seguro (sin stack); `JsonEnvelopeV1`/`JSON_FORMAT_VERSION` de 003 sin tocar.
-- [ ] T038 [US5] Implementar `FoundationsJsonReporter` en `src/infrastructure/reporter/foundations-json-reporter.ts` (implementa `FoundationsReporter`; eventos previos no-op; `completed` → una escritura a `io.out`).
+- [X] T038 [US5] Implementar `FoundationsJsonReporter` en `src/infrastructure/reporter/foundations-json-reporter.ts` (implementa `FoundationsReporter`; eventos previos no-op; `completed` → una escritura a `io.out`).
   - Done: stdout 1 JSON para todos los outcomes esperados; stderr vacío; no texto humano; no cota 200.
   - Test: incluido en T039.
-- [ ] T039 [P] [US5] `tests/unit/cli/foundations-json-reporter.test.ts` (IO falso).
+- [X] T039 [P] [US5] `tests/unit/cli/foundations-json-reporter.test.ts` (IO falso).
   - Done: n/a (test).
   - Test: 5 outcomes en stdout; una escritura; eventos previos no escriben; JSON parseable; >200 tokens conservados; IO fallido propaga; sin mutación.
 
