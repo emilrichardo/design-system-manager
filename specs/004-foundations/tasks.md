@@ -181,19 +181,19 @@
 
 ## Checkpoint H — CLI y composición
 
-- [ ] T040 [US1] Acción del comando en `src/cli/commands/foundations.ts`: `runFoundations(executionDir, deps)` delega en `inspectFoundations`; sin FS/JSON/exit-codes/prompts.
+- [X] T040 [US1] Acción del comando en `src/cli/commands/foundations.ts`: `runFoundations(executionDir, deps)` delega en `inspectFoundations`; sin FS/JSON/exit-codes/prompts.
   - Done: devuelve `FoundationsResult`; análogo a runValidate/runInspect.
   - Test: incluido en T044.
-- [ ] T041 [US6] Extender `src/cli/composition.ts`: `createFoundationsDependencies(io, analyze)` (reporter humano) y `createFoundationsJsonDependencies(io, analyze)` (reporter JSON), reutilizando `createBoundAnalyze`.
+- [X] T041 [US6] Extender `src/cli/composition.ts`: `createFoundationsDependencies(io, analyze)` (reporter humano) y `createFoundationsJsonDependencies(io, analyze)` (reporter JSON), reutilizando `createBoundAnalyze`.
   - Done: mismo analyzer enlazado (sin segundo análisis); un solo reporter por modo.
   - Test: `tests/unit/cli/foundations-composition.test.ts` — reporter correcto por factory; mismo analyze.
-- [ ] T042 [US1] [US8] Registrar el comando `foundations` con opción local `--json` (default false) en `src/cli/program.ts`; selección de modo por `opts.json`; manejo de internal-error JSON propio (catch → `serializeFoundationsJsonV1(toFoundationsInternalErrorEnvelope("foundations"))` a stderr, exit 70, stdout vacío); pasar deps desde `src/cli/index.ts`.
+- [X] T042 [US1] [US8] Registrar el comando `foundations` con opción local `--json` (default false) en `src/cli/program.ts`; selección de modo por `opts.json`; manejo de internal-error JSON propio (catch → `serializeFoundationsJsonV1(toFoundationsInternalErrorEnvelope("foundations"))` a stderr, exit 70, stdout vacío); pasar deps desde `src/cli/index.ts`.
   - Done: comando dedicado, sin subcomandos; `--json` no global; `init --json`/`--json foundations` siguen error de uso (3); `exitCodeForOutcome` reutilizado; init/validate/inspect intactos.
   - Test: incluido en T043/T044.
-- [ ] T043 [P] [US6] [US8] `tests/cli/foundations-commands.test.ts` (vía `runCli`, IO falso).
+- [X] T043 [P] [US6] [US8] `tests/cli/foundations-commands.test.ts` (vía `runCli`, IO falso).
   - Done: n/a (test).
   - Test: `--json` reconocido y default false; help menciona `--json`; humano vs JSON; `init --json`→3; `--json foundations`→3; opción desconocida→3; un caso de uso; exit codes por outcome; internal-error JSON (stderr/empty stdout/70); runtime sin foundationsDeps no rompe tests de 001.
-- [ ] T044 [P] [US1] `tests/cli/foundations-commands.test.ts` (exit + streams) — *(misma suite que T043; reservar id para granularidad de ejecución).* Verifica streams: outcomes esperados → stdout 1 JSON / stderr vacío incluso con exit 3/4/5/6.
+- [X] T044 [P] [US1] `tests/cli/foundations-commands.test.ts` (exit + streams) — *(misma suite que T043; reservar id para granularidad de ejecución).* Verifica streams: outcomes esperados → stdout 1 JSON / stderr vacío incluso con exit 3/4/5/6.
   - Done: n/a (test).
   - Test: matriz outcome→exit; stderr vacío en outcomes esperados (JSON).
 

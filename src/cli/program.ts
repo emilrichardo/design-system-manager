@@ -14,12 +14,16 @@ import type {
   ValidateDesignSystemDependencies,
   InspectDesignSystemDependencies,
 } from "../application/analysis-ports.js";
+import type { InspectFoundationsDependencies } from "../application/foundations/foundations-ports.js";
 import type { CliIO } from "./io.js";
 import { exitCodeForResult, exitCodeForOutcome, INTERNAL_ERROR_EXIT, USAGE_ERROR_EXIT } from "./exit-codes.js";
 import { writeInternalErrorJson } from "./json-error.js";
+import { toFoundationsInternalErrorEnvelope } from "../application/foundations/json/map-internal-error.js";
+import { serializeFoundationsJsonV1 } from "../infrastructure/reporter/foundations-json-serializer.js";
 import { runInit } from "./commands/init.js";
 import { runValidate } from "./commands/validate.js";
 import { runInspect } from "./commands/inspect.js";
+import { runFoundations } from "./commands/foundations.js";
 
 /** Modo de presentación parseado por Commander para validate/inspect. */
 export interface CommandModeOptions {
@@ -32,6 +36,7 @@ export interface ProgramHandlers {
   onInit: () => Promise<number>;
   onValidate: (opts: CommandModeOptions) => Promise<number>;
   onInspect: (opts: CommandModeOptions) => Promise<number>;
+  onFoundations: (opts: CommandModeOptions) => Promise<number>;
 }
 
 const JSON_FLAG_DESCRIPTION = "Emite el resultado como JSON estructurado.";
@@ -78,6 +83,15 @@ export function createProgram(handlers: ProgramHandlers): {
     state.code = await handlers.onInspect({ json: options.json === true });
   });
 
+  const foundations = program
+    .command("foundations")
+    .description("Inspecciona las categorías foundation del Design System sin modificar archivos.")
+    .option("--json", JSON_FLAG_DESCRIPTION, false);
+  foundations.exitOverride();
+  foundations.action(async (options: { json?: boolean }) => {
+    state.code = await handlers.onFoundations({ json: options.json === true });
+  });
+
   return { program, getCode: () => state.code };
 }
 
@@ -93,7 +107,14 @@ export interface CliRuntime {
   /** Dependencias de `validate`/`inspect` en modo JSON (reporter JSON). Mismas garantías. */
   validateJsonDeps?: ValidateDesignSystemDependencies;
   inspectJsonDeps?: InspectDesignSystemDependencies;
+  /** Dependencias de `foundations` en modo textual/JSON. Opcionales para pruebas centradas en 001. */
+  foundationsDeps?: InspectFoundationsDependencies;
+  foundationsJsonDeps?: InspectFoundationsDependencies;
   version: string;
+}
+
+function writeFoundationsInternalErrorJson(io: CliIO): void {
+  io.err(serializeFoundationsJsonV1(toFoundationsInternalErrorEnvelope("foundations")));
 }
 
 export async function runCli(runtime: CliRuntime): Promise<number> {
@@ -131,12 +152,29 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
     }
   };
 
+  const runFoundationsMode = async (json: boolean): Promise<number> => {
+    const deps = json ? runtime.foundationsJsonDeps : runtime.foundationsDeps;
+    if (deps === undefined) {
+      if (json) writeFoundationsInternalErrorJson(runtime.io);
+      return INTERNAL_ERROR_EXIT;
+    }
+    if (!json) return runFoundations(runtime.cwd, deps).then((r) => exitCodeForOutcome(r.outcome));
+    try {
+      const result = await runFoundations(runtime.cwd, deps);
+      return exitCodeForOutcome(result.outcome);
+    } catch {
+      writeFoundationsInternalErrorJson(runtime.io);
+      return INTERNAL_ERROR_EXIT;
+    }
+  };
+
   const { program, getCode } = createProgram({
     version: runtime.version,
     io: runtime.io,
     onInit: () => runInit(runtime.cwd, runtime.deps).then(exitCodeForResult),
     onValidate: ({ json }) => runValidateMode(json),
     onInspect: ({ json }) => runInspectMode(json),
+    onFoundations: ({ json }) => runFoundationsMode(json),
   });
 
   try {

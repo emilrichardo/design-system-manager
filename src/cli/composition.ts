@@ -7,6 +7,7 @@ import type {
   InspectDesignSystemDependencies,
   ValidateDesignSystemDependencies,
 } from "../application/analysis-ports.js";
+import type { InspectFoundationsDependencies } from "../application/foundations/foundations-ports.js";
 import { analyzeExistingDesignSystem } from "../application/analyze-existing-design-system.js";
 import {
   documentPreparer,
@@ -25,6 +26,8 @@ import { ValidateTerminalReporter } from "../infrastructure/reporter/validate-te
 import { InspectTerminalReporter } from "../infrastructure/reporter/inspect-terminal-reporter.js";
 import { ValidateJsonReporter } from "../infrastructure/reporter/validate-json-reporter.js";
 import { InspectJsonReporter } from "../infrastructure/reporter/inspect-json-reporter.js";
+import { FoundationsTerminalReporter } from "../infrastructure/reporter/foundations-terminal-reporter.js";
+import { FoundationsJsonReporter } from "../infrastructure/reporter/foundations-json-reporter.js";
 import type { CliIO } from "./io.js";
 
 export function createRealDependencies(io: CliIO): InitializeDependencies {
@@ -72,4 +75,13 @@ export function createValidateJsonDependencies(io: CliIO, analyze: AnalyzeUseCas
 
 export function createInspectJsonDependencies(io: CliIO, analyze: AnalyzeUseCase): InspectDesignSystemDependencies {
   return { analyze, reporter: new InspectJsonReporter(io) };
+}
+
+// Feature 004 - foundations reutiliza la misma tuberia de analisis enlazada; solo cambia el reporter.
+export function createFoundationsDependencies(io: CliIO, analyze: AnalyzeUseCase): InspectFoundationsDependencies {
+  return { analyze, reporter: new FoundationsTerminalReporter(io) };
+}
+
+export function createFoundationsJsonDependencies(io: CliIO, analyze: AnalyzeUseCase): InspectFoundationsDependencies {
+  return { analyze, reporter: new FoundationsJsonReporter(io) };
 }

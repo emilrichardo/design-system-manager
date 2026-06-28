@@ -3,6 +3,8 @@
 // aplica process.exitCode y maneja solo errores de frontera (excepciones inesperadas → 70).
 import {
   createBoundAnalyze,
+  createFoundationsDependencies,
+  createFoundationsJsonDependencies,
   createInspectDependencies,
   createInspectJsonDependencies,
   createRealDependencies,
@@ -32,6 +34,8 @@ try {
     inspectDeps: createInspectDependencies(io, analyze),
     validateJsonDeps: createValidateJsonDependencies(io, analyze),
     inspectJsonDeps: createInspectJsonDependencies(io, analyze),
+    foundationsDeps: createFoundationsDependencies(io, analyze),
+    foundationsJsonDeps: createFoundationsJsonDependencies(io, analyze),
     version: readCliVersion(),
   });
   process.exitCode = code;
