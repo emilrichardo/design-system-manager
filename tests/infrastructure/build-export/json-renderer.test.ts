@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { ResolvedTokensV1 } from "../../../src/application/build-export/resolved-tokens-mapper.js";
 import { renderResolvedTokensArtifact, serializeResolvedTokensV1 } from "../../../src/infrastructure/build-export/json-renderer.js";
+import { sha256Hex } from "../../../src/infrastructure/build-export/hash.js";
 import type { BuildFormat } from "../../../src/domain/build-export/build-format.js";
 import type { FormatCompatibility, NormalizedBuildToken, NormalizedTokenSet } from "../../../src/domain/build-export/normalized-token.js";
 import type { FoundationCategoryId } from "../../../src/domain/foundations/foundation-category.js";
@@ -226,6 +227,76 @@ describe("json renderer (T056/T058)", () => {
     expect(first.artifact.byteLength).toBe(second.artifact.byteLength);
     expect(first.artifact.contentHash).toBe(second.artifact.contentHash);
     expect(new TextDecoder().decode(first.artifact.bytes)).toContain('\n  "tokens": {\n    "color.alpha":');
+  });
+
+  it("serializa envelopes standalone semanticamente equivalentes con tokens en orden canonico", () => {
+    const token = (
+      value: string,
+      category: FoundationCategoryId | null,
+      foundationLevel: FoundationLevel = "unclassified",
+    ) => ({
+      value,
+      aliasOf: null,
+      type: "string",
+      category,
+      foundationLevel,
+      description: null,
+    });
+    const tokensInCanonicalOrder = {
+      "color.B": token("color.B", "color", "primitive"),
+      "color.b": token("color.b", "color", "primitive"),
+      "spacing.a": token("spacing.a", "spacing", "semantic"),
+      "spacing.a.b": token("spacing.a.b", "spacing", "semantic"),
+      "spacing.a.b.c": token("spacing.a.b.c", "spacing", "semantic"),
+      "spacing.a.c": token("spacing.a.c", "spacing", "semantic"),
+      "misc.B": token("misc.B", null),
+      "misc.b": token("misc.b", null),
+    } satisfies ResolvedTokensV1["tokens"];
+    const tokensInReverseInsertionOrder = Object.fromEntries(
+      Object.entries(tokensInCanonicalOrder).reverse(),
+    ) as ResolvedTokensV1["tokens"];
+    const baseEnvelope = {
+      formatVersion: "1.0.0",
+      source: { path: "design-system/tokens/base.tokens.json", hash: "d".repeat(64) },
+    } satisfies Omit<ResolvedTokensV1, "tokens">;
+    const first = serializeResolvedTokensV1({ ...baseEnvelope, tokens: tokensInCanonicalOrder });
+    const second = serializeResolvedTokensV1({ ...baseEnvelope, tokens: tokensInReverseInsertionOrder });
+
+    expect(first.ok).toBe(true);
+    expect(second.ok).toBe(true);
+    if (!first.ok || !second.ok) return;
+
+    const firstText = new TextDecoder().decode(first.bytes);
+    const secondText = new TextDecoder().decode(second.bytes);
+    expect(first.bytes).toEqual(second.bytes);
+    expect(first.bytes.byteLength).toBe(second.bytes.byteLength);
+    expect(firstText).toBe(secondText);
+    expect(sha256Hex(first.bytes)).toBe(sha256Hex(second.bytes));
+    expect(Object.keys(JSON.parse(firstText).tokens)).toEqual([
+      "color.B",
+      "color.b",
+      "spacing.a",
+      "spacing.a.b",
+      "spacing.a.b.c",
+      "spacing.a.c",
+      "misc.B",
+      "misc.b",
+    ]);
+    expect(firstText).toContain(`{
+  "formatVersion": "1.0.0",
+  "source": {
+    "path": "design-system/tokens/base.tokens.json",
+    "hash": "${"d".repeat(64)}"
+  },
+  "tokens": {`);
+    expect(firstText).toContain(`"color.B": {
+      "value": "color.B",
+      "aliasOf": null,
+      "type": "string",
+      "category": "color",
+      "foundationLevel": "primitive",
+      "description": null
+    }`);
   });
 
   it("rechaza envelopes no JSON-safe sin bytes parciales", () => {

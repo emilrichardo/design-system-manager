@@ -3,6 +3,7 @@
 // (2 espacios + LF final, sin BOM) y devuelve un `BuildArtifact`. No toca filesystem ni reporters.
 import { createBuildArtifact, type BuildArtifact } from "../../domain/build-export/artifact.js";
 import { artifactContentType, artifactFilename, type BuildFormat } from "../../domain/build-export/build-format.js";
+import { compareCanonical } from "../../domain/build-export/build-token-order.js";
 import type { NormalizedTokenSet } from "../../domain/build-export/normalized-token.js";
 import {
   mapResolvedTokensV1,
@@ -117,7 +118,14 @@ function canonicalToken(
 export function serializeResolvedTokensV1(envelope: ResolvedTokensV1): ResolvedTokensSerializerResult {
   const canonicalTokens: Record<string, ResolvedTokenV1> = {};
 
-  for (const [tokenPath, token] of Object.entries(envelope.tokens)) {
+  const tokenEntries = Object.entries(envelope.tokens).sort(([leftPath, left], [rightPath, right]) =>
+    compareCanonical(
+      { path: leftPath, category: left.category },
+      { path: rightPath, category: right.category },
+    ),
+  );
+
+  for (const [tokenPath, token] of tokenEntries) {
     const canonical = canonicalToken(token, tokenPath);
     if (!canonical.ok) {
       return canonical;
