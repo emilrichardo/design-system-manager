@@ -117,6 +117,83 @@ Las categorías `absent` por sí solas no invalidan ni vuelven parcial el result
 profunda sigue disponible solo para `color`; el resto de tipos DTCG reconocidos se inspeccionan de
 forma superficial y pueden producir warnings heredados de `inspect`.
 
+## `neuraz-ds presets`
+
+Aplica **presets** de tokens empaquetados con el gestor a tu Design System local. Un **preset** es un
+bloque de tokens DTCG curado, inmutable y versionado, distribuido **dentro del paquete** (no se
+descarga ni se lee desde tu repositorio); su propósito es **sembrar** foundations válidas sin que
+escribas el JSON a mano.
+
+Diferencia clave con `foundations`:
+
+- **foundation** (004) es una *vista de solo lectura*: clasifica los tokens que ya existen.
+- **preset** (005) es una *operación de escritura explícita y opt-in*: **añade** tokens nuevos al
+  Design System. `init` **nunca** aplica un preset automáticamente; el usuario elige el preset y
+  ejecuta `apply` de forma deliberada.
+
+### Preset disponible
+
+| Campo | Valor |
+|---|---|
+| id | `neutral-base` |
+| nombre | Neutral Base |
+| versión | `1.0.0` |
+| categorías | `color`, `spacing` |
+| propósito | base neutral y portable: grises **primitive**, un rol de superficie **semantic** y una escala de espaciado **primitive** mínima. |
+
+Es el único preset del catálogo en v1. El catálogo empaquetado permite incorporar más presets en
+versiones futuras; el README documenta únicamente lo que existe hoy.
+
+### Comandos
+
+```bash
+npx neuraz-ds presets list                 # lista el catálogo empaquetado
+npx neuraz-ds presets inspect neutral-base  # detalle del preset (categorías, tokens)
+npx neuraz-ds presets plan neutral-base     # PREVIEW: qué crearía/omitiría; nunca escribe
+npx neuraz-ds presets apply neutral-base    # aplica de forma segura (recalcula el plan y escribe)
+```
+
+Cada subcomando acepta `--json` (local al subcomando, no global) para una salida estable y headless.
+
+### plan frente a apply
+
+```text
+plan  → recalcula el diff contra tu Design System → muestra el preview → NUNCA escribe.
+apply → recalcula el plan → escribe SOLO si es seguro (sin conflictos bloqueantes).
+```
+
+Ambos son deterministas y derivan del mismo motor de diff; `plan` es estrictamente de solo lectura.
+
+### Seguridad del merge
+
+- **add-only**: solo crea tokens y grupos intermedios ausentes; **no** elimina ni **sobrescribe**
+  contenido existente.
+- **conflictos bloqueantes**: si un token del preset difiere del host en valor, tipo, nivel
+  foundation o alias, el plan se marca **no escribible** y `apply` se detiene (exit `4`) sin tocar el
+  archivo; los `create` seguros se conservan en el preview.
+- **descripción distinta**: si solo difiere `$description`, no es un conflicto: la operación es
+  `skip` (no bloqueante) y se preserva la descripción del host.
+- **target fijo**: siempre escribe `design-system/tokens/base.tokens.json`; con contención de rutas
+  (sin symlinks fuera de la raíz).
+- **escritor atómico**: escritura a un temporal + `rename` atómico; nunca deja escrituras parciales.
+  Ante fallo de escritura el archivo original queda intacto (exit `6`).
+- **concurrencia optimista**: detecta cambios del archivo entre lectura y escritura.
+- **idempotencia**: aplicar dos veces el mismo preset es `unchanged` (exit `2`); los bytes y el
+  `mtime` del archivo no cambian.
+- **verificación posterior**: tras escribir, se reanaliza el resultado; ante `verification-error`
+  (exit `7`) se **retiene un backup**. No hay rollback automático destructivo.
+
+### Opciones intencionalmente ausentes en v1
+
+```text
+--force       (no existe: los conflictos nunca se fuerzan)
+--category    (no existe: no hay filtrado por categoría)
+--dry-run     (no existe: `plan` ya es el preview de solo lectura)
+```
+
+Tampoco están disponibles aquí: themes, dark mode, component tokens, presets externos/marketplace,
+Figma, importadores de URL/CSS, imágenes, IA, viewer, editor, asset manager, MCP ni build/export.
+
 ### Comandos disponibles
 
 | Comando | Descripción |
@@ -125,6 +202,10 @@ forma superficial y pueden producir warnings heredados de `inspect`.
 | `neuraz-ds validate [--json]` | Valida el Design System administrado **sin modificar archivos**. |
 | `neuraz-ds inspect [--json]` | Inspecciona estructura, tokens y estado **sin modificar archivos**. |
 | `neuraz-ds foundations [--json]` | Inspecciona categorías foundation y niveles **sin modificar archivos**. |
+| `neuraz-ds presets list [--json]` | Lista el catálogo de presets empaquetado **sin modificar archivos**. |
+| `neuraz-ds presets inspect <id> [--json]` | Detalla un preset **sin modificar archivos**. |
+| `neuraz-ds presets plan <id> [--json]` | Previsualiza la aplicación **sin modificar archivos**. |
+| `neuraz-ds presets apply <id> [--json]` | Aplica el preset de forma segura (add-only, atómica). |
 | `neuraz-ds --help` / `<cmd> --help` | Ayuda. |
 | `neuraz-ds --version` | Versión del gestor. |
 
@@ -143,7 +224,9 @@ forma superficial y pueden producir warnings heredados de `inspect`.
 | 70 | Error interno de frontera CLI (no contractual) |
 
 `validate`, `inspect` y `foundations` **no** usan `1`, `2` ni `7` en su flujo normal (operaciones de
-solo lectura).
+solo lectura). `presets list/inspect/plan` también son de solo lectura; `presets apply` sí puede usar
+`2` (sin cambios / idempotente), `4` (conflicto bloqueante), `6` (error de escritura) y `7`
+(verificación posterior tras escribir).
 
 ## Salida JSON v1
 
@@ -192,6 +275,11 @@ Resumen de DTOs:
 - `foundations --json`: contrato separado e independiente del JSON v1 de 003; incluye `host`,
   `structuralState`, las nueve `categories`, `unresolved`, `summary`, `validation` y `limits`.
   Conserva todos los tokens foundation, sin cota de 200.
+- `presets <sub> --json`: contrato propio (`formatVersion: "1.0.0"`), aislado de los envelopes de 003
+  y 004. `command` es `"preset-list"`, `"preset-inspect"`, `"preset-plan"` o `"preset-apply"`;
+  `outcome` cubre `success`/`applied`/`unchanged`/`invalid-preset`/`conflict`/`not-found`/
+  `read-error`/`write-error`/`verification-error` (más `internal-error` en la frontera CLI). No emite
+  rutas absolutas, stacks ni contenidos de archivo.
 
 ## Arquitectura headless
 
@@ -212,16 +300,20 @@ de dominio en crudo ni ejecuta un segundo análisis.
 
 ## Estado y límites de esta versión
 
-Implementa `init`, `validate`, `inspect` y `foundations`. Límites actuales (no son defectos):
+Implementa `init`, `validate`, `inspect`, `foundations` y `presets`. Límites actuales (no son
+defectos):
 
 - **un** Design System por proyecto; **tres** documentos administrados; **un** archivo de tokens;
 - tokens en **JSON DTCG 2025.10**; inspección **profunda** solo de `color`;
 - los otros **12 tipos** DTCG reconocidos se validan de forma superficial y producen un *warning*
   (`dtcg-type-not-deeply-inspected`), sin invalidar el Design System;
-- `foundations` clasifica solo foundation primitives/semantics; no contiene presets, themes, CSS ni
-  edición de tokens. Es la base para trabajos futuros 005/006, que **no** están disponibles aquí;
+- `foundations` clasifica solo foundation primitives/semantics;
+- `presets` ofrece **un** preset empaquetado (`neutral-base`) con merge **add-only** sobre el archivo
+  de tokens; **sin** `--force`/`--category`/`--dry-run`, **sin** delete, themes, dark mode, component
+  tokens, presets externos/marketplace ni recomendador automático. Es la base para 006 (build/export),
+  que **no** está disponible aquí;
 - **sin** reparación/edición/migración, **sin** TUI/viewer/MCP, **sin** Style Dictionary y **sin**
-  múltiples themes/presets ni múltiples archivos de tokens.
+  múltiples themes ni múltiples archivos de tokens.
 
 ### Roadmap (futuro, no disponible)
 
@@ -243,8 +335,8 @@ npm run build       # compila a dist/
 
 Requiere **Node.js `>=22`**. Construido con Spec-Driven Development
 ([GitHub Spec Kit](https://github.com/github/spec-kit)); especificaciones en
-[`specs/001-ds-init/`](specs/001-ds-init/), [`specs/002-ds-validate-inspect/`](specs/002-ds-validate-inspect/)
-y [`specs/003-json-output/`](specs/003-json-output/), decisiones en [`docs/adr/`](docs/adr/)
-y [`specs/004-foundations/`](specs/004-foundations/), decisiones en [`docs/adr/`](docs/adr/)
-(0001–0017), principios en
+[`specs/001-ds-init/`](specs/001-ds-init/), [`specs/002-ds-validate-inspect/`](specs/002-ds-validate-inspect/),
+[`specs/003-json-output/`](specs/003-json-output/), [`specs/004-foundations/`](specs/004-foundations/)
+y [`specs/005-presets/`](specs/005-presets/), decisiones en [`docs/adr/`](docs/adr/)
+(0001–0021), principios en
 [`.specify/memory/constitution.md`](.specify/memory/constitution.md).

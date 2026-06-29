@@ -1,12 +1,36 @@
 # Quickstart: Design System Presets
 
-This is target behavior for `005-presets`; it is not implemented during `/speckit-plan`.
+`005-presets` is implemented. This is the reproducible end-to-end flow against the installed package.
 
 ## Prerequisites
 
 - Node >=22.
 - A project initialized with `neuraz-ds init` for plan/apply.
 - Package installed with bundled `presets/` assets.
+
+## 0. Install and initialize
+
+```bash
+npm install -D @neuraz/design-system-manager
+
+npx neuraz-ds init                          # interactive (TTY); creates the local Design System
+npx neuraz-ds presets list
+npx neuraz-ds presets inspect neutral-base
+npx neuraz-ds presets plan neutral-base
+npx neuraz-ds presets apply neutral-base    # first apply
+npx neuraz-ds foundations
+npx neuraz-ds presets apply neutral-base    # second apply (idempotent)
+```
+
+Outcomes and exit codes for the two applies:
+
+```text
+first apply  → outcome: applied   → wrote: true   → exit: 0
+second apply → outcome: unchanged → wrote: false  → exit: 2
+```
+
+The bundled catalog is read from the package (`import.meta.url`), never from the host repository or
+`process.cwd()`; the same flow works regardless of the current directory.
 
 ## 1. List bundled presets
 
@@ -102,6 +126,24 @@ Expected:
 - contributed foundation categories and primitive/semantic levels are observable;
 - existing `foundations` JSON contract remains unchanged.
 
+## 8. JSON outputs (headless)
+
+Every subcommand accepts `--json` (local, not global). Example shapes (trimmed):
+
+```jsonc
+// neuraz-ds presets list --json
+{ "formatVersion": "1.0.0", "command": "preset-list", "outcome": "success", "result": { "presets": [ { "id": "neutral-base", "name": "Neutral Base", "version": "1.0.0", "includedCategories": ["color", "spacing"] } ] } }
+
+// neuraz-ds presets apply neutral-base --json (first apply)
+{ "formatVersion": "1.0.0", "command": "preset-apply", "outcome": "applied", "result": { "wrote": true, "targetFile": "design-system/tokens/base.tokens.json" } }
+```
+
+## Options intentionally unavailable in v1
+
+`presets` has no `--force`, no `--category`, no `--dry-run` (use `plan` as the read-only preview), no
+`delete`, no themes/modes/dark/light, no component tokens, no external/local presets, no recommender,
+and no `006` build/export.
+
 ## Validation Commands
 
 During implementation and closure, run:
@@ -111,7 +153,7 @@ npm run typecheck
 npm run lint
 npm test
 npm run build
-npm pack --dry-run
+npm pack --dry-run --json
 ```
 
-The full regression baseline before implementation is `938/938` tests across `148` files.
+The closure baseline for `005-presets` is `1264/1264` tests across `208` files.
