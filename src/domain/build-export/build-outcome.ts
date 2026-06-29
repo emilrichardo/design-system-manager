@@ -62,6 +62,38 @@ export interface BuildConflict {
   readonly blocksWrite: boolean;
 }
 
+// ── T073 (006) — Ownership del output (autoridad: build manifest previo) ─────────────────────────
+
+/** Estado de ownership del directorio de salida frente al build manifest previo. */
+export type BuildOwnershipState =
+  | "empty"
+  | "trusted"
+  | "untrusted-build-manifest"
+  | "required-path-owned-by-unknown"
+  | "managed-artifact-modified"
+  | "managed-artifact-missing"
+  | "unsupported-unknown-node";
+
+/** Estados de ownership que NO permiten publicar (bloquean con `conflict`, `wrote:false`). */
+export const BLOCKING_OWNERSHIP_STATES: readonly BuildOwnershipState[] = [
+  "untrusted-build-manifest",
+  "required-path-owned-by-unknown",
+  "managed-artifact-modified",
+  "managed-artifact-missing",
+  "unsupported-unknown-node",
+] as const;
+
+/** Resultado de clasificación de ownership: estado + conflictos deterministas. */
+export interface BuildOwnership {
+  readonly state: BuildOwnershipState;
+  readonly conflicts: readonly BuildConflict[];
+}
+
+/** `empty` y `trusted` permiten continuar; el resto bloquea. */
+export function ownershipAllowsPublish(state: BuildOwnershipState): boolean {
+  return state === "empty" || state === "trusted";
+}
+
 /** Estado de disponibilidad/recuperación del directorio de salida. Rutas relativas únicamente. */
 export interface BuildRecoveryState {
   readonly outputAvailable: boolean;

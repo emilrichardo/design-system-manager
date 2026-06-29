@@ -13,8 +13,35 @@ export type {
   BuildConflict,
   BuildRecoveryState,
   SafeBuildError,
+  BuildOwnershipState,
+  BuildOwnership,
 } from "./build-outcome.js";
-export { BUILD_OUTCOMES, EXPORT_OUTCOMES, recoveryInvariantHolds, wroteInvariantHolds } from "./build-outcome.js";
+export {
+  BUILD_OUTCOMES,
+  EXPORT_OUTCOMES,
+  BLOCKING_OWNERSHIP_STATES,
+  recoveryInvariantHolds,
+  wroteInvariantHolds,
+  ownershipAllowsPublish,
+} from "./build-outcome.js";
+
+export type { BuildManifestV1, BuildManifestArtifactV1, BuildManifestValidation } from "./build-manifest.js";
+export {
+  BUILD_MANIFEST_FORMAT_VERSION,
+  BUILD_MANIFEST_FILENAME,
+  BUILD_OUTPUT_ROOT,
+  BUILD_SOURCE_LOGICAL_PATH,
+  isSha256Hex,
+  isSafeRelativePath,
+  validateBuildManifestV1,
+} from "./build-manifest.js";
+
+export type {
+  PreviousBuildManifest,
+  UnknownPreservationPolicy,
+  CandidateBuildManifest,
+  BuildPlan,
+} from "./build-plan.js";
 
 export type {
   VerificationStatus,

@@ -2,8 +2,9 @@
 // `NormalizedTokenSet`, construye el contrato `ResolvedTokensV1`, serializa en UTF-8 determinista
 // (2 espacios + LF final, sin BOM) y devuelve un `BuildArtifact`. No toca filesystem ni reporters.
 import { createBuildArtifact, type BuildArtifact } from "../../domain/build-export/artifact.js";
-import { artifactContentType, artifactFilename, type BuildFormat } from "../../domain/build-export/build-format.js";
+import { BUILD_FORMATS, artifactContentType, artifactFilename, type BuildFormat } from "../../domain/build-export/build-format.js";
 import { compareCanonical } from "../../domain/build-export/build-token-order.js";
+import type { BuildManifestV1 } from "../../domain/build-export/build-manifest.js";
 import type { NormalizedTokenSet } from "../../domain/build-export/normalized-token.js";
 import {
   mapResolvedTokensV1,
@@ -173,4 +174,29 @@ export function renderResolvedTokensArtifact(set: NormalizedTokenSet): ResolvedT
       contentHash: sha256Hex(serialized.bytes),
     }),
   };
+}
+
+// ── T070 (006) — Serializer determinista del build manifest (design-system/build/manifest.json) ──
+// Construye explícitamente el orden de claves del contrato (formatVersion, source, sourceHash,
+// artifacts) y de cada artifact (format, relativePath, contentHash, byteLength); reordena artifacts
+// css/json/typescript de forma defensiva (no depende del insertion order); no muta el input.
+export function serializeBuildManifestV1(manifest: BuildManifestV1): Uint8Array {
+  const orderedArtifacts = [...manifest.artifacts]
+    .sort((a, b) => BUILD_FORMATS.indexOf(a.format) - BUILD_FORMATS.indexOf(b.format))
+    .map((artifact) => ({
+      format: artifact.format,
+      relativePath: artifact.relativePath,
+      contentHash: artifact.contentHash,
+      byteLength: artifact.byteLength,
+    }));
+
+  const document = {
+    formatVersion: manifest.formatVersion,
+    source: manifest.source,
+    sourceHash: manifest.sourceHash,
+    artifacts: orderedArtifacts,
+  };
+
+  const text = `${JSON.stringify(document, null, 2)}\n`;
+  return new TextEncoder().encode(text);
 }

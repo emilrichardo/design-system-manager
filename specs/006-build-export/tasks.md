@@ -157,28 +157,28 @@
 
 ### Tasks
 
-- [ ] T068 [US10] Crear `src/domain/build-export/build-manifest.ts` con `BuildManifestV1` (`formatVersion` primera clave, `source` lógico, `sourceHash`, `artifacts`) y `BuildManifestArtifactV1` (`format`, `relativePath`, `contentHash`, `byteLength`); orden css/json/typescript; sin self-entry; sin timestamp/env/cwd/host.
-- [ ] T069 [US01] Crear `src/application/build-export/manifest-builder.ts`: ensamblar `BuildManifestV1` desde artifacts + `sourceHash`; SHA-256 minúscula; `byteLength` exacto; paths relativos.
-- [ ] T070 [US01] Añadir en `src/infrastructure/build-export/json-renderer.ts` `serializeBuildManifestV1`: dos espacios + LF final, UTF-8 sin BOM.
-- [ ] T071 [P] [US10] Crear `tests/application/build-export/build-manifest.test.ts`: `formatVersion` 1.0.0; `source` lógico (token source, no host manifest); sin self-entry; orden de artifacts; `byteLength`; sin timestamps/cwd/hostname/rutas absolutas.
-- [ ] T072 [US10] Crear `src/domain/build-export/build-plan.ts` con `BuildPlan` (`outputRoot`, `sourceHash`, `artifacts`, `manifest`, `previousBuildManifest`, `requiredPaths`, `unknownPolicy`); invariante: sin conjunto candidato parcial.
-- [ ] T073 [US10] Añadir en `src/domain/build-export/build-outcome.ts` el modelo `BuildOwnership` (`empty|trusted|untrusted-build-manifest|required-path-owned-by-unknown|managed-artifact-modified|managed-artifact-missing|unsupported-unknown-node`) y los códigos estables de `BuildConflict`.
-- [ ] T074 [US10] Crear `src/application/build-export/ownership.ts`: clasificar el build manifest previo (parseable/corrupto/no soportado/ausente) y los artifacts declarados; la autoridad de ownership es únicamente el build manifest (`design-system/build/manifest.json`), nunca el Design System host manifest (`design-system/design-system.json`).
-- [ ] T075 [P] [US19] Crear `tests/domain/build-export/manifest-terminology.test.ts` que documente y verifique la distinción host manifest vs build manifest (paths y propósito).
-- [ ] T076 [P] [US10] Crear `tests/application/build-export/ownership-empty.test.ts`: primer build sin build manifest ni required paths → `empty` (permitido).
-- [ ] T077 [P] [US10] Crear `tests/application/build-export/ownership-trusted.test.ts`: build manifest soportado con hashes coincidentes → `trusted`.
-- [ ] T078 [P] [US10] Crear `tests/application/build-export/ownership-manifest-absent-required-present.test.ts`: build manifest ausente con required paths presentes → `required-path-owned-by-unknown`.
-- [ ] T079 [P] [US10] Crear `tests/application/build-export/ownership-manifest-corrupt.test.ts`: build manifest corrupto → `untrusted-build-manifest`.
-- [ ] T080 [P] [US10] Crear `tests/application/build-export/ownership-manifest-unknown-version.test.ts`: versión desconocida → `untrusted-build-manifest`.
-- [ ] T081 [P] [US10] Crear `tests/application/build-export/ownership-artifact-modified.test.ts`: managed artifact modificado → `managed-artifact-modified`.
-- [ ] T082 [P] [US10] Crear `tests/application/build-export/ownership-artifact-missing.test.ts`: managed artifact faltante → `managed-artifact-missing`.
-- [ ] T083 [P] [US10] Crear `tests/application/build-export/ownership-unknown-file-required-path.test.ts`: archivo regular desconocido en required path → `required-path-owned-by-unknown`.
-- [ ] T084 [P] [US10] Crear `tests/application/build-export/ownership-unknown-dir-required-path.test.ts`: directorio desconocido en required path → `required-path-owned-by-unknown`.
-- [ ] T085 [P] [US10] Crear `tests/application/build-export/ownership-artifact-bad-hash.test.ts`: artifact declarado con hash inválido → `untrusted-build-manifest`.
-- [ ] T086 [P] [US10] Crear `tests/application/build-export/ownership-artifact-outside-root.test.ts`: artifact declarado fuera del output root → `untrusted-build-manifest`/unsafe.
-- [ ] T087 [P] [US10] Crear `tests/application/build-export/ownership-manifest-duplicate-path.test.ts`: build manifest con path duplicado → `untrusted-build-manifest`.
-- [ ] T088 [P] [US10] Crear `tests/application/build-export/ownership-manifest-unknown-artifact.test.ts`: build manifest con artifact desconocido → `untrusted-build-manifest`.
-- [ ] T089 Gate F: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T068 [US10] Crear `src/domain/build-export/build-manifest.ts` con `BuildManifestV1` (`formatVersion` primera clave, `source` lógico, `sourceHash`, `artifacts`) y `BuildManifestArtifactV1` (`format`, `relativePath`, `contentHash`, `byteLength`); orden css/json/typescript; sin self-entry; sin timestamp/env/cwd/host.
+- [X] T069 [US01] Crear `src/application/build-export/manifest-builder.ts`: ensamblar `BuildManifestV1` desde artifacts + `sourceHash`; SHA-256 minúscula; `byteLength` exacto; paths relativos.
+- [X] T070 [US01] Añadir en `src/infrastructure/build-export/json-renderer.ts` `serializeBuildManifestV1`: dos espacios + LF final, UTF-8 sin BOM.
+- [X] T071 [P] [US10] Crear `tests/application/build-export/build-manifest.test.ts`: `formatVersion` 1.0.0; `source` lógico (token source, no host manifest); sin self-entry; orden de artifacts; `byteLength`; sin timestamps/cwd/hostname/rutas absolutas.
+- [X] T072 [US10] Crear `src/domain/build-export/build-plan.ts` con `BuildPlan` (`outputRoot`, `sourceHash`, `artifacts`, `manifest`, `previousBuildManifest`, `requiredPaths`, `unknownPolicy`); invariante: sin conjunto candidato parcial.
+- [X] T073 [US10] Añadir en `src/domain/build-export/build-outcome.ts` el modelo `BuildOwnership` (`empty|trusted|untrusted-build-manifest|required-path-owned-by-unknown|managed-artifact-modified|managed-artifact-missing|unsupported-unknown-node`) y los códigos estables de `BuildConflict`.
+- [X] T074 [US10] Crear `src/application/build-export/ownership.ts`: clasificar el build manifest previo (parseable/corrupto/no soportado/ausente) y los artifacts declarados; la autoridad de ownership es únicamente el build manifest (`design-system/build/manifest.json`), nunca el Design System host manifest (`design-system/design-system.json`).
+- [X] T075 [P] [US19] Crear `tests/domain/build-export/manifest-terminology.test.ts` que documente y verifique la distinción host manifest vs build manifest (paths y propósito).
+- [X] T076 [P] [US10] Crear `tests/application/build-export/ownership-empty.test.ts`: primer build sin build manifest ni required paths → `empty` (permitido).
+- [X] T077 [P] [US10] Crear `tests/application/build-export/ownership-trusted.test.ts`: build manifest soportado con hashes coincidentes → `trusted`.
+- [X] T078 [P] [US10] Crear `tests/application/build-export/ownership-manifest-absent-required-present.test.ts`: build manifest ausente con required paths presentes → `required-path-owned-by-unknown`.
+- [X] T079 [P] [US10] Crear `tests/application/build-export/ownership-manifest-corrupt.test.ts`: build manifest corrupto → `untrusted-build-manifest`.
+- [X] T080 [P] [US10] Crear `tests/application/build-export/ownership-manifest-unknown-version.test.ts`: versión desconocida → `untrusted-build-manifest`.
+- [X] T081 [P] [US10] Crear `tests/application/build-export/ownership-artifact-modified.test.ts`: managed artifact modificado → `managed-artifact-modified`.
+- [X] T082 [P] [US10] Crear `tests/application/build-export/ownership-artifact-missing.test.ts`: managed artifact faltante → `managed-artifact-missing`.
+- [X] T083 [P] [US10] Crear `tests/application/build-export/ownership-unknown-file-required-path.test.ts`: archivo regular desconocido en required path → `required-path-owned-by-unknown`.
+- [X] T084 [P] [US10] Crear `tests/application/build-export/ownership-unknown-dir-required-path.test.ts`: directorio desconocido en required path → `required-path-owned-by-unknown`.
+- [X] T085 [P] [US10] Crear `tests/application/build-export/ownership-artifact-bad-hash.test.ts`: artifact declarado con hash inválido → `untrusted-build-manifest`.
+- [X] T086 [P] [US10] Crear `tests/application/build-export/ownership-artifact-outside-root.test.ts`: artifact declarado fuera del output root → `untrusted-build-manifest`/unsafe.
+- [X] T087 [P] [US10] Crear `tests/application/build-export/ownership-manifest-duplicate-path.test.ts`: build manifest con path duplicado → `untrusted-build-manifest`.
+- [X] T088 [P] [US10] Crear `tests/application/build-export/ownership-manifest-unknown-artifact.test.ts`: build manifest con artifact desconocido → `untrusted-build-manifest`.
+- [X] T089 Gate F: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: ninguna; manifest y ownership son nuevos.
 **Suggested commit**: `feat: add build manifest and ownership classification`
