@@ -13,6 +13,18 @@
 | `json` | `tokens.resolved.json` | `application/json; charset=utf-8` |
 | `typescript` | `tokens.ts` | `text/typescript; charset=utf-8` |
 
+## Schema Concept
+
+```text
+BuildArtifact =
+  format
+  relativePath
+  contentType
+  bytes
+  contentHash
+  byteLength
+```
+
 ## Invariants
 
 - UTF-8, no BOM, LF newline, final newline for text artifacts.
@@ -27,6 +39,7 @@ CSS:
 ```css
 :root {
   --color-base-blue-500: #0066ff;
+  --color-surface-default: var(--color-base-blue-500);
 }
 ```
 
@@ -41,6 +54,23 @@ export const tokens = {
 ## Errors
 
 Artifacts are absent when rendering fails. Build never writes a subset of this contract.
+CSS rendering fails before bytes are emitted for invalid custom-property names, name collisions,
+unrenderable aliases, unsupported effective types or values, non-finite numbers, unsupported color
+shapes, unsupported composite types, or string escaping failures. JSON and TypeScript artifacts may
+still be valid for JSON-safe values when CSS is unsupported.
+
+## CSS V1 Rules
+
+- Custom property name: `"--" + token path segments joined with "-"`.
+- Segment regex: `^[A-Za-z0-9_][A-Za-z0-9_-]*$`; preserve case; no lowercasing, Unicode
+  normalization, identifier escaping or prefix.
+- Collision example: `foo.bar-baz` and `foo-bar.baz` both become `--foo-bar-baz` and fail with
+  `css-name-collision`.
+- Alias output uses the immediate alias target: `var(--target-name)`.
+- Supported or conditional scalar types: `color`, `dimension`, `number`, `string`, `fontFamily`,
+  `fontWeight`, `duration`, `cubicBezier`, subject to the matrix in `research.md`.
+- Unsupported in CSS v1: `boolean`, `strokeStyle`, `border`, `transition`, `shadow`, `gradient`,
+  `typography` and any analyzer-admitted shape without exact CSS bytes.
 
 ## Null Policy
 

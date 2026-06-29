@@ -1,71 +1,113 @@
 # Research: Build and Export
 
-All decisions are resolved for planning; no `NEEDS CLARIFICATION` remains.
+All decisions are resolved for planning; no open clarification markers remain.
 
 ## 1. CSS Serialization by DTCG Type
 
-**Decision**: CSS v1 admits `color`, `dimension`, `fontFamily`, `fontWeight`, `duration`,
-`cubicBezier`, and `number`. Composite types are rejected for CSS v1 with `unsupported-value`.
+**Decision**: CSS v1 is conservative. A type is supported only when the current analyzer-admitted value
+shape gives enough information to serialize exact, deterministic CSS bytes. Unsupported CSS values
+return `unsupported-value` with `format: "css"`, `tokenPath`, effective `type`, stable code, and
+`wrote:false`; no partial CSS is emitted.
 
-| DTCG type | CSS v1 | Representation | Reason |
-|---|---:|---|---|
-| `color` | yes | hex when available, otherwise deterministic `rgb()`/`rgba()` from sRGB components | Existing deep validation supports sRGB color; direct CSS value. |
-| `dimension` | yes | number + unit from DTCG value object | Required by spacing/radius/sizing. |
-| `fontFamily` | yes | comma-separated escaped font family list/string | Typography needs family tokens. |
-| `fontWeight` | yes | number or known keyword string | CSS-native. |
-| `duration` | yes | numeric value + `ms`/`s` unit | Motion primitive. |
-| `cubicBezier` | yes | `cubic-bezier(n, n, n, n)` | CSS-native timing function. |
-| `number` | yes | finite JSON number string | Opacity and unitless typography. |
-| `strokeStyle` | no | n/a | Composite/semantic mapping is ambiguous in v1. |
-| `border` | no | n/a | Composite; could require multiple CSS variables. |
-| `transition` | no | n/a | Composite; aliases and ordering need separate design. |
-| `shadow` | no | n/a | Composite lists are easy to misrepresent. |
-| `gradient` | no | n/a | Complex CSS grammar not in scope. |
-| `typography` | no | n/a | Composite; should not silently flatten. |
+Classes:
 
-**Rationale**: The admitted set covers simple CSS-native primitives from the spec without inventing
-lossy composite serialization.
+- `SUPPORTED`: accepted whenever the runtime shape below matches.
+- `CONDITIONALLY_SUPPORTED`: accepted only for the listed shape/restrictions.
+- `UNSUPPORTED_IN_CSS_V1`: rejected even if JSON/TS can represent the value.
 
-**Alternatives considered**: Support all 13 recognized DTCG types; support only `color`.
+| DTCG type | CSS v1 class | Runtime shape admitted for CSS | Restrictions | Exact output | Example | Error when rejected |
+|---|---|---|---|---|---|---|
+| `color` | `CONDITIONALLY_SUPPORTED` | object `{ colorSpace: "srgb", components: [n,n,n], hex?: "#RRGGBB", alpha?: n }` accepted by current deep analyzer | v1 CSS supports only `hex` present and `alpha` absent or `1`; other analyzer-valid color objects are valid DS but not CSS v1 | lowercase `#rrggbb` | `#0066ff` | `css-color-unsupported-shape` |
+| `dimension` | `CONDITIONALLY_SUPPORTED` | object `{ value: finite number, unit: "px" | "rem" | "em" | "%" }` | no whitespace in unit, exact lowercase units, finite value only | `<number><unit>` | `16px` | `css-dimension-unsupported-shape` |
+| `number` | `SUPPORTED` | finite JSON number | `NaN`/infinity impossible in JSON but still rejected defensively; `-0` -> `0`; decimal `.`; no locale; no scientific output | shortest stable decimal without locale | `0.875` | `css-number-invalid` |
+| `string` | `CONDITIONALLY_SUPPORTED` | string value with effective type `string` when admitted by future analyzer evolution | double-quoted CSS string; names are not escaped | escaped string | `"Primary"` | `css-string-unsupported-type` |
+| `boolean` | `UNSUPPORTED_IN_CSS_V1` | any boolean | CSS has no unambiguous design-token boolean scalar | n/a | n/a | `css-boolean-unsupported` |
+| `fontFamily` | `CONDITIONALLY_SUPPORTED` | nonempty string or nonempty string array | exact generic keywords `serif`, `sans-serif`, `monospace`, `cursive`, `fantasy`, `system-ui` may be unquoted; all other families use CSS string escaping | comma+space joined family list | `"Inter", system-ui` | `css-font-family-unsupported-shape` |
+| `fontWeight` | `CONDITIONALLY_SUPPORTED` | finite integer `1..1000` or string `normal`/`bold` | no other keywords in v1 | number or keyword | `700` | `css-font-weight-unsupported-shape` |
+| `duration` | `CONDITIONALLY_SUPPORTED` | object `{ value: finite number, unit: "ms" | "s" }` | exact lowercase units, no whitespace | `<number><unit>` | `120ms` | `css-duration-unsupported-shape` |
+| `cubicBezier` | `CONDITIONALLY_SUPPORTED` | array `[x1, y1, x2, y2]` finite numbers | `x1` and `x2` in `0..1`; `y1`/`y2` finite | `cubic-bezier(a, b, c, d)` | `cubic-bezier(0.4, 0, 0.2, 1)` | `css-cubic-bezier-unsupported-shape` |
+| `strokeStyle` | `UNSUPPORTED_IN_CSS_V1` | any | Composite/semantic mapping is ambiguous in v1 | n/a | n/a | `css-type-unsupported` |
+| `border` | `UNSUPPORTED_IN_CSS_V1` | any | Composite; could require multiple declarations | n/a | n/a | `css-type-unsupported` |
+| `transition` | `UNSUPPORTED_IN_CSS_V1` | any | Composite ordering/alias semantics need separate design | n/a | n/a | `css-type-unsupported` |
+| `shadow` | `UNSUPPORTED_IN_CSS_V1` | any | Composite lists are easy to misrepresent | n/a | n/a | `css-type-unsupported` |
+| `gradient` | `UNSUPPORTED_IN_CSS_V1` | any | Complex CSS grammar not in scope | n/a | n/a | `css-type-unsupported` |
+| `typography` | `UNSUPPORTED_IN_CSS_V1` | any | Composite; should not silently flatten | n/a | n/a | `css-type-unsupported` |
 
-**Rejected alternatives**: All 13 is too broad and risks incorrect CSS. Color-only would fail the
-specified foundations categories such as spacing, radius, typography, opacity and motion.
+**Rationale**: The current analyzer deeply validates only sRGB color objects. Other primitive-ish DTCG
+types are admitted only when a simple runtime shape can be checked locally without inventing composite
+conversions. Composites stay unsupported to avoid lossy output.
 
-**Impact**: `build` can fail with `unsupported-value` when any required CSS artifact cannot represent a
-token; `export json` and `export typescript` may still succeed for JSON-safe values.
+**Alternatives considered**: Support all recognized DTCG types; support only color; invent full CSS
+grammars for composites.
+
+**Rejected alternatives**: All recognized types is too broad and risks incorrect CSS. Color-only would
+make common spacing/typography/motion primitives unusable. Composite grammars need a separate product
+contract.
+
+**Impact**: `build` can fail with `unsupported-value` when CSS cannot represent a token; `export json`
+and `export typescript` may still succeed for JSON-safe values.
 
 ## 2. CSS Escaping
 
 **Decision**: Implement small pure CSS serializers per value type. Custom property names are generated
-by a separate typed function. String values use CSS string escaping; identifiers are emitted only after
-validation.
+by a separate validator and are never escaped in v1. String values use double quotes and escape `\`,
+`"`, LF, CR, form feed, NULL, C0 controls and DEL. Hex escapes use a trailing space terminator where a
+following hex digit could be consumed.
 
-**Rationale**: CSS escaping differs for identifiers, strings and raw numeric constructs. One helper
-would be unsafe.
+Examples:
 
-**Alternatives considered**: Inline escaping in the renderer; rely on raw DTCG strings.
+| Source string | CSS string bytes |
+|---|---|
+| `A "quote"` | `"A \"quote\""` |
+| `line\nbreak` | `"line\A break"` |
+| `nul\u0000x` | `"nul\0 x"` |
+| `tab\t9` | `"tab\9 9"` |
+
+Numeric serialization uses finite numbers only, decimal `.` only, no locale, no `toLocaleString`;
+`-0` serializes as `0` and scientific notation is not emitted.
+
+**Rationale**: CSS escaping differs for identifiers, strings and raw numeric constructs. Validating the
+identifier subset and escaping only values keeps public names predictable and testable.
+
+**Alternatives considered**: Inline escaping in the renderer; rely on raw DTCG strings; use CSS
+identifier escaping for token paths.
 
 **Rejected alternatives**: Inline escaping is hard to test exhaustively. Raw strings can break CSS or
-allow malformed declarations.
+allow malformed declarations. Identifier escaping would create surprising public names and collision
+rules; v1 rejects invalid names instead.
 
-**Impact**: Unit tests must cover quotes, backslashes, control characters, non-ASCII, `</style>`,
-newline, invalid units and invalid identifiers.
+**Impact**: Unit tests must cover quotes, backslashes, control characters, invalid units, invalid
+identifiers and finite-number formatting.
 
-## 3. CSS Naming and Collisions
+## 3. CSS Naming, Aliases and Collisions
 
 **Decision**: `tokenPathToCssCustomPropertyName(path)` transforms segments to one custom property name
-without locale folding, then a global collision map validates uniqueness before bytes are produced.
+exactly as `"--" + segments.join("-")`. A segment is nonempty and must match
+`^[A-Za-z0-9_][A-Za-z0-9_-]*$`. Case is preserved; there is no lowercasing, Unicode normalization,
+identifier escaping or configurable prefix. Dots are only token path separators.
 
-**Rationale**: The spec requires segment joining with `-` and collision detection, not silent
-resolution.
+**Collision rule**: Build a global map of transformed names to source paths before bytes are produced.
+`foo.bar-baz` and `foo-bar.baz` both become `--foo-bar-baz` and therefore return
+`unsupported-value` / `css-name-collision`.
 
-**Alternatives considered**: Prefix every variable; append hashes to collisions.
+**Alias rule**: CSS aliases emit `var(--<immediate-alias-target>)`. For
+`semantic.a -> semantic.b -> primitive.c`, CSS can emit `--semantic-a: var(--semantic-b);` and
+`--semantic-b: var(--primitive-c);`. Every target in the chain must exist, be a token, have a valid CSS
+name, generate a declaration and be type-compatible. Otherwise CSS returns `unsupported-value` with a
+stable alias code such as `css-alias-target-unrenderable`; it never falls back silently to the final
+resolved value.
 
-**Rejected alternatives**: Prefixes are out of scope. Hash suffixes hide source ambiguity and produce
-surprising public names.
+**Rationale**: The spec requires segment joining with `-`, collision detection, and alias preservation
+without surprising public names.
 
-**Impact**: `foo.bar-baz` and `foo-bar.baz` are a blocking `css-name-collision`. The error reports both
-logical paths and the generated name, no absolute paths.
+**Alternatives considered**: Prefix every variable; append hashes to collisions; inline final resolved
+values for invalid alias targets.
+
+**Rejected alternatives**: Prefixes are out of scope. Hash suffixes hide source ambiguity. Inlining on
+alias failure hides a source/rendering problem and weakens design-token semantics.
+
+**Impact**: Name and alias validation happen before CSS serialization; errors report logical paths and
+generated names only, no absolute paths.
 
 ## 4. TypeScript Serialization Safety
 
@@ -100,8 +142,9 @@ dependency is not justified.
 
 ## 6. Hashing
 
-**Decision**: SHA-256 lowercase hexadecimal over exact bytes. `sourceHash` hashes exact source bytes;
-`contentHash` hashes exact artifact bytes after serialization.
+**Decision**: SHA-256 lowercase hexadecimal over exact bytes. `sourceHash` hashes the exact raw bytes
+from the initial semantic source snapshot; the optional pre-publish source reread for build hashes
+current raw bytes only for comparison. `contentHash` hashes exact artifact bytes after serialization.
 
 **Rationale**: Existing preset writer already uses SHA-256; byte hashing is deterministic and avoids
 object-order ambiguity.
@@ -115,56 +158,81 @@ determinism.
 
 ## 7. Directory Publication Strategy
 
-**Decision**: Use sibling staging, managed-file backup, optimistic snapshot re-check, per-file publish
-and post-publication verification. Do not replace the whole `build/` directory.
+**Decision**: Use set-consistent transactional publication with a complete candidate directory. The
+writer inspects existing `build/`, validates ownership, classifies managed/unknown nodes, creates a
+sibling staging directory, securely copies allowed unknown regular files/directories into it, writes
+all new managed artifacts and the new build manifest there, verifies staging, revalidates concurrency,
+then publishes the candidate directory as a set by renaming prior `build/` to backup and staging to
+`build/`.
 
-**Rationale**: Whole-directory replacement conflicts with unknown-file preservation. A file-set writer
-can replace only managed paths and leave unknown files untouched.
+**Rationale**: Artifact-by-artifact publication can expose mixed managed sets. A complete candidate
+directory lets the future `design-system/build/` be verified before it becomes visible while preserving
+allowed unknown files.
 
-**Alternatives considered**: Atomic directory replacement; staging sibling + directory rename; backup +
-rename; per-file journal; versioned directories + pointer; lockfile only.
+**Alternatives considered**: Artifact-by-artifact managed-file publish; atomic directory replacement;
+versioned directories + pointer; lockfile only.
 
-**Rejected alternatives**: Directory replacement loses unknown files. Directory rename cannot merge
-unknown files. Pointer directories are a larger product change. Locks alone do not protect external
-edits.
+**Rejected alternatives**: Artifact-by-artifact publication violates set consistency. Blind directory
+replacement loses unknown files. Pointer directories are a larger product change. Locks alone do not
+protect external edits.
 
-**Impact**: The writer must honestly document that multi-file atomicity is best-effort by filesystem
-capabilities, backed by verification and backup.
+**Impact**: Valid states are complete prior directory, complete candidate directory, or prior directory
+temporarily moved with a full backup retained. A mixed managed artifact set is forbidden. The plan does
+not promise absolute atomicity on every filesystem.
 
 ## 8. POSIX and Windows Rename Behavior
 
-**Decision**: Stage in the same parent/volume and use rename only for individual files after
-preconditions are rechecked. Treat rename failure as `write-error`, preserve prior output where
-possible, and verify after success.
+**Decision**: Stage and backup under the same parent/volume. POSIX flow uses sibling directory renames,
+with the known limitation that replacing a non-empty directory requires two renames and may create a
+short availability window. Windows flow expects open directories/files, antivirus scanners and handles
+to block rename; it uses bounded retry, restoration before commit where possible, and retained backup
+with recovery metadata when restoration fails.
 
-**Rationale**: Same-volume file rename is the strongest common primitive; directory replacement
-semantics differ across platforms, especially when targets exist.
+**Rationale**: Same-volume sibling rename is the strongest shared primitive, but it is not a portable
+cross-platform transaction. The contract must describe recovery states honestly.
 
-**Alternatives considered**: Cross-volume temp dir; non-empty directory rename.
+**Alternatives considered**: Cross-volume temp dir; assume non-empty directory replacement; hide rename
+failure as unchanged.
 
-**Rejected alternatives**: Cross-volume rename can fail or copy. Non-empty directory replacement is not
-portable.
+**Rejected alternatives**: Cross-volume rename can fail or copy. Non-empty replacement semantics vary by
+platform. Reporting unchanged after a failed restore would be false.
 
-**Impact**: Tests inject rename failures and permissions rather than assuming OS-specific behavior.
+**Impact**: Tests inject rename failure, open-handle failure, restore success/failure and permissions
+rather than assuming OS-specific behavior.
 
 ## 9. Unknown File Preservation
 
-**Decision**: Preserve unknown files always. Unknown means "not declared by a supported previous
-manifest." Required path occupied by unknown file/directory blocks with `conflict`.
+**Decision**: Preserve unknown nodes only when they are regular files or regular directories, contained
+under `design-system/build/`, within documented count/depth/byte limits, and copyable byte-for-byte.
+The writer never follows symlinks, assumes hard-link safety, executes files or accepts sockets, FIFOs,
+devices, special node kinds or path escapes. Unsupported unknown nodes block with `conflict` /
+`unsupported-unknown-node`; unknown occupancy of a required path blocks with
+`required-path-owned-by-unknown`.
 
-**Rationale**: Constitution XIV prohibits overwriting unknown files silently.
+Limits reuse repo limits when available: unknown file count <= `ANALYSIS_LIMITS.maxNodes`, directory
+depth <= `ANALYSIS_LIMITS.maxDepth`, total copied bytes <= `ANALYSIS_LIMITS.maxTotalBytes` if present
+in the limit set, and per-file size <= the same byte budget. If the repo lacks a byte limit, the future
+task must add a named 006 limit in the same domain limit style before implementation.
 
-**Alternatives considered**: Clean build directory; trust fixed names as managed.
+**Rationale**: Constitution XIV prohibits overwriting unknown files silently, but copying arbitrary
+filesystem nodes into a candidate directory would be unsafe.
+
+**Alternatives considered**: Clean build directory; trust fixed names as managed; preserve every node
+kind.
 
 **Rejected alternatives**: Cleaning deletes user files. Fixed-name trust cannot distinguish manual
-files from prior generated files when manifest is absent/corrupt.
+files from prior generated files when build manifest is absent/corrupt. Preserving every node kind
+introduces link/device/special-file risks.
 
-**Impact**: First build with pre-existing `tokens.css` and no trusted manifest returns conflict.
+**Impact**: First build with pre-existing `tokens.css` and no trusted build manifest returns
+`required-path-owned-by-unknown`; allowed notes or subdirectories survive through candidate copy.
 
 ## 10. Manifest Ownership
 
-**Decision**: `manifest.json` is the only ownership authority for existing artifacts. Unsupported or
-corrupt manifest is untrusted, not repaired during build.
+**Decision**: The previous build manifest (`design-system/build/manifest.json`) is the only ownership
+authority for generated artifacts. The Design System host manifest (`design-system/design-system.json`)
+only proves the project is initialized and is never used for artifact ownership. Unsupported or corrupt
+build manifest is untrusted and not repaired during build.
 
 **Rationale**: Ownership by manifest is auditable and deterministic.
 
@@ -172,21 +240,27 @@ corrupt manifest is untrusted, not repaired during build.
 
 **Rejected alternatives**: Inference can overwrite user-created files.
 
-**Impact**: Manifest parsing/compatibility gets dedicated tests and public conflicts.
+**Impact**: Build manifest parsing/compatibility gets dedicated tests and public conflicts:
+`untrusted-build-manifest`, `managed-artifact-modified`, `managed-artifact-missing` and
+`required-path-owned-by-unknown`.
 
 ## 11. Optimistic Concurrency
 
-**Decision**: Snapshot source, manifest, managed artifacts, required path node kinds and symlink state;
-re-read/recheck immediately before publish. Any mismatch returns `conflict`, `wrote:false`.
+**Decision**: The initial semantic read produces `sourceHash` from exact raw bytes. Immediately before
+publication, `build` may perform one byte-only source reread, hash it, and compare it to `sourceHash`.
+It also rechecks previous build manifest, managed artifacts, required path node kinds and symlink
+state. Any mismatch returns `conflict`, `wrote:false`; source mismatch subtype is `source-modified`.
+The reread never decodes, parses, analyzes, rebuilds aliases, projects foundations or renders.
 
-**Rationale**: The CLI is local and short-lived; optimistic concurrency matches 005 without adding
-complex locks.
+**Rationale**: The CLI is local and short-lived; optimistic byte concurrency matches 005 without adding
+complex locks while preserving the one semantic read guarantee.
 
 **Alternatives considered**: Lockfiles; mtime-only checks.
 
 **Rejected alternatives**: Lockfiles are advisory and not enough alone. Mtime/size can miss changes.
 
-**Impact**: Tests need injected changes between render and publish.
+**Impact**: Tests need injected changes between render and publish and spies proving no second semantic
+analysis occurs.
 
 ## 12. Staging and fsync
 
@@ -205,22 +279,27 @@ expected pre-publish failures.
 
 ## 13. Backup
 
-**Decision**: Backup only previously managed files before replacement; remove backup after successful
-post-verification; retain backup on `verification-error` and expose only a relative path.
+**Decision**: Backup the complete previous build directory before the commit point. Remove backup after
+successful post-verification. Retain backup on `verification-error`, catastrophic restore failure, or
+any state where recovery is required, exposing only a relative path.
 
-**Rationale**: Mirrors 005's honest recovery model while avoiding destructive rollback.
+**Rationale**: The publication unit is now the directory set, so recovery must preserve the whole prior
+set, including unknown nodes.
 
-**Alternatives considered**: No backup; automatic rollback.
+**Alternatives considered**: No backup; backup only managed files; automatic rollback after commit.
 
-**Rejected alternatives**: No backup weakens recovery. Rollback is another destructive write after an
-already suspicious state.
+**Rejected alternatives**: No backup weakens recovery. Managed-only backup cannot restore unknown
+preservation. Rollback after commit is another destructive write after an already suspicious state.
 
-**Impact**: `verification-error` has `wrote:true` and retained backup.
+**Impact**: `verification-error` has `wrote:true`, `outputAvailable:true`, retained backup and
+`recoveryRequired:true`; catastrophic restore failure has `write-error`, `wrote:false`,
+`outputAvailable:false`, retained backup and `recoveryRequired:true`.
 
 ## 14. Verification Error
 
-**Decision**: A failure after publish is `verification-error`, not `write-error`, because bytes may have
-changed on disk. It reports safe diagnostics, retains backup and avoids rollback.
+**Decision**: A failure after the candidate directory becomes `build/` is `verification-error`, not
+`write-error`, because the commit point has passed and bytes may have changed on disk. It reports safe
+diagnostics, sets `wrote:true`, `outputAvailable:true`, retains backup and avoids rollback.
 
 **Rationale**: The user needs a truthful state report.
 
@@ -228,7 +307,8 @@ changed on disk. It reports safe diagnostics, retains backup and avoids rollback
 
 **Rejected alternatives**: Internal error hides the disk state. Rollback can worsen corruption.
 
-**Impact**: CLI exits 7 and JSON includes verification and backup fields.
+**Impact**: CLI exits 7 and JSON includes verification, `backupRelativePath`, `outputAvailable:true`
+and `recoveryRequired:true`.
 
 ## 15. Limits
 
@@ -270,7 +350,7 @@ without coupling directory-set publishing to preset application.
 **Alternatives considered**: Reuse `createSingleFileAtomicWriter` for each artifact; create one generic
 writer immediately.
 
-**Rejected alternatives**: Per-artifact writer cannot coordinate all-or-nothing set semantics. A broad
+**Rejected alternatives**: Per-artifact writer cannot coordinate set-consistent publication semantics. A broad
 generic writer before 006 needs are proven risks over-abstraction.
 
 **Impact**: `ArtifactSetWriter` is a new port with its own contract.

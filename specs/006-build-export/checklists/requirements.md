@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [x] No [NEEDS CLARIFICATION] markers remain
+- [x] No open clarification markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -33,9 +33,18 @@
 
 - [x] `build` and `export` are unambiguously distinguished (managed write vs stdout-only)
 - [x] Source vs derived artifacts are explicitly separated; build is unidirectional
-- [x] All-or-nothing build guaranteed (no partial artifact sets)
+- [x] Set-consistent build guaranteed (no mixed managed artifact set; recovery states explicit)
 - [x] A safe policy for unknown files in the output directory is defined
 - [x] CSS name-collision detection is specified (no silent resolution)
+- [x] One semantic source read is specified separately from byte-only concurrency reread
+- [x] `sourceHash` is defined over initial raw source bytes
+- [x] Reusable resolved token view is specified; no second alias graph for renderers
+- [x] CSS naming, string escaping and exhaustive support matrix are specified
+- [x] Design System host manifest and build manifest terminology is unambiguous
+- [x] Ownership conflicts are explicit (`source-modified`, unsupported unknown, unknown required path)
+- [x] Directory candidate publication is specified; artifact-by-artifact live publish is excluded
+- [x] Commit point, restore before commit, post-commit verification-error and catastrophic restore state are specified
+- [x] JSON examples in contracts are parseable JSON
 - [x] The spec does not require modifying the DTCG source
 - [x] The feature does not depend on a future viewer/editor to function
 - [x] Relationship to viewer/editor/Studio is described without implementing them
@@ -44,7 +53,7 @@
 - [x] Independent contracts (`ResolvedTokensV1`, `BuildManifestV1`, `BuildJsonEnvelopeV1`); no cast over 003/004/005
 - [x] Compatibility with `001`–`005` (behavior, JSON bytes, exit codes) is required
 - [x] Exit-code matrix reconciles with the historical common table (no historical change)
-- [x] 0 NEEDS CLARIFICATION
+- [x] 0 open clarification markers
 
 ## Notes
 

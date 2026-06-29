@@ -13,6 +13,20 @@ neuraz-ds export json
 neuraz-ds export typescript
 ```
 
+## Schema Concept
+
+```text
+export <format> success:
+  stdout = exact artifact bytes
+  stderr = empty
+  exit = 0
+
+export <format> expected error:
+  stdout = empty
+  stderr = safe human report
+  exit = mapped outcome code
+```
+
 ## Invariants
 
 - Success stdout is exact artifact bytes only.
@@ -20,7 +34,9 @@ neuraz-ds export typescript
 - Expected error stdout is empty.
 - Expected error stderr is a safe human report.
 - No `--json` option exists for export v1.
-- Export writes no files, creates no temporaries/backups/manifest and changes no mtimes.
+- Export writes no files, creates no temporaries/backups/build manifest and changes no mtimes.
+- Export performs only the initial semantic source read/analysis; it has no byte-only concurrency reread
+  because it does not publish.
 
 ## Examples
 

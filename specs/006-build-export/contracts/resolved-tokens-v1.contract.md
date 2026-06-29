@@ -31,13 +31,15 @@
 
 - Independent from `JsonEnvelopeV1`, `FoundationsJsonEnvelopeV1` and `PresetsJsonEnvelopeV1`.
 - Flat token-path record.
-- `value` is fully resolved; alias relation is preserved only in `aliasOf`.
+- `value` is the final fully resolved JSON-safe value; `aliasOf` is the immediate alias target path,
+  not the full chain. Public v1 does not expose `aliasChain`.
 - Unknown `$extensions`, raw source document and trust are excluded.
 
 ## Errors
 
 Invalid source blocks before this contract is produced. Unsupported CSS values do not prevent
-`export json` if JSON-safe.
+`export json` if JSON-safe. The JSON renderer consumes the shared `ResolvedTokenView`; it must not
+rebuild alias graphs independently.
 
 ## Null Policy
 

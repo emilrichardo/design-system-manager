@@ -31,7 +31,8 @@ neuraz-ds build
 
 Expected behavior:
 
-- Reads `design-system/tokens/base.tokens.json` once.
+- Performs one semantic read of `design-system/tokens/base.tokens.json`: raw bytes, UTF-8 decode,
+  JSON parse, DTCG analysis, alias graph, type resolution and foundation projection happen once.
 - Validates through the reused `002`/`004` analysis and foundation projection.
 - Creates `design-system/build/` when absent.
 - Writes:
@@ -42,6 +43,8 @@ Expected behavior:
 - Reports outcome `built`, `wrote:true`, exit `0`.
 - Leaves `design-system/tokens/base.tokens.json`, `neuraz-ds.config.json`, and
   `design-system/design-system.json` unchanged.
+- Immediately before publishing, build may reread only the source bytes to compare SHA-256 with the
+  initial `sourceHash`; it does not parse or analyze a second time.
 
 ## Second Build
 
@@ -84,7 +87,7 @@ Expected behavior:
 - stdout is exact CSS artifact bytes.
 - stderr is empty on success.
 - No `design-system/build/` directory is created or modified.
-- No manifest, staging, backup or mtime change occurs.
+- No build manifest, staging, backup or mtime change occurs.
 
 ## Export Resolved JSON
 
@@ -127,8 +130,17 @@ remains untouched after build.
 If an unknown file or directory occupies a required artifact path such as
 `design-system/build/tokens.css`, build returns `conflict`, `wrote:false`, exit `4`.
 
-If `manifest.json` is missing, corrupt or unsupported, existing required artifact paths are not trusted
-as managed and can block publication.
+The Design System host manifest is `design-system/design-system.json`; the build manifest is
+`design-system/build/manifest.json`.
+
+If the build manifest is missing and no required artifact paths exist, first build is allowed. If the
+build manifest is missing while required artifact paths exist, those paths are unknown and block with
+`required-path-owned-by-unknown`. Corrupt or unsupported build manifest blocks with
+`untrusted-build-manifest`; it is not treated as "project not initialized".
+
+Unknown regular files/directories are copied into the candidate directory when contained and within
+limits. Symlinks, sockets, FIFOs, devices, special nodes, escapes, or limit excess block with
+`unsupported-unknown-node`.
 
 ## Unsupported Values
 
@@ -140,14 +152,29 @@ format supports it.
 
 ## Manifest and Hashes
 
-`manifest.json` is planned to contain:
+Build `manifest.json` is planned to contain:
 
 - `formatVersion: "1.0.0"`;
 - source logical path and SHA-256 hash of exact source bytes;
 - ordered artifact metadata for CSS, JSON and TypeScript;
 - no timestamp, cwd, hostname, username, Node version or absolute path.
 
-The manifest is the ownership authority for future builds.
+The build manifest is the ownership authority for future builds. Its `source` is the logical token
+source path, not the Design System host manifest.
+
+## Publication and Recovery
+
+Build stages a complete future `design-system/build/` directory as a sibling, verifies it, rechecks
+concurrency, renames the prior `build/` to a backup, then renames staging to `build/`. It does not
+publish artifact-by-artifact into the live directory and does not promise absolute atomicity on every
+filesystem.
+
+Normal success and expected pre-commit failures leave either the complete prior set or complete
+candidate set. If restore fails after the prior directory was moved to backup, build reports
+`write-error`, `wrote:false`, `outputAvailable:false`, a retained `backupRelativePath`, and
+`recoveryRequired:true`. If verification fails after candidate publication, build reports
+`verification-error`, `wrote:true`, `outputAvailable:true`, retained backup and
+`recoveryRequired:true`.
 
 ## Safety
 

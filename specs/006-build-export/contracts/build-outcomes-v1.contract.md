@@ -35,6 +35,28 @@ read-error
 internal-error
 ```
 
+## Schema Concept
+
+```text
+BuildResult =
+  | built
+  | unchanged
+  | invalid-design-system
+  | unsupported-value
+  | conflict
+  | not-found
+  | read-error
+  | write-error
+  | verification-error
+
+ExportResult =
+  | exported
+  | invalid-design-system
+  | unsupported-value
+  | not-found
+  | read-error
+```
+
 ## Exit Mapping
 
 | Outcome | Exit |
@@ -54,6 +76,14 @@ internal-error
 - `unsupported-value` and `conflict` share exit 4 but remain distinct discriminants.
 - `not-found` distinguishes `design-system` and `source` where exposed.
 - Expected outcomes contain no raw `Error`, stack or absolute path.
+- Build conflicts include stable subtypes: `source-modified`, `unsupported-unknown-node`,
+  `required-path-owned-by-unknown`, `untrusted-build-manifest`, `managed-artifact-modified` and
+  `managed-artifact-missing`.
+- `write-error` before commit point has `wrote:false`. If restore fails after moving the prior build
+  directory, it also has `outputAvailable:false`, retained `backupRelativePath` and
+  `recoveryRequired:true`.
+- `verification-error` happens after the candidate directory commit point and has `wrote:true`,
+  `outputAvailable:true`, retained `backupRelativePath` and `recoveryRequired:true`.
 
 ## Examples
 
@@ -62,8 +92,20 @@ internal-error
 ```
 
 ```json
-{ "outcome": "verification-error", "wrote": true }
+{
+  "outcome": "verification-error",
+  "wrote": true,
+  "outputAvailable": true,
+  "backupRelativePath": ".build-backup-<internal>",
+  "recoveryRequired": true
+}
 ```
+
+## Errors
+
+Expected failures are represented as outcome discriminants plus safe `conflict`, `error`,
+`verification`, `outputAvailable`, `backupRelativePath` and `recoveryRequired` fields where meaningful.
+No raw `Error`, stack, absolute path or artifact bytes are exposed.
 
 ## Null Policy
 

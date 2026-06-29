@@ -7,23 +7,24 @@
 ## Summary
 
 Add headless `build` and `export` use cases that consume the existing local source
-`design-system/tokens/base.tokens.json`, reuse the closed `002`/`004` analysis/foundation pipeline
-exactly once per operation, project a normalized readonly token set, render deterministic artifacts,
-and either publish the complete managed artifact set to `design-system/build/` or emit one artifact to
-stdout with zero writes.
+`design-system/tokens/base.tokens.json`, reuse the closed `002`/`004` analysis/foundation pipeline in
+one semantic pass per operation, project a readonly resolved token view and normalized token set, render
+deterministic artifacts, and either publish a complete candidate `design-system/build/` directory as a
+set or emit one artifact to stdout with zero writes.
 
 The planned flow is:
 
 ```text
 base.tokens.json
-→ analyzeExistingDesignSystem (host + safe read + JSON.parse + DTCG analyzer)
+→ AnalyzedSourceSnapshot (one raw byte read + UTF-8 decode + JSON.parse + DTCG analyzer)
+→ ResolvedTokenView / TokenResolutionMap (same analyzer execution)
 → projectFoundationMetadata
 → projectFoundations
 → NormalizedTokenSet
 → ArtifactRenderer registry
 → BuildArtifact bytes
 → BuildManifestV1
-→ BuildPlan / BuildSnapshot
+→ BuildPlan / BuildSnapshot / BuildOwnership
 → ArtifactSetWriter
 → BuildVerification
 → BuildResult / BuildJsonEnvelopeV1 / CLI report
@@ -53,9 +54,11 @@ closed. POSIX and Windows filesystem behavior must be handled conservatively.
 **Project Type**: Single TypeScript package with the existing layer rule
 `domain <- application <- infrastructure <- cli`.
 
-**Performance Goals**: One safe source read, one `JSON.parse`, one DTCG traversal, one alias/type
-resolution, one foundation metadata pass, one foundation projection per operation; renderers are O(token
-count + byte length). No quadratic collision checks beyond map/set indexing.
+**Performance Goals**: One semantic source read, one UTF-8 decode, one `JSON.parse`, one DTCG traversal,
+one alias graph, one type resolution, one foundation metadata pass, one foundation projection per
+operation; `build` may add one byte-only source reread before publication to hash and compare
+concurrency, with no decode/parse/analyze/render. Renderers are O(token count + byte length). No
+quadratic collision checks beyond map/set indexing.
 
 **Constraints**: DTCG 2025.10 source of truth; no network; no generated-code execution; no dynamic
 plugins/templates; no Style Dictionary dependency in v1 despite constitutional alignment with the
@@ -170,12 +173,16 @@ filesystem/hash/rendering adapters and reporters; CLI only composes commands, st
 ## Current Architecture Findings
 
 - `analyzeExistingDesignSystem` already performs host resolution, presence, managed safe reads,
-  `JSON.parse`, config/manifest validation, one DTCG analysis of tokens, cross-document checks, and
-  returns `DesignSystemAnalysis`.
+  `JSON.parse`, config/Design System host manifest validation, one DTCG analysis of tokens,
+  cross-document checks, and returns `DesignSystemAnalysis`.
 - `DesignSystemAnalysis.documents["design-system/tokens/base.tokens.json"].parsed` contains the parsed
   source document; `analysis.nodes` contains path/type/alias/description/trust, but not raw resolved
-  values. 006 must read values from the parsed document by token path while using nodes as the
-  authoritative index for token identity/type/alias.
+  values. 006 extends the internal analysis projection additively with a readonly `ResolvedTokenView`
+  so renderers reuse declared value, resolved value, immediate alias target, alias chain, effective
+  type, alias state and trust without a second alias traversal.
+- The managed document reader may be extended additively to expose bytes+text from the same read for
+  this feature. Raw bytes, decoded text and parsed document stay internal to `AnalyzedSourceSnapshot`
+  and must not alter historical validate/inspect/foundations outputs.
 - `projectFoundationMetadata` and `projectFoundations` provide the existing foundation level/category
   projection. 006 must reuse them rather than deriving categories or levels independently.
 - `RECOGNIZED_DTCG_TYPES` contains the exact 13 DTCG 2025.10 types; CSS v1 support is a subset defined
@@ -204,8 +211,8 @@ application
   coordinate writer / verify / structured results
     ^
 infrastructure
-  managed reader reuse / concrete renderers / SHA-256 / filesystem snapshot / staging /
-  artifact-set writer / backup / rename / post-write verification / stream adapters
+  managed reader reuse / concrete renderers / SHA-256 / filesystem snapshot / candidate-directory
+  staging / artifact-set writer / backup / rename / post-write verification / stream adapters
     ^
 CLI
   commander commands / composition / human and JSON reporters / stdout-stderr discipline / exits
@@ -217,7 +224,20 @@ CLI must never contain transformation rules. Renderers are pure infrastructure a
 ### One-Pass Reuse Contract
 
 `buildDesignSystem` and `exportDesignSystemArtifact` call the bound `AnalyzeUseCase` exactly once. The
-single `DesignSystemAnalysis` then feeds:
+single semantic read creates an `AnalyzedSourceSnapshot`:
+
+```text
+logicalSourcePath
+sourceByteSnapshot/rawBytes (internal)
+sourceHash (SHA-256 over the exact initial raw bytes)
+decodedText (internal)
+parsedDocument (internal)
+analysis
+resolvedTokenView
+foundationProjection
+```
+
+The resulting `DesignSystemAnalysis` then feeds:
 
 1. `classifyAnalysisOutcome` equivalent validity gate.
 2. `projectFoundationMetadata(parsedTokens)`.
@@ -225,10 +245,13 @@ single `DesignSystemAnalysis` then feeds:
 4. `createNormalizedTokenSet(analysis, foundations, parsedTokens)`.
 5. N renderers.
 
-No second source read, `JSON.parse`, DTCG traversal, alias graph, type resolver, or foundation
-projection is allowed. Tests will inject spies around `analyze`, `projectMetadata`, `projectInspection`
-and renderers to assert call counts and will use child-process fixtures to prove one operation still
-writes/emits the same bytes.
+No second semantic source read, `JSON.parse`, DTCG traversal, alias graph, type resolver, or foundation
+projection is allowed. `build` alone may perform a byte-only reread just before directory publication:
+read current raw bytes, hash with SHA-256, compare to the initial `sourceHash`, and return `conflict` /
+`source-modified` with `wrote:false` on mismatch. That reread must not decode, parse, analyze, inspect
+foundations or render. `export` has only the initial semantic read. Tests will inject spies around
+`analyze`, `projectMetadata`, `projectInspection`, alias graph creation and renderers to assert call
+counts and will use child-process fixtures to prove one operation still writes/emits the same bytes.
 
 ### Normalized Projection
 
@@ -240,10 +263,12 @@ writes/emits the same bytes.
 - `issues: readonly BuildProjectionIssue[]`.
 
 Each `NormalizedBuildToken` contains path, path segments, effective type, category, foundation level,
-source value, resolved value, alias target, description, trust, canonical order index, and serializer
-metadata. It contains no filesystem paths, streams, Commander, full host document, raw `Error`, presets,
-viewer, or MCP data. It is constructed with defensive copies and frozen objects/arrays; public JSON is
-mapped from it, never cast.
+declared value, resolved value, immediate alias target, full alias chain, alias state, trust,
+description, canonical order index, and serializer metadata. It is populated from `ResolvedTokenView`
+and the foundation projection, contains no filesystem paths, streams, Commander, full host document,
+raw `Error`, presets, viewer, or MCP data, and is constructed with defensive copies and frozen
+objects/arrays. Public JSON is mapped from it, never cast, and does not leak historical analyzer
+internals.
 
 Tokens with invalid alias/type or unresolved effective type never reach normal renderers; they are
 blocked by analysis/foundation validity. Tokens with values unsupported by a target produce
@@ -277,7 +302,7 @@ resolve/analyze source
 → render css/json/typescript in registry order
 → verify candidate artifacts in memory
 → create BuildManifestV1
-→ snapshot output and previous manifest
+→ snapshot output and previous build manifest
 → compare unchanged
 → ArtifactSetWriter.publish(...)
 → post-publication verification
@@ -316,10 +341,20 @@ mtime changes. It has no `--json`; `export json` means the JSON artifact.
 }
 ```
 
-- Names: token path segments joined with `-`, ASCII-safe escaping/validation defined by
-  `tokenPathToCssCustomPropertyName`; no locale folding, no prefix.
+- Names: token path segments joined with `-`, ASCII-safe validation defined by
+  `tokenPathToCssCustomPropertyName`; exact formula is `"--" + segments.join("-")`. Every segment must
+  match `^[A-Za-z0-9_][A-Za-z0-9_-]*$`; case is preserved; no lowercasing, Unicode normalization,
+  identifier escaping or prefix exists in v1.
 - Collision detection: build a global map of transformed names to source paths before serializing.
-- Aliases: valid source aliases to in-scope tokens render as `var(--target-name)`.
+- Aliases: valid source aliases to in-scope tokens render as `var(--immediate-target-name)`. Alias
+  chains keep each immediate hop in CSS when every hop generates a valid custom property; if any target
+  is missing, a group, invalid, non-renderable or lacks a CSS declaration, CSS returns
+  `unsupported-value` with no fallback to the final resolved value.
+- String values: double quoted; escape `\`, `"`, LF, CR, form feed, NULL, C0 controls and DEL with
+  deterministic CSS hex escapes plus a space terminator where needed. This is value escaping, not
+  identifier escaping.
+- Numbers: finite only, decimal point `.`, no locale formatting, no `toLocaleString`; `-0` serializes
+  as `0`; scientific notation is not emitted.
 - Comments: only an optional fixed generated header if ADR 0023 keeps it byte-stable; no token
   descriptions as comments in v1 to avoid escaping/leakage complexity.
 - Unsupported values are typed `unsupported-value`; no partial CSS is emitted.
@@ -362,54 +397,98 @@ dependency, no eval/dynamic import. Syntax validation uses the existing TypeScri
 
 ### Manifest
 
-`BuildManifestV1` file: `manifest.json`, independent contract, not listed in `artifacts`.
+`BuildManifestV1` file: `design-system/build/manifest.json`, independent contract, not listed in
+`artifacts`. It is always called the build manifest. The Design System host manifest is
+`design-system/design-system.json` and is only used to determine host initialization; it is not an
+artifact ownership authority.
 
-Artifact order is fixed: `css`, `json`, `typescript`. `sourceHash` is SHA-256 over exact source bytes.
-Each `contentHash` is SHA-256 over exact artifact bytes. No timestamp, cwd, environment, Node version,
-user, hostname, UUID or absolute path.
+Artifact order is fixed: `css`, `json`, `typescript`. `sourceHash` is SHA-256 over the exact initial
+raw source bytes. Each `contentHash` is SHA-256 over exact artifact bytes. No timestamp, cwd,
+environment, Node version, user, hostname, UUID or absolute path.
 
 ## Publication Strategy
 
-The chosen strategy is "snapshot + sibling staging + backup of managed paths + per-path atomic rename
-with journaled verification", not whole-directory replacement. It preserves unknown files by default
-and does not require deleting/replacing the entire `design-system/build/` directory.
+The chosen strategy is set-consistent transactional publication of a complete directory candidate:
+`snapshot + sibling staging directory + full backup of the prior build directory + bounded rename
+publish + verification`. It rejects artifact-by-artifact publication into the live
+`design-system/build/` directory and does not promise absolute cross-platform filesystem atomicity.
+
+Sibling layout:
+
+```text
+parent/
+├── build/
+├── .build-staging-<internal>
+└── .build-backup-<internal>
+```
+
+Internal names are not public contract values.
 
 Algorithm:
 
-1. Build all candidate bytes in memory.
-2. Read a `BuildSnapshot`: source bytes/hash, previous manifest bytes/hash/parse result, existing
-   managed artifacts, required paths, node kinds, symlink state, unknown occupancy.
-3. If candidate manifest and managed artifacts equal existing bytes, return `unchanged` before staging.
-4. Create staging sibling under `design-system/.build-staging-*` or the parent of `build/`, with random
-   avoided in contract-level names and implementation using exclusive mkdir retry.
-5. Write candidate files to staging, flush/fsync where Node/platform permits, verify bytes/hashes.
-6. Re-check source, manifest, managed artifact bytes, required path occupancy, parents and symlinks.
-7. Backup current managed files only to a sibling backup directory with relative path exposed if retained.
-8. Publish each required artifact into `design-system/build/` by file rename/copy+rename discipline,
-   preserving unknown files.
-9. Write `manifest.json` last after artifact bytes are present.
-10. Post-publish verify all artifacts and manifest.
-11. On success, remove staging and backup. On `verification-error`, report `wrote:true`, retain backup,
-    and do not attempt destructive rollback.
+1. Build all candidate managed bytes in memory.
+2. Inspect existing `design-system/build/`.
+3. Validate output ownership from the previous build manifest.
+4. Classify managed artifacts and unknown nodes.
+5. Create a staging sibling containing the complete future `design-system/build/`.
+6. Securely copy allowed unknown regular files/directories into staging, byte-for-byte, without
+   following links or executing anything.
+7. Write all new managed artifacts to staging.
+8. Write the new build manifest into staging.
+9. Verify staging bytes, hashes, contracts, node kinds and containment.
+10. Revalidate concurrency: byte-only source hash compare, previous build manifest/artifact hashes,
+    required path occupancy, parents and symlinks.
+11. Publish the candidate directory as a set: rename current `build/` to backup, rename staging to
+    `build/`, then verify the published build.
+12. On success, delete backup best-effort. On `verification-error`, report `wrote:true`,
+    `outputAvailable:true`, retain backup, set `recoveryRequired:true`, and do not attempt destructive
+    rollback.
 
-Atomicity limit: filesystems generally provide atomic rename for a single path on the same volume, not
-for a directory set while preserving unknown files. The user-visible guarantee is "no partial set is
-published on expected pre-publish failures; after a successful publish attempt, post-verification
-detects and reports any inconsistency with retained backup." This limitation is explicitly captured in
-ADR 0024.
+Commit point is successful rename of staging to `build/`; from that point `wrote:true`.
+
+Failure states:
+
+- Before moving `build/`: `write-error` or `conflict`, `wrote:false`, previous build intact, staging
+  cleaned best-effort.
+- After moving `build/` to backup but before candidate publish: immediately restore backup to `build`.
+  If restore works, report `write-error`, `wrote:false`, previous build restored, staging cleaned. If
+  restore fails, report `write-error`, `wrote:false`, `outputAvailable:false`, retain backup relative
+  path, and set `recoveryRequired:true`.
+- After commit point: `verification-error`, `wrote:true`, `outputAvailable:true`, backup retained,
+  `recoveryRequired:true`; no automatic rollback.
+
+POSIX expectation: same-filesystem sibling renames are the strongest primitive available, but replacing
+non-empty directories still requires two renames and can create a short availability window. The backup
+exists before the commit point and supports restore.
+
+Windows expectation: open directories/files, antivirus scanners and handles may block rename. The
+adapter uses bounded retry, then either restores before commit or retains backup with typed recovery
+metadata. Best-effort cleanup is never reported as success-critical.
+
+Shared guarantee: no artifact-by-artifact live publication, no mixed managed artifact set, complete
+backup before commit point, and typed recoverable errors.
 
 ## Unknown Files and Ownership
 
-Previous `manifest.json` is the only ownership authority. If it is absent, corrupt or unsupported, no
-existing required artifact path is trusted as managed; required-path occupancy blocks with `conflict`.
-Unknown files are preserved and never globally cleaned. Unknown file or directory occupying
-`tokens.css`, `tokens.resolved.json`, `tokens.ts` or `manifest.json` blocks with `wrote:false`.
-Artifacts declared by an older supported manifest but no longer emitted may be removed only because the
-previous manifest proves ownership; v1 emits a fixed set, so this is future-proofing.
+Previous build manifest is the only ownership authority. If it is absent and required paths are absent,
+ownership is `empty` and first build is allowed. If it is absent while required artifact paths exist,
+those paths are unknown and block with `required-path-owned-by-unknown`. Corrupt or unsupported build
+manifest blocks with `untrusted-build-manifest`; missing managed artifact blocks with
+`managed-artifact-missing`; hash mismatch blocks with `managed-artifact-modified`.
 
-Manual modification of a managed artifact is detected by comparing previous manifest hash/byte length
+Unknown nodes are preserved only when they are regular files or regular directories, remain contained
+under `design-system/build/`, and fit documented limits: file count <= `ANALYSIS_LIMITS.maxNodes`,
+depth <= `ANALYSIS_LIMITS.maxDepth`, total bytes <= `ANALYSIS_LIMITS.maxTotalBytes` when available for
+the existing repo limit set, and per-file size <= the same total-byte budget. Symlinks, hard-link
+assumptions, sockets, FIFOs, devices, special node kinds, path escapes and limit excess block with
+`unsupported-unknown-node`. Unknown file or directory occupying `tokens.css`, `tokens.resolved.json`,
+`tokens.ts` or build `manifest.json` blocks with `wrote:false`. Artifacts declared by an older
+supported build manifest but no longer emitted may be removed only because the previous build manifest
+proves ownership; v1 emits a fixed set, so this is future-proofing.
+
+Manual modification of a managed artifact is detected by comparing previous build manifest hash/byte length
 against actual bytes. It is a `conflict` unless the modified bytes exactly match the candidate set and
-the manifest is also consistent.
+the build manifest is also consistent.
 
 ## Verification
 
@@ -418,7 +497,7 @@ valid, limits not partial.
 
 Candidate verification: bytes match hashes/lengths, CSS has one `:root`, unique declarations and valid
 `var(...)` targets, JSON parses and matches `ResolvedTokensV1`, TS has expected exports/no imports and
-syntax diagnostics clean, manifest structure/hashes/paths valid.
+syntax diagnostics clean, build manifest structure/hashes/paths valid.
 
 Post-publication verification: re-read files from disk and repeat hash/length/contract checks. No
 `eval`, no dynamic import of `tokens.ts`, no generated code execution.
@@ -499,18 +578,18 @@ Regression:
 
 | Phase | Scope | Depends on | Parallelism |
 |---|---|---|---|
-| A | domain models, formats, normalized projection | current analyzer/foundations | foundation for all |
-| B | CSS naming, escaping, renderer | A | can start with C after projection |
-| C | resolved JSON mapper/serializer | A | parallel with B/D |
-| D | TypeScript renderer and syntax validation | A | parallel with B/C |
-| E | manifest, hashes, artifact metadata | B/C/D | before writer |
-| F | build/export headless use cases | A-E | before reporters |
-| G | reporters, JSON envelope, outcomes | F | parallel with writer internals |
-| H | snapshot, ownership, conflicts | E | before publication |
-| I | artifact-set writer transactional publication | H | before CLI write path |
-| J | verification and idempotence | E/I | after writer skeleton |
-| K | CLI commands, streams, exits | F/G/I/J | late adapter |
-| L | child processes, packaging, regression, audit | K | final closure |
+| A | models, source snapshot and resolved token view | current analyzer/foundations | foundation for all |
+| B | normalized projection and ordering | A | unblocks renderers |
+| C | CSS naming, escaping and exact support matrix | A-B | parallel with D/E after projection |
+| D | JSON renderer | A-B | parallel with C/E |
+| E | TypeScript renderer | A-B | parallel with C/D |
+| F | build manifest, hashes and ownership | C/D/E | before writer |
+| G | build/export headless use cases | A-F | before reporters |
+| H | reporters, public JSON and outcomes | G | parallel with I/J internals |
+| I | snapshot, unknown nodes and concurrency | F-G | before directory writer |
+| J | transactional directory writer | I | before CLI write path |
+| K | candidate/post-publication verification and idempotency | F/J | after writer skeleton |
+| L | CLI, child processes, packaging, regression and audit | G/H/J/K | final closure |
 
 ## Risks
 
@@ -518,8 +597,8 @@ Regression:
 |---|---|---|---|---|
 | False directory-set atomicity | Medium | High | ADR states limits; verify and backup retained | injected post-publish failure |
 | Windows rename behavior | Medium | High | same-parent staging; avoid replacing non-empty dirs | platform/adapter tests with failures |
-| Unknown file loss | Low | Critical | previous manifest ownership only; no global clean | unknown preservation integration |
-| Corrupt manifest ambiguity | Medium | Medium | treat as untrusted; block required occupancy | corrupt manifest test |
+| Unknown file loss | Low | Critical | previous build manifest ownership only; no global clean | unknown preservation integration |
+| Corrupt build manifest ambiguity | Medium | Medium | treat as untrusted; block required occupancy | corrupt build manifest test |
 | Manual artifact edit | Medium | Medium | hash/byte conflict before publish | managed modified test |
 | CSS collisions | Medium | Medium | global map before serialization | collision unit + CLI |
 | Unsafe escaping | Medium | High | pure serializers and fixture matrix | CSS/TS escaping tests |

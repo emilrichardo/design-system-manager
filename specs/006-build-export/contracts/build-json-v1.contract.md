@@ -18,10 +18,12 @@
   },
   "outputDirectory": "design-system/build",
   "wrote": true,
+  "outputAvailable": true,
   "artifacts": [],
   "manifest": null,
   "verification": null,
-  "backup": null,
+  "backupRelativePath": null,
+  "recoveryRequired": false,
   "conflict": null,
   "error": null
 }
@@ -36,12 +38,14 @@
 
 ## Errors
 
-Expected errors are represented in `outcome`, `conflict`, `verification` and/or `error`. CLI internal
-errors may emit this envelope to stderr with `outcome: "internal-error"` and exit 70.
+Expected errors are represented in `outcome`, `conflict`, `verification`, `backupRelativePath`,
+`recoveryRequired`, `outputAvailable` and/or `error`. CLI internal errors may emit this envelope to
+stderr with `outcome: "internal-error"` and exit 70.
 
 ## Null Policy
 
-All stable fields are present. Unavailable scalar/object fields are `null`; arrays are `[]`.
+All stable fields are present. Unavailable scalar/object fields are `null`; booleans are present when
+contracted; arrays are `[]`.
 
 ## Ordering
 
@@ -55,7 +59,7 @@ Consumers must check `formatVersion`. This envelope is not assignable to older J
 ## Security
 
 No absolute paths, stack traces, raw `Error`, environment, secrets, full source document, generated
-artifact bytes or backup absolute path.
+artifact bytes or backup absolute path. Retained backup is exposed only as a logical relative path.
 
 ## Evolution Policy
 
