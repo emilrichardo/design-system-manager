@@ -4,3 +4,5 @@ export * from "./inspect-preset.js";
 export * from "./validate-preset.js";
 export * from "./normalize-preset-change-set.js";
 export * from "./plan-preset-diff.js";
+export * from "./project-managed-nodes.js";
+export * from "./plan-preset-application.js";

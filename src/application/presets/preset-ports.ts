@@ -6,7 +6,8 @@ import type {
   PresetInspection,
   PresetValidation,
 } from "../../domain/presets/index.js";
-import type { PresetApplicationPlan } from "../../domain/presets/preset-application-plan.js";
+import type { PresetApplicationPlan, PresetNotFoundResource } from "../../domain/presets/preset-application-plan.js";
+import type { AnalyzeUseCase } from "../analysis-ports.js";
 import type {
   AliasState,
   NodeKind,
@@ -62,7 +63,17 @@ export interface PresetTokenAnalysis {
 /** Analiza en memoria el bloque `tokens` ya cargado (sin filesystem, sin host, sin red). */
 export type AnalyzePresetTokens = (tokens: unknown) => PresetTokenAnalysis;
 
+/**
+ * Carga rica del catálogo: preserva la causa (`invalid-preset`) en vez de degradar a lista vacía.
+ * `reason` es un código estable y seguro (sin paths absolutos ni `Error`).
+ */
+export type CatalogLoadOutcome =
+  | { readonly ok: true; readonly entries: readonly PresetCatalogEntry[] }
+  | { readonly ok: false; readonly reason: string };
+
 export interface PresetCatalogPort {
+  /** Carga rica con causa preservada (usada por `listPresets`). */
+  load(): Promise<CatalogLoadOutcome>;
   list(): Promise<readonly PresetCatalogEntry[]>;
   get(id: PresetId): Promise<PresetEnvelope | null>;
 }
@@ -93,7 +104,12 @@ export interface PresetPlanInput {
 
 export type PresetApplicationPlanResult =
   | { readonly outcome: "success" | "unchanged" | "conflict"; readonly plan: PresetApplicationPlan }
-  | { readonly outcome: "invalid-preset" | "not-found" | "read-error"; readonly plan: PresetApplicationPlan | null };
+  | { readonly outcome: "invalid-preset" | "read-error"; readonly plan: PresetApplicationPlan | null }
+  | {
+      readonly outcome: "not-found";
+      readonly plan: PresetApplicationPlan | null;
+      readonly notFoundResource: PresetNotFoundResource;
+    };
 
 export interface PresetApplyInput {
   readonly id: PresetId;
@@ -106,11 +122,16 @@ export interface ListPresetsDependencies {
 
 export interface InspectPresetDependencies {
   readonly catalog: PresetCatalogPort;
-  readonly validator: PresetValidationPort;
+  /** Análisis en memoria del bloque `tokens` (una pasada DTCG + una de metadata). */
+  readonly analyzeTokens: AnalyzePresetTokens;
 }
 
 export interface PlanPresetApplicationDependencies {
   readonly catalog: PresetCatalogPort;
+  /** Análisis en memoria del preset (reutilizado por validación y candidatos). */
+  readonly analyzeTokens: AnalyzePresetTokens;
+  /** Análisis del Design System host (caso de uso enlazado de `002`); una sola invocación. */
+  readonly analyzeHost: AnalyzeUseCase;
 }
 
 export interface ApplyPresetDependencies {

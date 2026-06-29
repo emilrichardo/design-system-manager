@@ -17,7 +17,7 @@ import type {
 import { createPresetEnvelope, toPresetCatalogEntry } from "../../domain/presets/preset-envelope.js";
 import type { PresetId } from "../../domain/presets/preset-id.js";
 import { isPresetId } from "../../domain/presets/preset-id.js";
-import type { PresetCatalogPort } from "../../application/presets/preset-ports.js";
+import type { CatalogLoadOutcome, PresetCatalogPort } from "../../application/presets/preset-ports.js";
 import { readJsonAsset } from "./preset-asset-reader.js";
 
 /** Por qué un catálogo empaquetado no está disponible (estado seguro, sin paths absolutos). */
@@ -152,6 +152,10 @@ export function createBundledPresetCatalog(options: BundledCatalogOptions = {}):
   let cached: Promise<CatalogLoadResult> | null = null;
   const load = (): Promise<CatalogLoadResult> => (cached ??= loadBundledPresetCatalog(options));
   return {
+    async load(): Promise<CatalogLoadOutcome> {
+      const result = await load();
+      return result.ok ? { ok: true, entries: result.entries } : { ok: false, reason: result.reason };
+    },
     async list(): Promise<readonly PresetCatalogEntry[]> {
       const result = await load();
       return result.ok ? result.entries : [];

@@ -10,6 +10,7 @@ import { ensureBuilt } from "../../helpers/run-binary.js";
 import { loadBundledPresetCatalog } from "../../../src/infrastructure/presets/bundled-preset-catalog.js";
 import { presetCatalogEntries } from "../../../src/application/presets/list-presets.js";
 import { presetInspectionTokens } from "../../../src/application/presets/inspect-preset.js";
+import { analyzePresetTokens } from "../../../src/infrastructure/presets/preset-token-analyzer.js";
 
 const DIST_CATALOG = fileURLToPath(new URL("../../../dist/infrastructure/presets/bundled-preset-catalog.js", import.meta.url));
 const cleanup: string[] = [];
@@ -26,7 +27,7 @@ describe("catalog offline & deterministic (T024)", () => {
     expect(env).toBeDefined();
     if (!env) return;
     expect(presetCatalogEntries([env]).map((e) => e.id)).toEqual(["neutral-base"]);
-    const tokens = presetInspectionTokens(env);
+    const tokens = presetInspectionTokens(env, analyzePresetTokens(env.tokens));
     expect(tokens.map((t) => t.path)).toEqual([
       "color.gray.100",
       "color.gray.900",

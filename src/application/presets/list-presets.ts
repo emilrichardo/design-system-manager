@@ -14,11 +14,12 @@ export function presetCatalogEntries(
 }
 
 /**
- * Caso de uso headless de listado. Devuelve las entradas del catálogo en orden estable; nunca escribe
- * ni lanza. La orquestación rica que distingue `invalid-preset` por defecto de empaquetado se completa
- * en el Checkpoint F sobre el cargador rico del catálogo.
+ * Caso de uso headless de listado (T054). Usa la carga RICA del catálogo para preservar la causa: un
+ * catálogo empaquetado inválido/ilegible produce `invalid-preset` (no una lista vacía). Orden estable,
+ * offline, sin lectura del host ni escrituras. No lanza ni expone `Error`/paths absolutos.
  */
 export const listPresets: ListPresets = async (deps) => {
-  const presets = await deps.catalog.list();
-  return { outcome: "success", presets, validation: null };
+  const loaded = await deps.catalog.load();
+  if (!loaded.ok) return { outcome: "invalid-preset", presets: [], validation: null };
+  return { outcome: "success", presets: loaded.entries, validation: null };
 };

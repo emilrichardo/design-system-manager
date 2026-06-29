@@ -1,13 +1,12 @@
-// T022 (005) — Proyección de inspección de un preset (capa de aplicación). Construye un resumen
-// SUPERFICIAL por token (path / categoría / nivel / `$type` declarado propio / alias target /
-// presencia de `$description`) reutilizando las funciones puras de `004` ya existentes
-// (`projectFoundationMetadata` para el nivel efectivo, `resolveFoundationCategory` para la categoría).
-// NO hace validación DTCG profunda, ni grafo de alias, ni compatibilidad de tipos, ni completitud
-// (eso es Checkpoint C). La orquestación completa de `inspectPreset` llega en el Checkpoint F.
-import { projectFoundationMetadata } from "../foundations/metadata-pass.js";
-import { resolveFoundationCategory } from "../../domain/foundations/resolve-foundation-category.js";
+// T055 (005) — Caso de uso e inspección de un preset (capa de aplicación). Reutiliza UNA sola pasada de
+// análisis (`analyzeTokens`: DTCG de `002` + metadata de `004`) para: validar el preset
+// (`validatePreset`) y proyectar resúmenes de token con el `$type` EFECTIVO (resuelve la deuda B/C
+// "PresetTokenInspection.type solo propio"). No recalcula tipos, no construye un segundo alias graph,
+// no hace una segunda pasada DTCG, no resuelve el host, no escribe. Distingue not-found / invalid-preset
+// / success conservando siempre la inspección recuperable.
+import { validatePreset } from "./validate-preset.js";
+import type { InspectPreset, PresetTokenAnalysis } from "./preset-ports.js";
 import type { FoundationCategoryId } from "../../domain/foundations/foundation-category.js";
-import type { FoundationLevel } from "../../domain/foundations/foundation-level.js";
 import type {
   PresetEnvelope,
   PresetInspection,
@@ -15,55 +14,42 @@ import type {
   PresetTokenInspection,
 } from "../../domain/presets/preset-envelope.js";
 import type { PresetValidation } from "../../domain/presets/preset-validation.js";
-import type { InspectPreset } from "./preset-ports.js";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function aliasTargetOf(node: Record<string, unknown>): string | null {
-  const value = node.$value;
-  if (typeof value !== "string") return null;
-  const match = /^\{(.+)\}$/.exec(value);
-  return match ? (match[1] as string) : null;
-}
-
-/** Recolecta hojas (`$value`) en orden de documento; hijos = claves sin `$` (reglas DTCG de 002). */
-function collectLeaves(
-  node: Record<string, unknown>,
-  segments: readonly string[],
-  out: { readonly path: string; readonly node: Record<string, unknown> }[],
-): void {
+/** Recolecta los paths de token que declaran `$description` (orden de documento; hijos sin `$`). */
+function collectDescriptionPaths(node: Record<string, unknown>, segments: readonly string[], out: Set<string>): void {
   if ("$value" in node) {
-    out.push({ path: segments.join("."), node });
+    if (typeof node.$description === "string") out.add(segments.join("."));
     return;
   }
   for (const key of Object.keys(node)) {
     if (key.startsWith("$")) continue;
     const child = node[key];
-    if (isRecord(child)) collectLeaves(child, [...segments, key], out);
+    if (isRecord(child)) collectDescriptionPaths(child, [...segments, key], out);
   }
 }
 
-/** Proyecta los tokens del envelope a resúmenes superficiales (solo categorías canónicas resueltas). */
-export function presetInspectionTokens(envelope: PresetEnvelope): readonly PresetTokenInspection[] {
-  const { levels } = projectFoundationMetadata(envelope.tokens);
-  const leaves: { readonly path: string; readonly node: Record<string, unknown> }[] = [];
-  collectLeaves(envelope.tokens as Record<string, unknown>, [], leaves);
+/** Proyecta los nodos analizados a resúmenes de token (tipo EFECTIVO; solo categorías resueltas). */
+export function presetInspectionTokens(
+  envelope: PresetEnvelope,
+  analysis: PresetTokenAnalysis,
+): readonly PresetTokenInspection[] {
+  const describedPaths = new Set<string>();
+  if (isRecord(envelope.tokens)) collectDescriptionPaths(envelope.tokens, [], describedPaths);
 
   const tokens: PresetTokenInspection[] = [];
-  for (const { path, node } of leaves) {
-    const category = resolveFoundationCategory(path);
-    if (category === "unresolved") continue; // defensivo; un preset válido no produce esto
-    const level: FoundationLevel = levels.get(path)?.level ?? "unclassified";
-    const declaredType = typeof node.$type === "string" ? node.$type : null;
+  for (const node of analysis.nodes) {
+    if (node.category === "unresolved") continue; // defensivo; un preset válido no produce esto
     tokens.push({
-      path,
-      category: category as FoundationCategoryId,
-      level,
-      type: declaredType,
-      aliasTarget: aliasTargetOf(node),
-      hasDescription: typeof node.$description === "string",
+      path: node.path,
+      category: node.category as FoundationCategoryId,
+      level: node.level,
+      type: node.effectiveType,
+      aliasTarget: node.aliasTarget,
+      hasDescription: describedPaths.has(node.path),
     });
   }
   return tokens;
@@ -79,27 +65,29 @@ function presetMetadata(envelope: PresetEnvelope): PresetMetadata {
   };
 }
 
-/** Ensambla la inspección (metadata + resúmenes de token + validación provista). */
+/** Ensambla la inspección (metadata + resúmenes de token efectivos + validación). */
 export function presetInspection(
   envelope: PresetEnvelope,
+  analysis: PresetTokenAnalysis,
   validation: PresetValidation,
 ): PresetInspection {
   return {
     metadata: presetMetadata(envelope),
-    tokens: presetInspectionTokens(envelope),
+    tokens: presetInspectionTokens(envelope, analysis),
     validation,
   };
 }
 
 /**
- * Caso de uso headless de inspección. Distingue preset no encontrado, encontrado pero inválido y
- * válido, conservando siempre la inspección recuperable. Surface `invalid-preset` de forma segura para
- * assets empaquetados rotos (sin lanzar). No escribe; no resuelve el proyecto host.
+ * Caso de uso headless de inspección. `not-found` cuando el id no existe en el catálogo; `invalid-preset`
+ * cuando el preset existe pero falla la validación (conservando la inspección recuperable); `success`
+ * en otro caso. Una sola pasada de análisis; sin host; sin escrituras.
  */
 export const inspectPreset: InspectPreset = async (input, deps) => {
   const envelope = await deps.catalog.get(input.id);
   if (envelope === null) return { outcome: "not-found", inspection: null };
-  const validation = deps.validator.validate(envelope);
-  const inspection = presetInspection(envelope, validation);
+  const analysis = deps.analyzeTokens(envelope.tokens);
+  const validation = validatePreset(envelope, analysis);
+  const inspection = presetInspection(envelope, analysis, validation);
   return { outcome: validation.valid ? "success" : "invalid-preset", inspection };
 };

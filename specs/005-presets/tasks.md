@@ -129,14 +129,14 @@ Every implementation task uses:
 
 **Independent test**: a programmatic consumer can run list, inspect, and plan with fake dependencies; the target file bytes, mtime, temporaries, backups, and host files remain unchanged.
 
-- [ ] T051 [P] [US1] Add headless use-case tests for `listPresets` deterministic catalog order, offline behavior, no writes, and safe invalid catalog results in `tests/unit/presets/list-presets.test.ts`.
-- [ ] T052 [P] [US2] Add headless use-case tests for `inspectPreset` valid id, unknown id `not-found`, metadata, included categories, token summaries, validation, and no writes in `tests/unit/presets/inspect-preset.test.ts`.
-- [ ] T053 [P] [US3] Add headless use-case tests for `planPresetApplication` create/update/unchanged/conflict/skip summary, typed `notFoundResource`, read-error, invalid-preset, no write, no temp project, and no mtime change in `tests/unit/presets/plan-preset-application.test.ts`.
-- [ ] T054 [US1] Finish `listPresets` orchestration and result shape in `src/application/presets/list-presets.ts`.
-- [ ] T055 [US2] Finish `inspectPreset` orchestration and token summary projection in `src/application/presets/inspect-preset.ts`.
-- [ ] T056 [US3] Implement `planPresetApplication` orchestration using preset validation, host analysis, diff planning, conflicts, ordering, and summary in `src/application/presets/plan-preset-application.ts`.
-- [ ] T057 [US3] Add host missing, target unreadable, invalid UTF-8, invalid JSON, and limits mapping for planning in `src/application/presets/plan-preset-application.ts`.
-- [ ] T058 [US12] Add integration tests proving list/inspect/plan are deterministic, read-only, and byte-identical on repeated runs in `tests/integration/presets/presets-readonly-flow.test.ts`.
+- [X] T051 [P] [US1] Add headless use-case tests for `listPresets` deterministic catalog order, offline behavior, no writes, and safe invalid catalog results in `tests/unit/presets/list-presets.test.ts`.
+- [X] T052 [P] [US2] Add headless use-case tests for `inspectPreset` valid id, unknown id `not-found`, metadata, included categories, token summaries, validation, and no writes in `tests/unit/presets/inspect-preset.test.ts`.
+- [X] T053 [P] [US3] Add headless use-case tests for `planPresetApplication` create/update/unchanged/conflict/skip summary, typed `notFoundResource`, read-error, invalid-preset, no write, no temp project, and no mtime change in `tests/unit/presets/plan-preset-application.test.ts`.
+- [X] T054 [US1] Finish `listPresets` orchestration and result shape in `src/application/presets/list-presets.ts`.
+- [X] T055 [US2] Finish `inspectPreset` orchestration and token summary projection in `src/application/presets/inspect-preset.ts`.
+- [X] T056 [US3] Implement `planPresetApplication` orchestration using preset validation, host analysis, diff planning, conflicts, ordering, and summary in `src/application/presets/plan-preset-application.ts`.
+- [X] T057 [US3] Add host missing, target unreadable, invalid UTF-8, invalid JSON, and limits mapping for planning in `src/application/presets/plan-preset-application.ts`.
+- [X] T058 [US12] Add integration tests proving list/inspect/plan are deterministic, read-only, and byte-identical on repeated runs in `tests/integration/presets/presets-readonly-flow.test.ts`.
 
 **MVP checkpoint**: list -> inspect -> read-only plan is demonstrable here. Apply is not part of MVP.
 **Checkpoint gate**: `npm run typecheck`, `npm run lint`, targeted read-only use-case tests, accumulated `npm test`, `npm run build`.
