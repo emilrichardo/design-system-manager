@@ -3,6 +3,7 @@
 // Los casos de uso devuelven outcomes SEMÁNTICOS; aquí (y solo aquí) se mapean a códigos.
 import type { InitializationResult } from "../domain/result/initialization-result.js";
 import type { AnalysisOutcome } from "../application/analysis-ports.js";
+import type { PresetsJsonOutcomeV1 } from "../application/presets/json/dto.js";
 
 export const USAGE_ERROR_EXIT = 3; // errores de uso del parser (entrada inválida)
 export const INTERNAL_ERROR_EXIT = 70; // excepción inesperada no contractual (sysexits EX_SOFTWARE)
@@ -51,5 +52,34 @@ export function exitCodeForResult(result: InitializationResult): number {
         case "post-verify":
           return 7;
       }
+  }
+}
+
+export type PresetExitOutcome = Exclude<PresetsJsonOutcomeV1, "success"> | "success";
+
+export function exitCodeForPresetOutcome(outcome: PresetExitOutcome): number {
+  switch (outcome) {
+    case "success":
+    case "applied":
+      return 0;
+    case "unchanged":
+      return 2;
+    case "invalid-preset":
+      return 3;
+    case "conflict":
+      return 4;
+    case "not-found":
+      return 5;
+    case "read-error":
+    case "write-error":
+      return 6;
+    case "verification-error":
+      return 7;
+    case "internal-error":
+      return INTERNAL_ERROR_EXIT;
+    default: {
+      const _exhaustive: never = outcome;
+      return INTERNAL_ERROR_EXIT;
+    }
   }
 }

@@ -148,15 +148,15 @@ Every implementation task uses:
 
 **Independent test**: expected outcomes write one deterministic result to stdout and empty stderr; JSON internal errors write one safe envelope to stderr and empty stdout with exit 70; 003/004 JSON bytes remain unchanged.
 
-- [ ] T059 [P] [US14] Add failing human reporter tests for list/inspect/plan/apply summaries, stable order, no required colors, no prompts, captured stdout, no TTY dependency, and safe relative target display in `tests/unit/presets/presets-terminal-reporter.test.ts`.
-- [ ] T060 [P] [US11] Add failing JSON DTO invariant tests for `PresetsJsonEnvelopeV1`, `preset-list`, `preset-inspect`, `preset-plan`, `preset-apply`, null policy, key order, deterministic serializer, and final newline in `tests/unit/presets/presets-json-dto.test.ts`.
-- [ ] T061 [P] [US11] Add failing JSON mapper tests for all preset outcomes, conflicts, summary, `wrote`, `verification`, relative backup, typed `notFoundResource`, read-error vs write-error, logical target, and no full token values in `tests/unit/presets/presets-json-mappers.test.ts`.
-- [ ] T062 [P] [US11] Add regression tests proving `JsonEnvelopeV1` and `FoundationsJsonEnvelopeV1` DTOs, mappers, serializers, streams, and byte outputs are unchanged in `tests/integration/presets/json-regression-003-004.test.ts`.
-- [ ] T063 [US14] Implement `PresetsTerminalReporter` for list/inspect/plan/apply in `src/infrastructure/reporter/presets-terminal-reporter.ts`.
-- [ ] T064 [US11] Implement preset JSON DTOs, format version, mappers, and internal-error mapper in `src/application/presets/json/dto.ts`, `src/application/presets/json/format-version.ts`, `src/application/presets/json/map-presets.ts`, and `src/application/presets/json/map-internal-error.ts`.
-- [ ] T065 [US11] Implement preset JSON serializer and reporter in `src/infrastructure/reporter/presets-json-serializer.ts` and `src/infrastructure/reporter/presets-json-reporter.ts`.
-- [ ] T066 [US11] Add outcome-to-exit mapping tests for success, applied, unchanged, invalid-preset, conflict, not-found, read-error, write-error, verification-error, and internal-error in `tests/unit/presets/preset-exit-codes.test.ts`.
-- [ ] T067 [US11] Extend CLI exit-code helpers additively for preset outcomes without modifying 001-004 outcome tables in `src/cli/exit-codes.ts`.
+- [X] T059 [P] [US14] Add failing human reporter tests for list/inspect/plan/apply summaries, stable order, no required colors, no prompts, captured stdout, no TTY dependency, and safe relative target display in `tests/unit/presets/presets-terminal-reporter.test.ts`.
+- [X] T060 [P] [US11] Add failing JSON DTO invariant tests for `PresetsJsonEnvelopeV1`, `preset-list`, `preset-inspect`, `preset-plan`, `preset-apply`, null policy, key order, deterministic serializer, and final newline in `tests/unit/presets/presets-json-dto.test.ts`.
+- [X] T061 [P] [US11] Add failing JSON mapper tests for all preset outcomes, conflicts, summary, `wrote`, `verification`, relative backup, typed `notFoundResource`, read-error vs write-error, logical target, and no full token values in `tests/unit/presets/presets-json-mappers.test.ts`.
+- [X] T062 [P] [US11] Add regression tests proving `JsonEnvelopeV1` and `FoundationsJsonEnvelopeV1` DTOs, mappers, serializers, streams, and byte outputs are unchanged in `tests/integration/presets/json-regression-003-004.test.ts`.
+- [X] T063 [US14] Implement `PresetsTerminalReporter` for list/inspect/plan/apply in `src/infrastructure/reporter/presets-terminal-reporter.ts`.
+- [X] T064 [US11] Implement preset JSON DTOs, format version, mappers, and internal-error mapper in `src/application/presets/json/dto.ts`, `src/application/presets/json/format-version.ts`, `src/application/presets/json/map-presets.ts`, and `src/application/presets/json/map-internal-error.ts`.
+- [X] T065 [US11] Implement preset JSON serializer and reporter in `src/infrastructure/reporter/presets-json-serializer.ts` and `src/infrastructure/reporter/presets-json-reporter.ts`.
+- [X] T066 [US11] Add outcome-to-exit mapping tests for success, applied, unchanged, invalid-preset, conflict, not-found, read-error, write-error, verification-error, and internal-error in `tests/unit/presets/preset-exit-codes.test.ts`.
+- [X] T067 [US11] Extend CLI exit-code helpers additively for preset outcomes without modifying 001-004 outcome tables in `src/cli/exit-codes.ts`.
 
 **Checkpoint gate**: `npm run typecheck`, `npm run lint`, targeted reporter/JSON/exit tests, accumulated `npm test`, `npm run build`.
 **Recommended checkpoint commit**: `feat: add preset presentation contracts`
