@@ -1,454 +1,484 @@
 # Tasks: 006-build-export
 
 **Input**: `specs/006-build-export/spec.md`, `plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`
-**Scope**: Implementacion futura de build/export determinista para artefactos CSS, JSON resuelto y TypeScript.
+**Scope**: Backlog técnico ejecutable para `build` (publica todos los formatos como un conjunto) y `export <format>` (solo stdout, sin escribir). Reúsa el motor `002`/`004`; no crea un segundo parser/alias-graph/type-engine/foundation-analyzer.
 **Generated**: 2026-06-29
-**Status**: Backlog tecnico ejecutable; ninguna tarea esta completada.
+**Status**: Backlog; ninguna tarea completada. No implementa código aquí.
 
 ## Execution Rules
 
-- Ejecutar en orden por checkpoint: A -> B -> C/D/E -> F/G -> H -> I -> J -> K -> L.
-- Mantener commits sugeridos como puntos de control; no mezclar checkpoints salvo para tareas marcadas `[P]`.
-- Correr los gates indicados al final de cada checkpoint antes de avanzar.
-- Cada tarea de implementacion o prueba apunta a un path concreto.
-- No crear `specs/006-build-export/audit.md` hasta el cierre del checkpoint L.
-- No modificar features cerradas 001-005 salvo pruebas de regresion explicitamente listadas aqui.
+- Orden por checkpoint: A → B → C/D/E → F → G → H → I → J → K → L (ver grafo de dependencias).
+- Cada checkpoint termina con un gate y un commit sugerido; no mezclar checkpoints salvo tareas `[P]`.
+- Cada tarea de implementación o prueba apunta a un path concreto y a una sola responsabilidad comprobable.
+- Reglas contractuales no negociables (spec D1–D16, research, data-model, ADR 0022–0025):
+  - **No artefactos parciales**: si un renderer requerido falla, el build completo se bloquea (`wrote:false`, cero artifacts publicados); en `export`, el renderer solicitado falla con stdout vacío, stderr seguro y cero escrituras.
+  - **`export` es siempre read-only**: nunca toca writer, build manifest, output inspector, staging, backup, rename ni filesystem.
+  - **Comandos exactos**: `neuraz-ds build`, `neuraz-ds build --json`, `neuraz-ds export css|json|typescript`. Sin `--output/--input/--formats/--force/--dry-run/--cwd/--clean/--watch/--minify` y sin `export --json`.
+  - Identificador de formato canónico: `typescript` (filename `tokens.ts`).
+- No crear `specs/006-build-export/audit.md` hasta el cierre del checkpoint L (tarea T160).
+- No modificar features cerradas `001`–`005` salvo las pruebas de regresión listadas en el checkpoint L.
 
-## Checkpoint A - Modelos, source snapshot y resolved token view
+## Checkpoint A — Modelos, source snapshot y resolved token view
 
-**Objective**: Definir el nucleo de dominio y la captura de entrada que alimenta todo build/export sin duplicar analisis existente.
-**Preconditions**: `specs/006-build-export/plan.md` y `specs/006-build-export/data-model.md` estan vigentes; features 001-005 siguen cerradas.
+**Objective**: Definir los modelos de dominio inmutables y la captura de entrada (una sola lectura semántica) que alimenta todo build/export sin duplicar el análisis `002`/`004`.
+**Preconditions**: `plan.md` y `data-model.md` vigentes; features `001`–`005` cerradas.
 
 ### Tasks
 
-- [ ] T001 Crear `src/domain/build-export/build-format.ts` con formatos canonicos `css`, `json`, `ts` y validaciones de lista ordenada.
-- [ ] T002 Crear `src/domain/build-export/artifact.ts` con `ArtifactKind`, `ArtifactPath`, `ArtifactBytes`, `ArtifactHash` y metadatos deterministas.
-- [ ] T003 Crear `src/domain/build-export/logical-path.ts` con normalizacion de logical paths, rechazo de traversal y preservacion de orden canonico.
-- [ ] T004 Crear `src/domain/build-export/build-outcome.ts` con outcomes, conflict kinds, recovery statuses y exit categories.
-- [ ] T005 Crear `src/domain/build-export/source-snapshot.ts` con `SourceSnapshot`, `SourceDocumentSnapshot`, hash de bytes y texto UTF-8 validado.
-- [ ] T006 Crear `src/domain/build-export/resolved-token-view.ts` con `ResolvedTokenView`, alias path, valor resuelto, tipo DTCG y procedencia.
-- [ ] T007 Crear `src/domain/build-export/verification.ts` con modelos de verificacion post-write, mismatch y ausencia de artefactos.
-- [ ] T008 Crear `src/domain/build-export/index.ts` exportando solo tipos y funciones publicas del dominio build/export.
-- [ ] T009 [P] Crear `tests/domain/build-export/build-domain-models.test.ts` para invariantes de formatos, paths, hashes y outcomes.
-- [ ] T010 Extender `src/application/analysis-ports.ts` para exponer snapshots de bytes y texto sin romper contratos de analisis existentes.
-- [ ] T011 Extender `src/infrastructure/analysis/managed-document-reader.ts` para devolver contenido, bytes y hash input cuando se solicite source snapshot.
-- [ ] T012 [P] Crear `tests/integration/build-export/source-snapshot-reader.test.ts` con UTF-8 estricto, size bytes y hash estable.
-- [ ] T013 Crear `src/infrastructure/build-export/hash.ts` con SHA-256 hexadecimal para bytes de entrada y artefactos generados.
-- [ ] T014 [P] Crear `tests/infrastructure/build-export/hash.test.ts` con vectores deterministas y diferencia texto/bytes.
-- [ ] T015 Crear `src/application/build-export/create-source-snapshot.ts` reutilizando lectura administrada y limites de `src/domain/traversal/limits.ts`.
-- [ ] T016 Crear `src/application/build-export/create-resolved-token-view.ts` reutilizando resultados del analizador y resolucion de alias existente.
-- [ ] T017 [P] Crear `tests/integration/build-export/resolved-token-view.test.ts` para alias chains, procedencia y ausencia de segundo grafo de aliases.
-- [ ] T018 Ejecutar gate A desde `package.json`: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [ ] T001 [US01] Crear `src/domain/build-export/build-format.ts` con `BuildFormat = "css" | "json" | "typescript"`, orden canónico `css, json, typescript` y el mapa formato→filename (`tokens.css`, `tokens.resolved.json`, `tokens.ts`).
+- [ ] T002 [US01] Crear `src/domain/build-export/artifact.ts` con `BuildArtifact` (format, relativePath, bytes, contentHash, byteLength, contentType) y `BuildArtifactMetadata` (sin bytes); readonly, copia defensiva de bytes, `relativePath` relativo sin separadores.
+- [ ] T003 [US07] Crear `src/domain/build-export/build-outcome.ts` con las uniones `BuildResult` (`built|unchanged|invalid-design-system|unsupported-value|conflict|not-found|read-error|write-error|verification-error`) y `ExportResult` (`exported|invalid-design-system|unsupported-value|not-found|read-error`), `BuildConflict` (code/path/format/severity/message/blocksWrite) y campos de recovery (`outputAvailable`, `backupRelativePath`, `recoveryRequired`); prohibir `partial`/`success`/`blocked` como outcomes públicos.
+- [ ] T004 [US17] Crear `src/domain/build-export/verification.ts` con `BuildVerification` (status `passed|failed|skipped`, checks en orden determinista) y `VerificationCheck` kinds `source|css|json|typescript|build-manifest|filesystem`.
+- [ ] T005 [US18] Crear `src/domain/build-export/index.ts` exportando solo tipos y funciones públicas del dominio build-export.
+- [ ] T006 [P] [US01] Crear `tests/domain/build-export/build-domain-models.test.ts`: orden de formatos, invariantes de artifact, uniones de outcome exactas (assert que `partial`/`success` NO existen), defaults de recovery.
+- [ ] T007 [US01] Crear `src/infrastructure/build-export/hash.ts` con SHA-256 hexadecimal en minúsculas sobre bytes exactos (source y artifact).
+- [ ] T008 [P] [US01] Crear `tests/infrastructure/build-export/hash.test.ts` con vectores deterministas y distinción texto/bytes.
+- [ ] T009 [US18] Crear `src/application/build-export/build-ports.ts` con los tipos internos `AnalyzedSourceSnapshot`, `ResolvedTokenView`, `ResolvedTokenRecord`, `TokenResolutionMap` y los puertos `SourceSnapshotReader`, `ArtifactRenderer`, `ArtifactSetWriter`, `BuildOutputInspector` (solo interfaces; sin Node, sin Commander).
+- [ ] T010 [US01] Crear `src/infrastructure/build-export/snapshot-reader.ts`: una lectura raw de bytes + una decodificación UTF-8 estricta + un `JSON.parse` + reúso de `createBoundAnalyze` (`src/cli/composition.ts`) y una proyección de foundations (`src/application/foundations/project-foundations.ts`); `sourceHash` desde los bytes iniciales; sin segundo parse/analyzer.
+- [ ] T011 [P] [US01] Crear `tests/integration/build-export/source-snapshot-reader.test.ts`: UTF-8 inválido → read-error, `sourceHash` estable byte-exacto, logical path lógico (sin ruta absoluta).
+- [ ] T012 [US18] Crear `tests/integration/build-export/one-pass-evidence.test.ts` con spies inyectados: por ejecución `initial semantic reads:1, UTF-8 decodes:1, JSON.parse:1, DTCG analyzer:1, alias graph builds:1, type resolution:1, foundation projections:1`; build permite `pre-publication raw byte reread:1` que no decodifica/parsea/analiza/proyecta; export `pre-publication rereads:0`; casos token normal, alias directo, alias chain, missing, cycle, alias-to-group; compatibilidad con `validate`/`inspect`; bytes históricos intactos.
+- [ ] T013 Gate A: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
-**Regression**: T012 y T017 deben probar que el analizador existente no cambia su salida publica.
-**Suggested commit**: `feat: add build export source snapshot models`
-**First task next checkpoint**: T019
-**Exclusions**: No renderers, no writer transaccional, no CLI.
+**Regression**: T011/T012 prueban que el analizador existente no cambia su salida pública.
+**Suggested commit**: `feat: add build-export source snapshot and domain models`
+**Exclusions**: sin renderers, sin writer, sin CLI, sin manifest.
+**First task next checkpoint**: T014.
 
-## Checkpoint B - Proyeccion normalizada y orden canonico
+## Checkpoint B — Proyección normalizada y orden canónico
 
-**Objective**: Convertir `ResolvedTokenView` en una proyeccion estable por formato, con orden total y decisiones de soportado/no soportado.
+**Objective**: Convertir el `ResolvedTokenView` en `NormalizedTokenSet` con orden canónico total y category/foundation calculados una sola vez (no por renderer).
 **Preconditions**: Checkpoint A completo y gate A verde.
 
 ### Tasks
 
-- [ ] T019 Crear `src/domain/build-export/normalized-token.ts` con `NormalizedToken`, `NormalizedAlias`, `UnsupportedToken` y `TokenProjectionIssue`.
-- [ ] T020 Crear `src/domain/build-export/build-token-order.ts` con comparador canonico por logical path, formato y tipo.
-- [ ] T021 Crear `src/application/build-export/create-build-projection.ts` para mapear resolved tokens a tokens normalizados.
-- [ ] T022 Crear `src/application/build-export/map-foundation-token.ts` para conservar decisiones de foundations ya implementadas en 004.
-- [ ] T023 Crear `src/application/build-export/classify-build-support.ts` para separar soportado, partial y blocked por formato.
-- [ ] T024 [P] Crear `tests/domain/build-export/build-token-order.test.ts` para orden lexicografico estable, profundidad y desempates.
-- [ ] T025 [P] Crear `tests/application/build-export/create-build-projection.test.ts` para copias defensivas y entrada inmutable.
-- [ ] T026 Crear `tests/integration/build-export/build-projection-aliases.test.ts` para aliases validos, aliases rotos y ciclos reportados por analisis.
-- [ ] T027 Crear `tests/fixtures/build-export/projection/source.tokens.json` como fixture minimo de tokens color, dimension y number.
-- [ ] T028 Crear `src/application/build-export/index.ts` exportando source snapshot, resolved view y proyeccion normalizada.
-- [ ] T029 Crear `tests/integration/build-export/build-projection-determinism.test.ts` para misma entrada en distinto orden JSON y misma proyeccion.
-- [ ] T030 Ejecutar gate B desde `package.json`: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [ ] T014 [US20] Crear `src/domain/build-export/normalized-token.ts` con `NormalizedBuildToken` (path, segments, category, foundationLevel, effectiveType, sourceValue, resolvedValue, aliasOf, aliasChain, description, trust, order, compatibility) y `NormalizedTokenSet` (source, tokens, byPath, warnings); readonly y congelado.
+- [ ] T015 [US20] Crear `src/domain/build-export/build-token-order.ts` con el comparador canónico único: orden de categoría foundation → path padres-antes-que-hijos → comparación bytewise por code point (sin `localeCompare`).
+- [ ] T016 [US06] Crear `src/application/build-export/create-build-projection.ts`: mapea `ResolvedTokenView` → `NormalizedTokenSet`, reutiliza UNA proyección de foundations para category/foundationLevel y el alias inmediato del grafo existente.
+- [ ] T017 [US07] Crear `src/application/build-export/compatibility.ts` para anotar `NormalizedBuildToken.compatibility` (representabilidad por formato) sin renderizar todavía.
+- [ ] T018 [US08] Añadir en `create-build-projection.ts` el rechazo de tokens con tipo no resoluble, alias inválido, alias-to-group, cycle o alias no confiable, y la exclusión de grupos (no se emiten como tokens).
+- [ ] T019 [US20] Garantizar en `normalized-token.ts`/`create-build-projection.ts` copias defensivas, valores JSON-safe y congelamiento de colecciones anidadas.
+- [ ] T020 [P] [US20] Crear `tests/domain/build-export/build-token-order.test.ts`: orden por categoría, padres antes que descendientes, code point, sin locale.
+- [ ] T021 [P] [US20] Crear `tests/application/build-export/create-build-projection.test.ts`: entrada inmutable, copias defensivas, distinto insertion order → misma proyección.
+- [ ] T022 [P] [US06] Crear `tests/integration/build-export/build-projection-aliases.test.ts`: alias válido (aliasOf inmediato), alias roto, cycle y alias-to-group reportados por el análisis (rechazados, no proyectados).
+- [ ] T023 [US18] Crear `tests/integration/build-export/projection-single-foundation.test.ts` con spy: `foundation projections:1`; category/foundationLevel no se recalculan por renderer.
+- [ ] T024 [US08] Crear `tests/fixtures/build-export/projection/source.tokens.json` (tokens color/dimension/number + un alias) y un test que confirme grupos excluidos y tokens inválidos rechazados.
+- [ ] T025 Gate B: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
-**Regression**: T026 debe preservar errores contractuales de alias existentes.
-**Suggested commit**: `feat: add normalized build projection`
-**First task next checkpoint**: T031, T053 o T064, segun paralelismo de renderers.
-**Exclusions**: No escritura de archivos ni manifiestos.
+**Regression**: T022 preserva los errores contractuales de alias de `002`.
+**Suggested commit**: `feat: add normalized build projection and canonical order`
+**Exclusions**: sin escritura de archivos ni manifest.
+**First task next checkpoint**: T026 (C), en paralelo conceptual con T055 (D) y T062 (E).
 
-## Checkpoint C - CSS naming, escaping y renderer
+## Checkpoint C — CSS naming, escaping y renderer
 
-**Objective**: Renderizar CSS custom properties deterministas, seguras y parcialmente generables cuando existan tokens no soportados.
+**Objective**: Renderizar CSS Custom Properties deterministas y exactas; cualquier token no representable bloquea el build completo (cero CSS).
 **Preconditions**: Checkpoint B completo y gate B verde.
 
 ### Tasks
 
-- [ ] T031 Crear `src/domain/build-export/css/css-name.ts` con reglas de nombre canonico para custom properties desde logical paths.
-- [ ] T032 Crear `src/domain/build-export/css/css-escape.ts` con escaping determinista para segmentos, caracteres especiales y prefijos numericos.
-- [ ] T033 Crear `src/domain/build-export/css/css-render-model.ts` con `CssRenderableToken`, `CssDeclaration`, `CssRenderWarning` y `CssRenderError`.
-- [ ] T034 Crear `src/domain/build-export/css/css-name-collision.ts` para detectar colisiones post-normalizacion y producir conflictos explicitos.
-- [ ] T035 [P] Crear `tests/domain/build-export/css/css-name.test.ts` para kebab case, segmentos reservados, Unicode escapado y colisiones.
-- [ ] T036 [P] Crear `tests/domain/build-export/css/css-escape.test.ts` para espacios, slashes, dots, numeros iniciales y caracteres no ASCII.
-- [ ] T037 Crear `src/infrastructure/build-export/css/render-css-value.ts` para color, dimension, duration, number, font family, font weight y cubic bezier.
-- [ ] T038 Crear `src/infrastructure/build-export/css/render-css-alias.ts` para alias como `var(--token-name)` con fallback bloqueado por defecto.
-- [ ] T039 Crear `src/infrastructure/build-export/css/render-css-file.ts` con header minimo, `:root`, orden canonico y newline final.
-- [ ] T040 Crear `src/infrastructure/build-export/css/css-renderer.ts` como renderer de formato `css` sobre `NormalizedTokenSet`.
-- [ ] T041 Crear `src/application/build-export/classify-css-support.ts` para marcar shadow, gradient, typography, border y transition como no soportados en CSS si no hay mapeo seguro.
-- [ ] T042 Crear `src/application/build-export/create-css-artifact.ts` para producir artefacto CSS partial cuando existan tokens no soportados no bloqueantes.
-- [ ] T043 Crear `tests/infrastructure/build-export/css/render-css-value.test.ts` para tipos DTCG soportados y errores de valores invalidos.
-- [ ] T044 Crear `tests/infrastructure/build-export/css/css-renderer.test.ts` para snapshot determinista de CSS con newline final.
-- [ ] T045 Crear `tests/integration/build-export/css-alias-output.test.ts` para alias resueltos como `var()` y nombres estables.
-- [ ] T046 Crear `tests/integration/build-export/css-unsupported-partial.test.ts` para salida parcial, warnings y exclusion de tipos no soportados.
-- [ ] T047 Crear `tests/integration/build-export/css-name-collision.test.ts` para bloqueo explicito por colision de custom property.
-- [ ] T048 Crear `tests/integration/build-export/css-invalid-alias-blocks.test.ts` para alias roto, alias circular y alias a tipo incompatible.
-- [ ] T049 Crear `tests/fixtures/build-export/css/source.tokens.json` con fixture amplio de tokens CSS soportados y no soportados.
-- [ ] T050 Crear `tests/integration/build-export/css-deterministic-output.test.ts` comparando hashes CSS de entradas reordenadas.
-- [ ] T051 Actualizar `src/application/build-export/index.ts` para exportar `createCssArtifact` sin exponer infraestructura interna.
-- [ ] T052 Ejecutar gate C desde `package.json`: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [ ] T026 [US11] Crear `src/domain/build-export/css-name.ts` con `tokenPathToCssCustomPropertyName(path)` = `"--"` + segments unidos por `-`; cada segmento valida `^[A-Za-z0-9_][A-Za-z0-9_-]*$`; case preservado; puntos solo como separadores; sin lowercasing, sin normalización Unicode, sin identifier escaping.
+- [ ] T027 [P] [US11] Crear `tests/domain/build-export/css-name.test.ts`: segmento vacío, Unicode, espacio, slash, backslash y caracteres fuera del subconjunto → `unsupported-value`/`css-name-invalid` (format `css`, tokenPath, wrote:false); case preservado; sin lowercase ni normalización.
+- [ ] T028 [US11] Crear en `src/domain/build-export/css-name.ts` el detector de colisiones (mapa global nombre→path antes de producir bytes): `foo.bar-baz` y `foo-bar.baz` colisionan en `--foo-bar-baz` → `unsupported-value`/`css-name-collision`, wrote:false.
+- [ ] T029 [P] [US11] Crear `tests/domain/build-export/css-name-collision.test.ts` con el caso `foo.bar-baz`/`foo-bar.baz` y verificación de que nunca se elige uno silenciosamente.
+- [ ] T030 [US20] Crear `src/infrastructure/build-export/css-string.ts` (escaping de valores string entre comillas dobles, separado de la validación de identifiers): backslash, comilla doble, LF, CR, form feed, NULL, controles C0, DEL; escapes hex con espacio terminador; UTF-8; independiente de locale.
+- [ ] T031 [P] [US20] Crear `tests/infrastructure/build-export/css-string.test.ts` con fixtures byte-exactos de `research.md` (comillas, salto de línea, NULL, tab) y controles C0/DEL.
+- [ ] T032 [US07] Crear en `src/infrastructure/build-export/css-renderer.ts` el serializer de `number` (SUPPORTED): decimal más corto estable, menos-cero a cero, sin locale, sin notación científica; rechazo defensivo de NaN/Infinity → `css-number-invalid`.
+- [ ] T033 [US07] Añadir en `src/infrastructure/build-export/css-renderer.ts` los serializers CONDITIONALLY_SUPPORTED: `color` (solo `hex`, alpha ausente o 1; `#rrggbb` minúscula), `dimension` (`px|rem|em|%`), `duration` (`ms|s`), `fontWeight` (entero 1..1000 o `normal|bold`), `fontFamily` (lista coma+espacio; keywords genéricos sin comillas), `cubicBezier` (`x1`/`x2` en 0..1), `string`.
+- [ ] T034 [US07] Añadir en `src/infrastructure/build-export/css-renderer.ts` el reconocimiento de tipos UNSUPPORTED_IN_CSS_V1 (`boolean`, `strokeStyle`, `border`, `transition`, `shadow`, `gradient`, `typography`) → `unsupported-value` con format `css`, tokenPath, type y stable code (`css-boolean-unsupported`, `css-type-unsupported`).
+- [ ] T035 [US05] Añadir en `src/infrastructure/build-export/css-renderer.ts` la emisión de aliases `var(--<immediate-target>)`: el target debe existir, ser token, tener CSS name válido, generar declaration, ser representable y compatible; si no → `unsupported-value`/`css-alias-target-unrenderable`; sin fallback silencioso al valor final.
+- [ ] T036 [US01] Completar `src/infrastructure/build-export/css-renderer.ts`: ensamblar bloque `:root`, declaraciones en orden canónico, newline final, UTF-8 sin BOM; all-or-nothing: si cualquier token es no soportado, retornar `unsupported-value` y cero bytes CSS.
+- [ ] T037 [P] [US07] Crear `tests/infrastructure/build-export/css-type-color.test.ts`: hex válido; alpha distinto de 1 / shape inválida → `css-color-unsupported-shape`.
+- [ ] T038 [P] [US07] Crear `tests/infrastructure/build-export/css-type-dimension.test.ts`: `16px`/`rem`/`em`/`%`; unidad inválida/whitespace/no-finito → `css-dimension-unsupported-shape`.
+- [ ] T039 [P] [US07] Crear `tests/infrastructure/build-export/css-type-number.test.ts`: `0.875`; menos-cero a cero; NaN/Infinity → `css-number-invalid`.
+- [ ] T040 [P] [US07] Crear `tests/infrastructure/build-export/css-type-string.test.ts`: string entrecomillado/escapado; gating de tipo → `css-string-unsupported-type`.
+- [ ] T041 [P] [US07] Crear `tests/infrastructure/build-export/css-type-boolean.test.ts`: cualquier boolean → `css-boolean-unsupported` (UNSUPPORTED).
+- [ ] T042 [P] [US07] Crear `tests/infrastructure/build-export/css-type-font-family.test.ts`: lista/keyword genérico sin comillas; shape inválida → `css-font-family-unsupported-shape`.
+- [ ] T043 [P] [US07] Crear `tests/infrastructure/build-export/css-type-font-weight.test.ts`: `700`/`normal`/`bold`; otro → `css-font-weight-unsupported-shape`.
+- [ ] T044 [P] [US07] Crear `tests/infrastructure/build-export/css-type-duration.test.ts`: `120ms`/`s`; unidad inválida → `css-duration-unsupported-shape`.
+- [ ] T045 [P] [US07] Crear `tests/infrastructure/build-export/css-type-cubic-bezier.test.ts`: `cubic-bezier(0.4, 0, 0.2, 1)`; `x` fuera de 0..1 → `css-cubic-bezier-unsupported-shape`.
+- [ ] T046 [P] [US07] Crear `tests/infrastructure/build-export/css-type-stroke-style.test.ts`: cualquier valor → `css-type-unsupported`.
+- [ ] T047 [P] [US07] Crear `tests/infrastructure/build-export/css-type-border.test.ts`: cualquier valor → `css-type-unsupported`.
+- [ ] T048 [P] [US07] Crear `tests/infrastructure/build-export/css-type-transition.test.ts`: cualquier valor → `css-type-unsupported`.
+- [ ] T049 [P] [US07] Crear `tests/infrastructure/build-export/css-type-shadow.test.ts`: cualquier valor → `css-type-unsupported`.
+- [ ] T050 [P] [US07] Crear `tests/infrastructure/build-export/css-type-gradient.test.ts`: cualquier valor → `css-type-unsupported`.
+- [ ] T051 [P] [US07] Crear `tests/infrastructure/build-export/css-type-typography.test.ts`: cualquier valor → `css-type-unsupported`.
+- [ ] T052 [US05] Crear `tests/integration/build-export/css-aliases.test.ts`: alias directo, cadena, missing, alias-to-group, cycle, target con nombre inválido, target no representable → `unsupported-value`; cero fallback silencioso.
+- [ ] T053 [US08] Crear `tests/integration/build-export/css-all-or-nothing.test.ts`: un token no soportado → renderer retorna `unsupported-value` y cero bytes CSS (sin CSS parcial).
+- [ ] T054 Gate C: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
-**Regression**: T046 y T048 cubren salida parcial segura y bloqueo por defectos contractuales.
-**Suggested commit**: `feat: render deterministic css artifacts`
-**First task next checkpoint**: T053 o T064 si aun no se ejecutaron en paralelo.
-**Exclusions**: No TypeScript renderer, no JSON renderer, no writer.
+**Regression**: ninguna; CSS es nuevo.
+**Suggested commit**: `feat: add deterministic css renderer with full type matrix`
+**Exclusions**: sin writer, sin manifest, sin JSON/TS renderers aquí.
+**First task next checkpoint**: T055 (D).
 
-## Checkpoint D - JSON resuelto
+## Checkpoint D — JSON resuelto
 
-**Objective**: Renderizar JSON resuelto estable, sin filtrar metadata interna y preservando formato DTCG util para consumidores.
-**Preconditions**: Checkpoint B completo y gate B verde.
-
-### Tasks
-
-- [ ] T053 Crear `src/domain/build-export/json/json-render-model.ts` con `ResolvedJsonDocument`, `ResolvedJsonToken` y errores de serializacion.
-- [ ] T054 Crear `src/infrastructure/build-export/json/create-resolved-json-document.ts` para convertir proyeccion normalizada a documento JSON publico.
-- [ ] T055 Crear `src/infrastructure/build-export/json/render-json-file.ts` con orden canonico, indentacion estable de dos espacios y newline final.
-- [ ] T056 Crear `src/infrastructure/build-export/json/json-renderer.ts` como renderer de formato `json` con aliases resueltos y procedencia omitida.
-- [ ] T057 Crear `src/application/build-export/create-json-artifact.ts` para producir artefacto JSON resuelto y warnings no bloqueantes.
-- [ ] T058 [P] Crear `tests/infrastructure/build-export/json/render-json-file.test.ts` para orden, indentacion y newline final.
-- [ ] T059 Crear `tests/integration/build-export/json-resolved-output.test.ts` para valores resueltos, alias chains y ausencia de `$extensions` internas.
-- [ ] T060 Crear `tests/integration/build-export/json-deterministic-output.test.ts` comparando hash de entradas reordenadas.
-- [ ] T061 Crear `tests/fixtures/build-export/json/source.tokens.json` con fixture de aliases, tipos soportados y metadata publica.
-- [ ] T062 Actualizar `src/application/build-export/index.ts` para exportar `createJsonArtifact`.
-- [ ] T063 Ejecutar gate D desde `package.json`: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
-
-**Regression**: T059 debe confirmar que no se exponen detalles internos del analizador.
-**Suggested commit**: `feat: render resolved json artifacts`
-**First task next checkpoint**: T064 o T075, segun avance paralelo.
-**Exclusions**: No CSS renderer adicional, no TypeScript renderer, no writer.
-
-## Checkpoint E - TypeScript renderer
-
-**Objective**: Renderizar modulo TypeScript determinista con tipos utiles, valores resueltos y export estable.
-**Preconditions**: Checkpoint B completo y gate B verde.
+**Objective**: Producir `tokens.resolved.json` (`ResolvedTokensV1`) determinista, con valores resueltos y metadata mínima, sin exponer datos internos.
+**Preconditions**: Checkpoint B completo y gate B verde (independiente de C).
 
 ### Tasks
 
-- [ ] T064 Crear `src/domain/build-export/typescript/typescript-render-model.ts` con `TypescriptModule`, `TypescriptExport`, `TypescriptRenderError`.
-- [ ] T065 Crear `src/infrastructure/build-export/typescript/sanitize-typescript-identifier.ts` para nombres exportables y deteccion de colisiones.
-- [ ] T066 Crear `src/infrastructure/build-export/typescript/render-typescript-value.ts` para literales `as const` seguros.
-- [ ] T067 Crear `src/infrastructure/build-export/typescript/render-typescript-file.ts` con header minimo, exports canonicos, newline final y sin imports runtime.
-- [ ] T068 Crear `src/infrastructure/build-export/typescript/typescript-renderer.ts` como renderer de formato `ts`.
-- [ ] T069 Crear `src/application/build-export/create-typescript-artifact.ts` para producir artefacto TypeScript y diagnosticos de identifiers.
-- [ ] T070 [P] Crear `tests/infrastructure/build-export/typescript/sanitize-typescript-identifier.test.ts` para palabras reservadas, numeros y colisiones.
-- [ ] T071 Crear `tests/infrastructure/build-export/typescript/typescript-renderer.test.ts` para snapshot estable y literales `as const`.
-- [ ] T072 Crear `tests/integration/build-export/typescript-output.test.ts` para aliases resueltos, tipos DTCG y compilabilidad con `tsc`.
-- [ ] T073 Actualizar `src/application/build-export/index.ts` para exportar `createTypescriptArtifact`.
-- [ ] T074 Ejecutar gate E desde `package.json`: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [ ] T055 [US06] Crear `src/application/build-export/resolved-tokens-mapper.ts` con los DTO `ResolvedTokensV1` (`formatVersion`, `source {path,hash}`, `tokens`) y `ResolvedTokenV1` (`value`, `aliasOf`, `type`, `category`, `foundationLevel`, `description`); flat record por token path; `aliasOf` inmediato; null policy por campo.
+- [ ] T056 [US06] Crear `src/infrastructure/build-export/json-renderer.ts` con `serializeResolvedTokensV1`: `JSON.stringify(envelope, null, 2)` + LF final, UTF-8 sin BOM, `formatVersion` primera clave, claves de token en orden canónico, campos en orden de contrato.
+- [ ] T057 [P] [US06] Crear `tests/application/build-export/resolved-tokens-mapper.test.ts`: flat record, valor resuelto, alias inmediato, null policy de `aliasOf`/`category`/`description`, orden de campos.
+- [ ] T058 [P] [US20] Crear `tests/infrastructure/build-export/json-renderer.test.ts`: parseable, dos espacios, newline final único, sin BOM, orden de tokens canónico, `formatVersion` 1.0.0, arrays/objetos/strings JSON-safe.
+- [ ] T059 [US06] Crear `tests/integration/build-export/resolved-tokens-no-leak.test.ts`: NO expone raw bytes, decoded/parsed source, trust interno, alias chain interna, `$extensions` desconocidas, rutas absolutas, errores crudos ni stack.
+- [ ] T060 Gate D: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
-**Regression**: T072 debe probar que el artefacto generado no depende de paths internos del paquete.
-**Suggested commit**: `feat: render typescript token artifacts`
-**First task next checkpoint**: T075
-**Exclusions**: No manifest ni escritura atomica.
+**Regression**: ninguna; contrato JSON nuevo e independiente de `003`/`004`/`005`.
+**Suggested commit**: `feat: add resolved tokens json renderer`
+**Exclusions**: sin writer, sin manifest.
+**First task next checkpoint**: T061 (E).
 
-## Checkpoint F - Manifest, hashes y ownership
+## Checkpoint E — TypeScript renderer
 
-**Objective**: Definir manifest versionado, hashing de artefactos, ownership de salidas y deteccion de conflictos antes de escribir.
-**Preconditions**: Checkpoints C, D y E completos o stubs equivalentes con gates verdes.
+**Objective**: Producir `tokens.ts` válido, autocontenido, determinista y verificable sin ejecución.
+**Preconditions**: Checkpoint B completo y gate B verde (independiente de C/D).
 
 ### Tasks
 
-- [ ] T075 Crear `src/domain/build-export/manifest.ts` con `BuildManifestV1`, version, source hash, artifact entries y timestamp determinista opcional.
-- [ ] T076 Crear `src/domain/build-export/ownership.ts` con ownership states `owned`, `foreign`, `missing`, `modified`, `unknown`.
-- [ ] T077 Crear `src/domain/build-export/artifact-set.ts` con conjunto de artefactos, paths relativos y hashes esperados.
-- [ ] T078 Crear `src/application/build-export/create-build-manifest.ts` para manifest desde source snapshot, projection y artifact set.
-- [ ] T079 Crear `src/application/build-export/parse-existing-manifest.ts` para leer manifest previo y validar schema/version.
-- [ ] T080 Crear `src/application/build-export/detect-output-ownership.ts` para comparar manifest previo, archivos actuales y artefactos esperados.
-- [ ] T081 Crear `src/infrastructure/build-export/manifest/manifest-renderer.ts` para serializacion JSON estable del manifest.
-- [ ] T082 [P] Crear `tests/domain/build-export/manifest.test.ts` para version, hashes, paths relativos y schema de entradas.
-- [ ] T083 Crear `tests/application/build-export/create-build-manifest.test.ts` para manifest determinista y source hash correcto.
-- [ ] T084 Crear `tests/application/build-export/detect-output-ownership.test.ts` para owned, foreign, modified, missing y unknown.
-- [ ] T085 Crear `tests/integration/build-export/manifest-roundtrip.test.ts` para parse/render estable de `build.manifest.json`.
-- [ ] T086 Crear `tests/fixtures/build-export/manifest/build.manifest.json` con fixture versionado valido.
-- [ ] T087 Crear `tests/integration/build-export/manifest-idempotency.test.ts` para manifest igual cuando entrada y opciones no cambian.
-- [ ] T088 Ejecutar gate F desde `package.json`: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [ ] T061 [US06] Crear `src/infrastructure/build-export/ts-renderer.ts`: emitir `export const tokens = { ... } as const;`, `export const tokenMetadata = { ... } as const;`, `export type TokenPath = keyof typeof tokens;`; flat record; claves siempre entrecomilladas; valores resueltos; metadata (`aliasOf` inmediato, `type`, `category`, `foundationLevel`, `description`); orden canónico; newline final; cero imports y cero dependencia runtime del manager.
+- [ ] T062 [US20] Crear `src/infrastructure/build-export/ts-literal.ts` (serializer de literales TS-safe basado en `JSON.stringify`): escapar comillas, backslash, Unicode, U+2028, U+2029 y `</script>`; arrays/objetos; números finitos; rechazar `NaN`/Infinity.
+- [ ] T063 [P] [US20] Crear `tests/infrastructure/build-export/ts-literal.test.ts`: U+2028/U+2029, `</script>`, controles, comillas/backslash; rechazo de `NaN`/Infinity.
+- [ ] T064 [P] [US06] Crear `tests/infrastructure/build-export/ts-renderer-shape.test.ts`: exports `tokens`/`tokenMetadata`/`TokenPath`, contrato exacto de metadata, ausencia de imports, null policy.
+- [ ] T065 [US06] Crear `tests/integration/build-export/ts-validation-no-exec.test.ts`: validar sintaxis con la dependencia `typescript` (`transpileModule`/`tsc --noEmit`); sin `eval`, sin import dinámico, sin ejecutar el artifact; comprobar exports esperados y ausencia de imports.
+- [ ] T066 [P] [US20] Crear `tests/infrastructure/build-export/ts-determinism.test.ts`: bytes deterministas; identificador de formato normalizado `typescript`; filename `tokens.ts`.
+- [ ] T067 Gate E: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
-**Regression**: T084 debe impedir sobrescritura de archivos no pertenecientes al sistema.
-**Suggested commit**: `feat: add build export manifest ownership`
-**First task next checkpoint**: T089
-**Exclusions**: No writer transaccional aun.
+**Regression**: ninguna; TS es nuevo.
+**Suggested commit**: `feat: add typescript renderer`
+**Exclusions**: sin writer, sin manifest.
+**First task next checkpoint**: T068 (F).
 
-## Checkpoint G - Casos de uso build/export
+## Checkpoint F — Manifest, hashes y ownership
 
-**Objective**: Orquestar build y export headless sobre renderers, manifest y resultados sin acoplarse a CLI.
-**Preconditions**: Checkpoints C, D, E y F completos; gates verdes.
+**Objective**: Construir el build manifest determinista y clasificar ownership del directorio de salida vía el manifest anterior (única autoridad).
+**Preconditions**: Checkpoints C, D y E completos y gates verdes.
 
 ### Tasks
 
-- [ ] T089 Crear `src/application/build-export/build-artifacts-use-case.ts` para pipeline source snapshot -> projection -> renderers -> manifest.
-- [ ] T090 Crear `src/application/build-export/export-artifacts-use-case.ts` para construir artifact set y delegar escritura a un puerto aun no implementado.
-- [ ] T091 Crear `src/application/build-export/build-export-ports.ts` con puertos de filesystem snapshot, writer, clock, reporter y process IO.
-- [ ] T092 Crear `src/application/build-export/select-build-formats.ts` para defaults y validacion de combinaciones `css`, `json`, `ts`.
-- [ ] T093 Crear `src/application/build-export/evaluate-build-result.ts` para outcome success, partial, blocked y verification-error.
-- [ ] T094 Crear `src/application/build-export/build-options.ts` con opciones de input, output dir, dry run, force, format y cwd.
-- [ ] T095 Crear `src/application/build-export/build-export-errors.ts` con errores tipados y mapeo a categorias publicas.
-- [ ] T096 Crear `tests/application/build-export/build-artifacts-use-case.test.ts` para pipeline exitoso de tres formatos y manifest.
-- [ ] T097 Crear `tests/application/build-export/build-artifacts-partial.test.ts` para CSS parcial con JSON/TS exitosos.
-- [ ] T098 Crear `tests/application/build-export/build-artifacts-blocked.test.ts` para bloqueo por alias contractual, colision y entrada invalida.
-- [ ] T099 Crear `tests/application/build-export/export-artifacts-use-case.test.ts` con writer fake y no escritura directa desde aplicacion.
-- [ ] T100 Crear `tests/integration/build-export/headless-use-cases.test.ts` para ejecucion sin CLI ni prompts.
-- [ ] T101 Ejecutar gate G desde `package.json`: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [ ] T068 [US10] Crear `src/domain/build-export/build-manifest.ts` con `BuildManifestV1` (`formatVersion` primera clave, `source` lógico, `sourceHash`, `artifacts`) y `BuildManifestArtifactV1` (`format`, `relativePath`, `contentHash`, `byteLength`); orden css/json/typescript; sin self-entry; sin timestamp/env/cwd/host.
+- [ ] T069 [US01] Crear `src/application/build-export/manifest-builder.ts`: ensamblar `BuildManifestV1` desde artifacts + `sourceHash`; SHA-256 minúscula; `byteLength` exacto; paths relativos.
+- [ ] T070 [US01] Añadir en `src/infrastructure/build-export/json-renderer.ts` `serializeBuildManifestV1`: dos espacios + LF final, UTF-8 sin BOM.
+- [ ] T071 [P] [US10] Crear `tests/application/build-export/build-manifest.test.ts`: `formatVersion` 1.0.0; `source` lógico (token source, no host manifest); sin self-entry; orden de artifacts; `byteLength`; sin timestamps/cwd/hostname/rutas absolutas.
+- [ ] T072 [US10] Crear `src/domain/build-export/build-plan.ts` con `BuildPlan` (`outputRoot`, `sourceHash`, `artifacts`, `manifest`, `previousBuildManifest`, `requiredPaths`, `unknownPolicy`); invariante: sin conjunto candidato parcial.
+- [ ] T073 [US10] Añadir en `src/domain/build-export/build-outcome.ts` el modelo `BuildOwnership` (`empty|trusted|untrusted-build-manifest|required-path-owned-by-unknown|managed-artifact-modified|managed-artifact-missing|unsupported-unknown-node`) y los códigos estables de `BuildConflict`.
+- [ ] T074 [US10] Crear `src/application/build-export/ownership.ts`: clasificar el build manifest previo (parseable/corrupto/no soportado/ausente) y los artifacts declarados; la autoridad de ownership es únicamente el build manifest (`design-system/build/manifest.json`), nunca el Design System host manifest (`design-system/design-system.json`).
+- [ ] T075 [P] [US19] Crear `tests/domain/build-export/manifest-terminology.test.ts` que documente y verifique la distinción host manifest vs build manifest (paths y propósito).
+- [ ] T076 [P] [US10] Crear `tests/application/build-export/ownership-empty.test.ts`: primer build sin build manifest ni required paths → `empty` (permitido).
+- [ ] T077 [P] [US10] Crear `tests/application/build-export/ownership-trusted.test.ts`: build manifest soportado con hashes coincidentes → `trusted`.
+- [ ] T078 [P] [US10] Crear `tests/application/build-export/ownership-manifest-absent-required-present.test.ts`: build manifest ausente con required paths presentes → `required-path-owned-by-unknown`.
+- [ ] T079 [P] [US10] Crear `tests/application/build-export/ownership-manifest-corrupt.test.ts`: build manifest corrupto → `untrusted-build-manifest`.
+- [ ] T080 [P] [US10] Crear `tests/application/build-export/ownership-manifest-unknown-version.test.ts`: versión desconocida → `untrusted-build-manifest`.
+- [ ] T081 [P] [US10] Crear `tests/application/build-export/ownership-artifact-modified.test.ts`: managed artifact modificado → `managed-artifact-modified`.
+- [ ] T082 [P] [US10] Crear `tests/application/build-export/ownership-artifact-missing.test.ts`: managed artifact faltante → `managed-artifact-missing`.
+- [ ] T083 [P] [US10] Crear `tests/application/build-export/ownership-unknown-file-required-path.test.ts`: archivo regular desconocido en required path → `required-path-owned-by-unknown`.
+- [ ] T084 [P] [US10] Crear `tests/application/build-export/ownership-unknown-dir-required-path.test.ts`: directorio desconocido en required path → `required-path-owned-by-unknown`.
+- [ ] T085 [P] [US10] Crear `tests/application/build-export/ownership-artifact-bad-hash.test.ts`: artifact declarado con hash inválido → `untrusted-build-manifest`.
+- [ ] T086 [P] [US10] Crear `tests/application/build-export/ownership-artifact-outside-root.test.ts`: artifact declarado fuera del output root → `untrusted-build-manifest`/unsafe.
+- [ ] T087 [P] [US10] Crear `tests/application/build-export/ownership-manifest-duplicate-path.test.ts`: build manifest con path duplicado → `untrusted-build-manifest`.
+- [ ] T088 [P] [US10] Crear `tests/application/build-export/ownership-manifest-unknown-artifact.test.ts`: build manifest con artifact desconocido → `untrusted-build-manifest`.
+- [ ] T089 Gate F: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
-**Regression**: T099 preserva frontera aplicacion/infraestructura y evita side effects prematuros.
-**Suggested commit**: `feat: orchestrate build export use cases`
-**First task next checkpoint**: T102
-**Exclusions**: No reporters CLI finales ni writer real.
+**Regression**: ninguna; manifest y ownership son nuevos.
+**Suggested commit**: `feat: add build manifest and ownership classification`
+**Exclusions**: sin writer transaccional ni publicación todavía.
+**First task next checkpoint**: T090 (G).
 
-## Checkpoint H - Reporters, JSON publico, outcomes y streams
+## Checkpoint G — Casos de uso build/export
 
-**Objective**: Publicar resultados humanos y JSON estable con streams, codigos de salida y diagnosticos consumibles.
+**Objective**: Orquestar build (render de todos los formatos en memoria → manifest → writer) y export (un renderer → bytes), ambos headless; export es estrictamente read-only.
+**Preconditions**: Checkpoints C/D/E completos (renderers) y F completo (manifest/ownership).
+
+### Tasks
+
+- [ ] T090 [US18] Finalizar `src/application/build-export/build-ports.ts`: interfaces `ArtifactRenderer`, `ArtifactSetWriter` (`ArtifactSetWriteRequest`/`ArtifactSetWriteResult`), `BuildOutputInspector`, `SourceSnapshotReader`; dominio/aplicación sin filesystem/Commander/stdout/npm.
+- [ ] T091 [US01] Crear `src/application/build-export/build-design-system.ts`: una snapshot → proyección → render de los 3 formatos en memoria → manifest → writer; all-or-nothing: si cualquier renderer da `unsupported-value`, retornar ese outcome con `wrote:false` sin invocar writer ni crear staging; produce `BuildResult`.
+- [ ] T092 [US02] Crear `src/application/build-export/export-design-system-artifact.ts`: resolve host → lectura semántica → validación → normalización → seleccionar UN renderer → devolver `bytes`/`contentType`/`logicalFilename`; nunca writer/manifest/output-inspector/staging/backup/reread/mtime; produce `ExportResult`.
+- [ ] T093 [P] [US01] Crear `tests/application/build-export/build-use-case.test.ts`: `built` renderiza los 3 y luego escribe; fallo de renderer bloquea antes de cualquier escritura (spy `writer calls:0`, sin staging); prior output intacto.
+- [ ] T094 [P] [US18] Crear `tests/application/build-export/export-read-only.test.ts` con spies/fakes: `writer calls:0`, `output inspector calls:0`, `manifest builder calls:0`, `concurrency rereads:0`, `filesystem writes:0`.
+- [ ] T095 [P] [US02] Crear `tests/application/build-export/export-outcomes.test.ts`: `exported`, `invalid-design-system`, `unsupported-value`, `not-found`, `read-error`.
+- [ ] T096 [US08] Crear `tests/integration/build-export/build-blocks-partial.test.ts`: CSS no soportado → `unsupported-value`; JSON/TS no publicados; sin manifest; prior output intacto.
+- [ ] T097 Gate G: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+
+**Regression**: ninguna directa; usa el motor reutilizado de A/B.
+**Suggested commit**: `feat: add build and export use cases`
+**Exclusions**: sin reporters/JSON público; sin writer real (puerto fake en G).
+**First task next checkpoint**: T098 (H).
+
+## Checkpoint H — Reporters, JSON público, outcomes y streams
+
+**Objective**: Presentación humana y JSON de build, mapeo exacto de outcomes a exit codes y disciplina de streams; export sin JSON envelope.
 **Preconditions**: Checkpoint G completo y gate G verde.
 
 ### Tasks
 
-- [ ] T102 Crear `src/application/build-export/public-build-result.ts` con DTO publico para `--json`, warnings, conflicts, artifacts y manifest.
-- [ ] T103 Crear `src/application/build-export/map-build-result-to-public-json.ts` para convertir resultados internos a contrato JSON publico.
-- [ ] T104 Crear `src/infrastructure/build-export/reporters/json-build-reporter.ts` para emitir JSON estable por stdout.
-- [ ] T105 Crear `src/infrastructure/build-export/reporters/human-build-reporter.ts` para resumen humano, tabla de artefactos y diagnosticos.
-- [ ] T106 Crear `src/infrastructure/build-export/reporters/build-stream-policy.ts` para stdout/stderr, silent mode y errores no JSON.
-- [ ] T107 Crear `src/application/build-export/map-build-outcome-to-exit-code.ts` para exit codes success, partial, blocked, validation y unexpected.
-- [ ] T108 Crear `tests/application/build-export/map-build-result-to-public-json.test.ts` para contrato JSON sin campos internos.
-- [ ] T109 Crear `tests/infrastructure/build-export/reporters/json-build-reporter.test.ts` para stdout JSON parseable y stderr vacio.
-- [ ] T110 Crear `tests/infrastructure/build-export/reporters/human-build-reporter.test.ts` para resumen legible de success, partial y blocked.
-- [ ] T111 Crear `tests/application/build-export/map-build-outcome-to-exit-code.test.ts` para tabla completa de outcomes y exit codes.
-- [ ] T112 Ejecutar gate H desde `package.json`: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [ ] T098 [US17] Crear `src/application/build-export/build-json/map-build.ts` con `BuildJsonEnvelopeV1` desde `BuildResult` (campos del contrato `build-json-v1.contract.md`); null policy; orden de propiedades; sin bytes/rutas absolutas/`Error`/stack/env.
+- [ ] T099 [US17] Crear `src/infrastructure/reporter/build-json-serializer.ts` (`serializeBuildJsonV1` independiente; dos espacios + LF), sin cast desde `JsonEnvelopeV1`/`FoundationsJsonEnvelopeV1`/`PresetsJsonEnvelopeV1`.
+- [ ] T100 [US17] Crear `src/infrastructure/reporter/build-json-reporter.ts`: un único envelope a stdout para outcomes esperados; stderr vacío.
+- [ ] T101 [US16] Crear `src/infrastructure/reporter/build-terminal-reporter.ts` (humano): outcome, source lógico, output directory lógico, formatos, archivos, hashes resumidos, `wrote`, verification.
+- [ ] T102 [US02] Crear `src/infrastructure/reporter/export-error-reporter.ts`: éxito → solo bytes del artifact a stdout; error → stderr seguro; nunca mezcla reporte y artifact.
+- [ ] T103 [US19] Extender `src/cli/exit-codes.ts` con el mapeo build/export: `built`/`exported`→0, `unchanged`→2, `invalid-design-system`→3, `unsupported-value`/`conflict`→4, `not-found`→5, `read-error`/`write-error`→6, `verification-error`→7, `internal-error`→70 (solo capa CLI/adapter).
+- [ ] T104 [P] [US07] Crear `tests/cli/build-export-outcomes.test.ts`: uniones exactas (build 9, export 5, `internal-error` adapter-only); ausencia pública de `success`/`partial`/`blocked`/`validation`/`unexpected`.
+- [ ] T105 [P] [US19] Crear `tests/cli/build-export-exit-codes.test.ts` tabla-a-tabla del mapeo de exit codes.
+- [ ] T106 [P] [US17] Crear `tests/infrastructure/reporter/build-json.test.ts`: contrato + bytes (sin rutas absolutas, `Error`, stack, env, ni bytes completos de artifact).
+- [ ] T107 [US13] Crear `tests/cli/build-export-streams.test.ts`: build humano (stdout reporte/stderr vacío); build --json (un envelope/stderr vacío); export success (artifact exacto/stderr vacío); export error (stdout vacío/stderr seguro); internal (stdout vacío/stderr seguro/exit 70); sin envelope JSON para export.
+- [ ] T108 Gate H: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
-**Regression**: T108 y T109 deben mantener compatibilidad con contratos JSON publicos de 003.
-**Suggested commit**: `feat: report build export outcomes`
-**First task next checkpoint**: T113
-**Exclusions**: No CLI final, no writer transaccional.
+**Regression**: T105/T107 confirman que los exit codes históricos no cambian.
+**Suggested commit**: `feat: add build reporters, json envelope and exit mapping`
+**Exclusions**: sin writer real ni filesystem snapshot todavía.
+**First task next checkpoint**: T109 (I).
 
-## Checkpoint I - Snapshot filesystem, unknown nodes y concurrencia
+## Checkpoint I — Snapshot filesystem, unknown nodes y concurrencia
 
-**Objective**: Observar directorios de salida de forma segura antes de escribir, preservando archivos desconocidos y detectando carreras.
-**Preconditions**: Checkpoints F y G completos; gate H puede avanzar en paralelo si no toca writer.
-
-### Tasks
-
-- [ ] T113 Crear `src/domain/build-export/filesystem-snapshot.ts` con nodos archivo/directorio/symlink, mtime, size y hash opcional.
-- [ ] T114 Crear `src/domain/build-export/concurrency-check.ts` con preconditions de escritura, tokens de snapshot y diferencias detectadas.
-- [ ] T115 Crear `src/infrastructure/build-export/filesystem/read-output-snapshot.ts` para caminar output dir con limites de profundidad y bytes.
-- [ ] T116 Crear `src/infrastructure/build-export/filesystem/classify-output-node.ts` para owned, unknown, symlink, unsupported y ignored.
-- [ ] T117 Crear `src/infrastructure/build-export/filesystem/detect-output-concurrency.ts` para comparar snapshot previo y estado actual antes de publish.
-- [ ] T118 Crear `src/application/build-export/evaluate-output-snapshot.ts` para transformar snapshot en ownership y conflictos publicos.
-- [ ] T119 [P] Crear `tests/domain/build-export/concurrency-check.test.ts` para cambios de mtime, size, hash y nodo eliminado.
-- [ ] T120 Crear `tests/infrastructure/build-export/filesystem/read-output-snapshot.test.ts` para directorio inexistente, vacio, symlink y limites.
-- [ ] T121 Crear `tests/infrastructure/build-export/filesystem/detect-output-concurrency.test.ts` para carreras antes de publish y despues de staging.
-- [ ] T122 Crear `tests/application/build-export/evaluate-output-snapshot.test.ts` para unknown files preservados y conflicts reportados.
-- [ ] T123 Crear `tests/integration/build-export/unknown-output-nodes.test.ts` para no borrar archivos manuales del directorio.
-- [ ] T124 Crear `tests/integration/build-export/concurrent-output-change.test.ts` para fallo controlado si cambia un archivo entre snapshot y publish.
-- [ ] T125 Ejecutar gate I desde `package.json`: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
-
-**Regression**: T123 protege archivos desconocidos y T124 evita corrupcion por concurrencia.
-**Suggested commit**: `feat: inspect build export output filesystem`
-**First task next checkpoint**: T126
-**Exclusions**: No publish atomico aun.
-
-## Checkpoint J - Writer transaccional por directorio
-
-**Objective**: Escribir artifact sets por directorio con staging, publish atomico, rollback y preservacion de nodos ajenos.
-**Preconditions**: Checkpoints F, G e I completos; gates verdes.
+**Objective**: Capturar el estado de `design-system/build/` con seguridad de nodos y revalidar concurrencia por bytes/hashes antes del commit point.
+**Preconditions**: Checkpoint F (ownership) y G (use cases) completos.
 
 ### Tasks
 
-- [ ] T126 Crear `src/domain/build-export/write-plan.ts` con operaciones stage, publish, preserve, remove-owned y rollback.
-- [ ] T127 Crear `src/infrastructure/build-export/filesystem/create-write-plan.ts` para calcular operaciones desde artifact set y ownership.
-- [ ] T128 Crear `src/infrastructure/build-export/filesystem/stage-artifact-set.ts` para escribir todos los artefactos en directorio temporal.
-- [ ] T129 Crear `src/infrastructure/build-export/filesystem/publish-artifact-set.ts` para reemplazo atomico por directorio en el mismo filesystem.
-- [ ] T130 Crear `src/infrastructure/build-export/filesystem/rollback-artifact-set.ts` para restaurar estado anterior ante fallo de publish.
-- [ ] T131 Crear `src/infrastructure/build-export/filesystem/preserve-unknown-nodes.ts` para copiar o mantener nodos desconocidos segun ownership.
-- [ ] T132 Crear `src/infrastructure/build-export/filesystem/remove-owned-artifacts.ts` para eliminar artefactos previos solo si manifest los reconoce.
-- [ ] T133 Crear `src/infrastructure/build-export/filesystem/directory-artifact-writer.ts` implementando el puerto de writer transaccional.
-- [ ] T134 Crear `src/infrastructure/build-export/filesystem/platform-write-retry.ts` para retries acotados en errores transitorios de filesystem.
-- [ ] T135 Crear `tests/infrastructure/build-export/filesystem/create-write-plan.test.ts` para preserve, remove-owned, stage y rollback planificados.
-- [ ] T136 Crear `tests/infrastructure/build-export/filesystem/directory-artifact-writer.test.ts` para success, fallo en stage, fallo en publish y rollback.
-- [ ] T137 Crear `tests/integration/build-export/atomic-directory-write.test.ts` para no dejar directorios temporales visibles tras exito.
-- [ ] T138 Crear `tests/integration/build-export/rollback-on-write-failure.test.ts` para restaurar salida previa y manifest previo.
-- [ ] T139 Ejecutar gate J desde `package.json`: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [ ] T109 [US10] Crear `src/domain/build-export/build-snapshot.ts` con `BuildSnapshot`, `UnknownOutputNode` (`kind` `regular-file|regular-directory|unsupported`, `depth`, `byteLength`, `copyAction`) y `requiredPathStates` (`file|dir|symlink|absent|other`).
+- [ ] T110 [US10] Crear `src/infrastructure/build-export/snapshot-reader.ts` (extensión del lector de output dir): estados de required paths, parents, defensa de symlink/containment; sin seguir symlinks.
+- [ ] T111 [US10] Crear `src/application/build-export/classify-unknown-nodes.ts`: permitir solo archivos/directorios regulares; rechazar symlink/socket/FIFO/block/char/special/path-escape → `conflict`/`unsupported-unknown-node`.
+- [ ] T112 [US10] Añadir límites reusando `src/domain/traversal/limits.ts` (`ANALYSIS_LIMITS`): cantidad de unknown nodes ≤ `maxNodes` (100000), profundidad ≤ `maxDepth` (32), bytes totales ≤ `maxTotalBytes` (16 MiB), por-archivo ≤ ese presupuesto; longitud de path reusando los límites de path existentes.
+- [ ] T113 [P] [US10] Crear `tests/integration/build-export/unknown-nodes-kinds.test.ts`: archivo/dir regular permitidos; symlink, FIFO, socket, device (vía seam/fake), special y path traversal rechazados; cambio de node kind concurrente.
+- [ ] T114 [P] [US10] Crear `tests/integration/build-export/unknown-nodes-limits.test.ts`: límite exacto, límite+1, directorios anidados, directorio vacío.
+- [ ] T115 [US12] Crear `src/application/build-export/concurrency.ts`: reread byte-only del source → SHA-256 vs `sourceHash`; rechequear build manifest bytes/hash, managed artifacts, required path node kinds, symlink state, output root y parent; sin decode/parse/analyze; mismatch → `conflict`/`source-modified`, `wrote:false`.
+- [ ] T116 [P] [US12] Crear `tests/integration/build-export/concurrency.test.ts`: una prueba por modificación concurrente (source bytes, build manifest, managed artifacts, required paths, unknown nodes, output root, parent, node kinds, symlinks, ownership) → `conflict`/`wrote:false`.
+- [ ] T117 [P] [US12] Crear `tests/integration/build-export/concurrency-not-mtime.test.ts`: la detección usa bytes/hash, no mtime/size.
+- [ ] T118 Gate I: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
-**Regression**: T136 y T138 son obligatorias antes de conectar CLI a escritura real.
-**Suggested commit**: `feat: write build export artifacts transactionally`
-**First task next checkpoint**: T140
-**Exclusions**: No CLI publica final todavia.
+**Regression**: ninguna; snapshot/concurrencia son nuevos.
+**Suggested commit**: `feat: add output snapshot, unknown-node safety and concurrency checks`
+**Exclusions**: sin publicación todavía (solo lectura/clasificación).
+**First task next checkpoint**: T119 (J).
 
-## Checkpoint K - Verificacion, recuperacion e idempotencia
+## Checkpoint J — Writer transaccional por directorio
 
-**Objective**: Verificar artefactos publicados, recuperar fallos controlados y garantizar idempotencia observable.
-**Preconditions**: Checkpoint J completo y gate J verde.
+**Objective**: Publicar el conjunto completo de artifacts vía directorio candidato (staging → build) con estados de recuperación explícitos y sin rollback automático tras el commit point.
+**Preconditions**: Checkpoint I completo y gate I verde.
 
 ### Tasks
 
-- [ ] T140 Crear `src/application/build-export/verify-artifact-set.ts` para comparar hashes esperados contra archivos publicados.
-- [ ] T141 Crear `src/application/build-export/verify-build-manifest.ts` para validar manifest escrito contra artifact set y source snapshot.
-- [ ] T142 Crear `src/application/build-export/recover-build-export.ts` para clasificar recovery completed, rolled-back, manual-required.
-- [ ] T143 Crear `src/application/build-export/complete-export-transaction.ts` integrando writer, verificacion y recovery.
-- [ ] T144 Crear `tests/application/build-export/verify-artifact-set.test.ts` para missing, hash mismatch y contenido correcto.
-- [ ] T145 Crear `tests/application/build-export/verify-build-manifest.test.ts` para manifest corrupto, version incompatible y hash incorrecto.
-- [ ] T146 Crear `tests/application/build-export/complete-export-transaction.test.ts` para success, verification-error y rollback visible.
-- [ ] T147 Crear `tests/integration/build-export/export-idempotency.test.ts` para dos ejecuciones iguales sin cambios de hashes ni manifest.
-- [ ] T148 Crear `tests/integration/build-export/export-recovery.test.ts` para fallo simulado y reporte de recovery.
-- [ ] T149 Crear `tests/integration/build-export/rebuild-after-manual-change.test.ts` para detectar modified owned artifact antes de overwrite.
-- [ ] T150 Ejecutar gate K desde `package.json`: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [ ] T119 [US13] Crear en `src/domain/build-export/build-outcome.ts`/`build-plan.ts` los modelos `ArtifactSetWriteRequest` (`strategy: "candidate-directory-set-v1"`, `expectedHashes`), `ArtifactSetWriteResult` (`published|unchanged|conflict|unsafe-target|write-error|verification-error`), `PublicationState` y `BuildRecoveryState`.
+- [ ] T120 [US01] Crear `src/infrastructure/build-export/artifact-set-writer.ts`: staging sibling en el mismo parent; copiar byte-a-byte los unknown regular files/dirs permitidos; escribir artifacts nuevos + build manifest nuevo; verificar el candidato antes de publicar; publicar como conjunto (rename prior `build/`→backup, staging→`build/`). Sin publicación live artifact-by-artifact.
+- [ ] T121 [US13] Modelar el commit point: transición a `candidate-published` solo cuando `staging → build` tiene éxito; desde ahí `wrote:true`.
+- [ ] T122 [US13] Estado: fallo antes de mover build → `wrote:false`, `outputAvailable:true`, `backupRelativePath:null`, `recoveryRequired:false`.
+- [ ] T123 [US13] Estado: primer rename (`build → backup`) falla → `wrote:false`, `outputAvailable:true`.
+- [ ] T124 [US13] Estado: segundo rename (`staging → build`) falla y restore (`backup → build`) funciona → `wrote:false`, `outputAvailable:true`, `backupRelativePath:null`, `recoveryRequired:false`.
+- [ ] T125 [US13] Estado: segundo rename falla y restore falla → `write-error`, `wrote:false`, `outputAvailable:false`, backup retenido, `recoveryRequired:true`.
+- [ ] T126 [US13] Estado: verification-error posterior al commit point → `verification-error`, `wrote:true`, `outputAvailable:true`, backup retenido, `recoveryRequired:true`; sin rollback automático.
+- [ ] T127 [P] [US13] Crear `tests/integration/build-export/writer-posix.test.ts`: renames sibling, ventana de dos renames en directorio no vacío, cleanup de staging.
+- [ ] T128 [P] [US13] Crear `tests/integration/build-export/writer-windows-sim.test.ts` (seams): open handle/antivirus rename failure simulado, permisos, retry acotado.
+- [ ] T129 [P] [US13] Crear `tests/integration/build-export/writer-recovery.test.ts`: primer rename, segundo rename, restore exitoso, restore fallido, cleanup, staging residual, backup residual, rutas públicas relativas.
+- [ ] T130 [US13] Crear `tests/integration/build-export/writer-no-rollback.test.ts`: tras el commit point no hay rollback destructivo automático.
+- [ ] T131 Gate J: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
-**Regression**: T147 y T149 cubren idempotencia y proteccion ante cambios manuales.
-**Suggested commit**: `feat: verify and recover build export writes`
-**First task next checkpoint**: T151
-**Exclusions**: No documentar cierre hasta CLI y packaging.
+**Regression**: ninguna; reúsa conceptos del writer `005` sin acoplar su interfaz de archivo único.
+**Suggested commit**: `feat: add transactional artifact-set writer with recovery states`
+**Exclusions**: sin verificación de tres niveles ni idempotencia completa (van en K).
+**First task next checkpoint**: T132 (K).
 
-## Checkpoint L - CLI, procesos hijos, packaging, regresion, documentacion y auditoria
+## Checkpoint K — Verificación, recuperación e idempotencia
 
-**Objective**: Exponer comandos finales, validar procesos reales, empaquetado, regresiones 001-005 y cierre documental.
-**Preconditions**: Checkpoints A-K completos; todos los gates previos verdes.
+**Objective**: Separar las tres verificaciones (input, candidate, post-publication) y decidir `unchanged` antes de cualquier staging.
+**Preconditions**: Checkpoints H y J completos.
 
 ### Tasks
 
-- [ ] T151 Crear `src/cli/commands/build.ts` con comando `build`, opciones de input/output/formats/json/dry-run/force/cwd y reporter humano.
-- [ ] T152 Crear `src/cli/commands/export.ts` con comando `export`, salida JSON opcional, exit codes publicos y writer transaccional real.
-- [ ] T153 Actualizar `src/cli/index.ts` para registrar `build` y `export` sin alterar comandos existentes.
-- [ ] T154 Crear `tests/cli/build-export.cli.test.ts` para success, partial, blocked, `--json`, `--dry-run`, `--cwd` y exit codes.
-- [ ] T155 Crear `tests/integration/build-export/child-process-build-export.test.ts` para ejecutar binario empaquetado desde un fixture externo.
-- [ ] T156 Crear `tests/integration/build-export/package-consumption.test.ts` para `npm pack`, instalacion temporal y uso de `build`/`export`.
-- [ ] T157 Actualizar `package.json` solo si falta registrar archivos CLI o exports requeridos por `build`/`export`.
-- [ ] T158 Crear `tests/regression/build-export/closed-features-001-005.test.ts` para confirmar que init, validate/inspect, json-output, foundations y presets no cambian sus contratos.
-- [ ] T159 Actualizar `specs/006-build-export/quickstart.md` solo si la implementacion final demuestra una discrepancia operacional menor.
-- [ ] T160 Crear `specs/006-build-export/audit.md` al cierre con evidencia de gates, cobertura de US/FR/SC/Constitution y decision final de readiness.
-- [ ] T161 Ejecutar gate L desde `package.json`: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [ ] T132 [US08] Crear `src/application/build-export/verification.ts` con la verificación de input: Design System válido, aliases válidos, tipos válidos, foundations válidas, límites; bloquea el render si falla.
+- [ ] T133 [US17] Añadir la verificación de candidate (antes de publicar): CSS, JSON, TypeScript, build manifest, hashes, byte lengths, presencia y paths de artifacts, selector, declarations, aliases CSS, exports TS y ausencia de runtime imports.
+- [ ] T134 [US13] Añadir la verificación post-publication: releer artifacts, recalcular hashes, comprobar tamaños, parsear JSON, validar TypeScript sin ejecución, validar CSS estructuralmente, releer build manifest y comprobar el conjunto completo (sin archivos faltantes).
+- [ ] T135 [US13] Confirmar la semántica de `verification-error`: posterior al commit point, `wrote:true`, backup retenido, sin rollback automático.
+- [ ] T136 [US09] Crear `src/application/build-export/idempotency.ts`: decidir `unchanged` ANTES de crear staging, comparando build manifest, artifact hashes, artifact bytes, byte lengths, paths, ownership y presence (no solo el hash del manifest).
+- [ ] T137 [P] [US09] Crear `tests/integration/build-export/idempotency.test.ts`: segunda ejecución sin cambios → `unchanged`/`wrote:false`; `staging creations:0`, `backup creations:0`, `rename calls:0`, `write calls:0`, `temporary files:0`, `bytes changed:0`, `mtime changed:0`.
+- [ ] T138 [P] [US17] Crear `tests/integration/build-export/verification-levels.test.ts`: input vs candidate vs post-publication por separado; `verification-error` con backup retenido.
+- [ ] T139 Gate K: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
-**Regression**: T154, T155, T156 y T158 son obligatorias para cerrar la feature.
-**Suggested commit**: `feat: expose build export cli`
-**First task next checkpoint**: Ninguna; cerrar con `specs/006-build-export/audit.md`.
-**Exclusions**: No nuevas dependencias salvo defecto contractual demostrado y documentado.
+**Regression**: ninguna; verificación/idempotencia son nuevas.
+**Suggested commit**: `feat: add three-level verification and idempotency`
+**Exclusions**: sin CLI ni packaging todavía.
+**First task next checkpoint**: T140 (L).
+
+## Checkpoint L — CLI, procesos hijos, packaging, regresión, documentación y auditoría
+
+**Objective**: Registrar los comandos exactos, probar el binario real, el packaging instalado y la regresión granular `001`–`005`, actualizar documentación y cerrar con la auditoría.
+**Preconditions**: Checkpoints A–K completos y gates verdes.
+
+### Tasks
+
+- [ ] T140 [US01] Crear `src/cli/commands/build.ts`: registrar `neuraz-ds build` con `--json` local; sin otros flags; un solo caso de uso por invocación.
+- [ ] T141 [US02] Crear `src/cli/commands/export.ts`: registrar `neuraz-ds export css|json|typescript`; sin `--json` ni otros flags; selección de un renderer.
+- [ ] T142 [US19] Conectar en `src/cli/program.ts` y `src/cli/composition.ts` los comandos build/export, reporter humano vs JSON y el `internal-error`→70 en el adapter.
+- [ ] T143 [P] [US19] Crear `tests/cli/build-export-help.test.ts`: `neuraz-ds --help`, `build --help`, `export --help` muestran los comandos válidos y NO `--output/--input/--formats/--force/--dry-run/--cwd/--clean/--watch/--minify` ni `export --json`.
+- [ ] T144 [P] [US18] Crear `tests/cli/build-export-commands.test.ts`: un caso de uso por invocación, selección correcta de reporter, sin escritura en export.
+- [ ] T145 [US14] Crear `tests/cli/build-binary.test.ts` (procesos hijos `dist/cli/index.js`): cwd diferente, path con espacios, path Unicode, stdin cerrado, sin TTY; primera build `built`/0, segunda build `unchanged`/2; streams y exit codes.
+- [ ] T146 [P] [US02] Crear `tests/cli/export-binary.test.ts`: `export css|json|typescript` emiten bytes exactos a stdout, stderr vacío, cero escrituras.
+- [ ] T147 [P] [US13] Crear `tests/cli/build-error-matrix.test.ts`: invalid DS/3, unsupported CSS/4, conflict/4, read-error/6, write-error/6, verification-error/7 y estado de recovery en JSON.
+- [ ] T148 [US14] Crear `tests/integration/build-export/npm-pack.test.ts`: `npm pack --dry-run --json` incluye `dist/`, bin, `presets/`, recursos runtime; excluye `src/`, `tests/`, `specs/`, `.agents/`.
+- [ ] T149 [US14] Crear `tests/integration/build-export/tarball-smoke.test.ts`: `npm pack` real + `npm install <tarball>` real (sin npm link, sin symlink al repo); ejecutar el binario instalado desde otro cwd: `build`, `build --json`, `export` de los 3 formatos, idempotencia; cleanup de tarballs/proyectos; sin residuos.
+- [ ] T150 [P] [US19] Crear `tests/integration/build-export/regression-001-init.test.ts`: init, config, Design System host manifest, bytes iniciales de tokens, idempotencia, segunda ejecución `unchanged`/2, ningún preset automático, ningún build automático.
+- [ ] T151 [P] [US19] Crear `tests/integration/build-export/regression-002-validate-inspect.test.ts`: validate, inspect, traversal, aliases, types, trust, limits, outcomes, streams, exits y compatibilidad de la extensión aditiva del analyzer.
+- [ ] T152 [P] [US19] Crear `tests/integration/build-export/regression-003-json.test.ts`: `JsonEnvelopeV1`, formatVersion, DTO, mapper, serializer, property order, dos espacios, newline, bytes, streams, exits.
+- [ ] T153 [P] [US19] Crear `tests/integration/build-export/regression-004-foundations.test.ts`: foundations, categorías, levels, namespace, inheritance, aliases, issues, JSON, formatVersion, bytes, exits.
+- [ ] T154 [P] [US19] Crear `tests/integration/build-export/regression-005-presets.test.ts`: presets list/inspect/plan/apply, safe merge, conflicts, writer, concurrency, verification, JSON, streams, exits, idempotencia, packaging.
+- [ ] T155 [US16] Actualizar `README.md` con `build`/`export`: comandos exactos, formatos, output dir fijo, fuente vs derivados, determinismo, idempotencia, ausencia de flags fuera de alcance.
+- [ ] T156 [US19] Actualizar `specs/006-build-export/quickstart.md` con el flujo reproducible build/export y los outcomes/exits.
+- [ ] T157 Gate L (suite completa): `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npm pack --dry-run --json`, `git diff --check`.
+- [ ] T158 [US19] Crear `specs/006-build-export/audit.md` con trazabilidad (20/20 US, 68/68 FR, 14/14 SC, 17/17 Constitution), hallazgos (0 CRITICAL/HIGH/MEDIUM) y gates finales registrados; cerrar la feature.
+
+**Regression**: T150–T154 prueban que `001`–`005` no cambian comportamiento, bytes, JSON ni exits.
+**Suggested commit**: `feat: add build and export cli with packaging and regression`
+**Exclusions**: no iniciar `007`; no publicar en npm.
+**First task next checkpoint**: ninguno; L cierra `006`.
 
 ## Dependencies
 
-- A (`T001-T018`) -> B (`T019-T030`)
-- B (`T019-T030`) -> C (`T031-T052`), D (`T053-T063`), E (`T064-T074`)
-- C + D + E -> F (`T075-T088`) y G (`T089-T101`)
-- F -> G cuando el manifest real sea necesario para artifact sets
-- G -> H (`T102-T112`)
-- F + G -> I (`T113-T125`)
-- I -> J (`T126-T139`)
-- J -> K (`T140-T150`)
-- H + K -> L (`T151-T161`)
+```text
+A → B
+B → C, D, E
+C + D + E → F
+F → G
+G → H
+F + G → I
+I → J
+J → K
+H + K → L
+```
+
+Reglas duras (no violar):
+
+- `export` (T092) NO depende del writer (J) ni del manifest builder; es read-only.
+- La CLI (L) no precede a los casos de uso (G).
+- El writer (J) no precede al snapshot/ownership (F/I).
+- El modelo de `verification-error` (J/K) no precede al commit-point (J).
+- Los reporters (H) no preceden a los outcomes (G/H base en T003).
+- El manifest (F) no precede a los modelos de artifact (A).
 
 ## Parallel Opportunities
 
-- T009, T012, T014 y T017 pueden ejecutarse en paralelo tras los modelos A correspondientes.
-- T024 y T025 pueden ejecutarse en paralelo con T026 una vez creada la proyeccion B.
-- Checkpoints C, D y E pueden avanzar en paralelo despues de B, siempre que cada renderer mantenga sus paths aislados.
-- T035 y T036 son paralelas dentro del renderer CSS.
-- T058 puede avanzar en paralelo con T059-T061 si el contrato JSON ya esta acordado.
-- T070 puede avanzar en paralelo con T071-T072 si el sanitizador TS esta definido.
-- T082 puede avanzar en paralelo con T083-T085 tras el modelo de manifest.
-- T119 puede avanzar en paralelo con T120-T124 tras los modelos de snapshot/concurrency.
-- T154, T155, T156 y T158 pueden ejecutarse en paralelo tras registrar CLI y empaquetado.
+- Tras B, los renderers son ramas paralelas: **C** (CSS, T026–T054), **D** (JSON, T055–T060) y **E**
+  (TypeScript, T061–T067) editan archivos distintos y no comparten modelos centrales mutables.
+- Dentro de C, las 15 pruebas de tipo (T037–T051) son `[P]`: archivos de test separados, sin editar el
+  renderer compartido.
+- En F, las 13 pruebas de ownership (T076–T088) son `[P]`: fixtures/tests independientes.
+- Las regresiones `001`–`005` (T150–T154) son `[P]`: archivos de test separados.
+- `[P]` se aplica solo cuando las dependencias del checkpoint están completas, no se edita el mismo
+  archivo y no se comparte un modelo central inestable.
+- Ruta crítica: A → B → (C ∪ D ∪ E) → F → G → H → I → J → K → L.
 
-## User Story Traceability - 20/20
+## Traceability — User Stories → Tasks (20/20)
 
-| User story | Primary tasks |
-| --- | --- |
-| US1 build completo | T089-T101, T140-T150, T151-T154 |
-| US2 export CSS | T031-T052, T089-T101, T151-T154 |
-| US3 export JSON resuelto | T053-T063, T089-T101, T151-T154 |
-| US4 export TypeScript | T064-T074, T089-T101, T151-T154 |
-| US5 aliases CSS | T038, T045, T048, T050 |
-| US6 aliases JSON/TS | T016, T056, T067, T059, T072 |
-| US7 CSS parcial | T041-T046, T093, T097 |
-| US8 build parcial multisalida | T092-T098, T102-T112 |
-| US9 idempotencia | T087, T147, T149 |
-| US10 archivos desconocidos | T076, T080, T113-T124, T131 |
-| US11 colisiones CSS | T034, T047 |
-| US12 concurrencia | T114, T117, T119, T121, T124 |
-| US13 verificacion y recuperacion | T140-T148 |
-| US14 paquete instalado | T155-T157 |
-| US15 cwd/directorios | T094, T151-T156 |
-| US16 reporte humano | T105, T106, T151 |
-| US17 reporte JSON | T102-T104, T108-T109, T152 |
-| US18 headless | T089-T101, T155 |
-| US19 compatibilidad 001-005 | T017, T026, T108, T158 |
-| US20 determinismo | T020, T024, T029, T050, T060, T071, T083, T147 |
+| US | Tasks |
+|---|---|
+| US1 build all artifacts | T091, T145 |
+| US2 export CSS to stdout | T092, T146 |
+| US3 export JSON to stdout | T092, T146 |
+| US4 export TypeScript to stdout | T092, T146 |
+| US5 CSS preserves aliases | T035, T052 |
+| US6 JSON/TS resolve aliases + metadata | T055, T061 |
+| US7 detect CSS-unsupported type | T034, T096 |
+| US8 block partial builds | T053, T091, T096 |
+| US9 idempotent build | T136, T137 |
+| US10 protect unknown files | T083, T084, T120 |
+| US11 detect CSS name collisions | T028, T029 |
+| US12 detect concurrency | T115, T116 |
+| US13 recover on verification-error | T126, T129, T135 |
+| US14 run from installed package | T145, T149 |
+| US15 run independent of cwd | T145, T149 |
+| US16 human-readable report | T101, T155 |
+| US17 machine-readable build output | T098, T106 |
+| US18 headless consumption | T090, T091, T092 |
+| US19 preserve compatibility 001–005 | T150, T151, T152, T153, T154 |
+| US20 deterministic outputs | T036, T058, T066, T137 |
 
-## Functional Requirement Traceability - 68/68
+## Traceability — Functional Requirements → Tasks (68/68)
 
-| Requirements | Primary tasks |
-| --- | --- |
-| FR-001-FR-004 source snapshot y entrada | T005, T010-T017 |
-| FR-005-FR-008 resolved view y proyeccion | T006, T016, T019-T029 |
-| FR-009-FR-012 orden canonico | T020, T024, T029, T050, T060, T071 |
-| FR-013-FR-018 CSS naming y valores | T031-T040, T043-T045 |
-| FR-019-FR-022 CSS parcial y colisiones | T034, T041-T048 |
-| FR-023-FR-027 JSON resuelto | T053-T063 |
-| FR-028-FR-032 TypeScript output | T064-T074 |
-| FR-033-FR-038 manifest y hashes | T075-T087 |
-| FR-039-FR-043 ownership y desconocidos | T076, T080, T113-T124, T131-T132 |
-| FR-044-FR-049 writer transaccional | T126-T139 |
-| FR-050-FR-053 verificacion y recovery | T140-T148 |
-| FR-054-FR-058 use cases headless | T089-T101 |
-| FR-059-FR-062 reporters y streams | T102-T112 |
-| FR-063-FR-066 CLI y procesos | T151-T156 |
-| FR-067-FR-068 packaging y documentacion final | T157-T161 |
+| FR | Tasks | FR | Tasks |
+|---|---|---|---|
+| FR-001 | T010, T092 | FR-035 | T069, T007 |
+| FR-002 | T002, T091 | FR-036 | T091, T120, T140 |
+| FR-003 | T010, T012, T016 | FR-037 | T120, T150 |
+| FR-004 | T010, T012, T016, T023 | FR-038 | T074, T120 |
+| FR-005 | T091, T092, T132 | FR-039 | T078, T083, T084 |
+| FR-006 | T018, T132 | FR-040 | T111, T120 |
+| FR-007 | T036, T053, T091, T096 | FR-041 | T101 |
+| FR-008 | T003, T034, T096 | FR-042 | T098, T099, T106 |
+| FR-009 | T035, T052 | FR-043 | T092, T146 |
+| FR-010 | T055, T061 | FR-044 | T092, T094 |
+| FR-011 | T016, T035, T012 | FR-045 | T141, T102, T146 |
+| FR-012 | T036 | FR-046 | T141, T143 |
+| FR-013 | T026 | FR-047 | T036, T058, T066, T137 |
+| FR-014 | T028, T029 | FR-048 | T015, T066, T137 |
+| FR-015 | T032, T033, T034, T037–T051 | FR-049 | T136, T137 |
+| FR-016 | T031, T036 | FR-050 | T136, T137 |
+| FR-017 | T030, T031 | FR-051 | T091, T133 |
+| FR-018 | T015, T036 | FR-052 | T120 |
+| FR-019 | T055, T056 | FR-053 | T115, T116 |
+| FR-020 | T055, T057 | FR-054 | T134 |
+| FR-021 | T059 | FR-055 | T126, T135 |
+| FR-022 | T055, T058 | FR-056 | T125, T129 |
+| FR-023 | T056, T058 | FR-057 | T107 |
+| FR-024 | T061, T064 | FR-058 | T103, T107 |
+| FR-025 | T061, T064 | FR-059 | T003, T104 |
+| FR-026 | T062, T063 | FR-060 | T103, T105 |
+| FR-027 | T066 | FR-061 | T026, T110, T111 |
+| FR-028 | T065 | FR-062 | T110, T111, T113 |
+| FR-029 | T068 | FR-063 | T065, T120 |
+| FR-030 | T068, T069 | FR-064 | T030, T059, T063, T106 |
+| FR-031 | T068, T071 | FR-065 | T145, T149 |
+| FR-032 | T074 | FR-066 | T090, T091, T092 |
+| FR-033 | T007, T069 | FR-067 | T150–T154 |
+| FR-034 | T007, T010 | FR-068 | T090, T091, T092 |
 
-## Success Criteria Traceability - 14/14
+## Traceability — Success Criteria → Tasks (14/14)
 
-| Success criteria | Evidence tasks |
-| --- | --- |
-| SC-001 build exitoso genera artefactos esperados | T096, T154 |
-| SC-002 CSS determinista | T044, T050 |
-| SC-003 JSON resuelto determinista | T058-T060 |
-| SC-004 TypeScript usable | T071-T072, T156 |
-| SC-005 manifest versionado | T083, T085 |
-| SC-006 idempotencia | T087, T147 |
-| SC-007 no sobrescribe desconocidos | T084, T123 |
-| SC-008 detecta concurrencia | T121, T124 |
-| SC-009 rollback/recovery | T136, T138, T146, T148 |
-| SC-010 salida parcial segura | T046, T097 |
-| SC-011 JSON publico estable | T108-T109, T154 |
-| SC-012 CLI instalada funciona | T155-T156 |
-| SC-013 regresion 001-005 verde | T158 |
-| SC-014 auditoria de cierre completa | T160-T161 |
+| SC | Tasks |
+|---|---|
+| SC-001 same bytes twice | T137 |
+| SC-002 second run unchanged, 0 writes | T137 |
+| SC-003 export 0 filesystem writes | T094, T146 |
+| SC-004 required-target failure → 0 partial | T053, T096 |
+| SC-005 JSON parseable | T058, T134 |
+| SC-006 TS syntactically valid | T065 |
+| SC-007 CSS deterministic | T036, T066 |
+| SC-008 aliases correct (var / resolved+aliasOf) | T052, T055, T061 |
+| SC-009 installed package works from other cwd | T149 |
+| SC-010 regression 001–005 green | T150, T151, T152, T153, T154 |
+| SC-011 0 absolute paths / 0 stacks | T059, T106, T143 |
+| SC-012 audit 0 findings ≥ MEDIUM | T158 |
+| SC-013 CSS collision blocks | T028, T029 |
+| SC-014 concurrency blocks (wrote:false) | T116, T117 |
 
-## Constitution Traceability - 17/17
+## Traceability — Constitution → Tasks/Gates (17/17)
 
 | Principle | Coverage |
-| --- | --- |
-| I Library-first CLI | T089-T101, T151-T153 |
-| II Deterministic outputs | T020, T024, T029, T050, T060, T071, T083, T147 |
-| III DTCG canonical format | T019-T023, T037, T054, T066 |
-| IV TypeScript strict ESM | T064-T074, T155-T157, all gates |
-| V Contract-first public JSON | T102-T109, T154 |
-| VI Atomic writes | T126-T139 |
-| VII No silent data loss | T076, T080, T123, T149 |
-| VIII Explicit errors | T004, T093, T095, T107, T140-T148 |
-| IX Regression protection | T017, T026, T108, T158 |
-| X Testable headless flows | T089-T101, T155 |
-| XI Minimal dependencies | T157 and all gates |
-| XII Security and path safety | T003, T031-T036, T113-T124, T151-T156 |
-| XIII Streaming discipline | T104-T106, T109-T110 |
-| XIV Documentation accuracy | T159-T160 |
-| XV Backward compatibility | T017, T026, T108, T158 |
-| XVI Packaging readiness | T155-T157 |
-| XVII Formal closure evidence | T160-T161 |
+|---|---|
+| I One Design System per project | T010 (single source), T091 |
+| II Local files are source of truth | T091 (no source mutation), T150 |
+| III DTCG canonical tokens | T010, T016 (reuse analysis; no second parser) |
+| IV Style Dictionary pipeline | PASS (N/A): 006 no altera el pipeline; renderers puros |
+| V Framework independence | T061 (no runtime/manager import) |
+| VI Manager is tool, not DS | T091 (artifacts downstream, never source) |
+| VII Visual editing transparency | T101, T106 (logical paths + hashes, no absolute) |
+| VIII Validate before generation | T132, T091 (input verification gate antes de render/write) |
+| IX Contracts before implementation | tareas ancladas a `contracts/` + gates por checkpoint |
+| X Accessibility structural | PASS (N/A): sin UI |
+| XI Pages as validation | PASS (N/A): sin pages/viewer |
+| XII Content optional context | PASS (N/A): sin content |
+| XIII Local-first | T120 (sin red), T065 (sin ejecución) |
+| XIV Safe modifications | T111, T120, T125, T126 (preservar unknown, set atómico, recovery, sin rollback destructivo) |
+| XV Controlled agent integration | T090, T098 (headless + JSON estable) |
+| XVI Incremental/verifiable | gates A–L: T013, T025, T054, T060, T067, T089, T097, T108, T118, T131, T139, T157 |
+| XVII Portability / no lock-in | T055, T061 (CSS/JSON/TS estándar, sin runtime del manager) |
 
-## Quality Checklist
+## Validation Summary
 
-- Task IDs are continuous from T001 to T161.
-- No task is marked complete.
-- `[P]` appears only where dependencies allow real parallel execution.
-- Every productive or test task names an exact path.
-- Each checkpoint includes objective, preconditions, tasks, regression, gates, suggested commit, next task and exclusions.
-- Dependencies and parallel opportunities are explicit.
-- Traceability covers 20/20 user stories, 68/68 functional requirements, 14/14 success criteria and 17/17 constitution principles.
-- No open clarification markers remain.
-- `specs/006-build-export/audit.md` is intentionally scheduled for T160 and must not exist before implementation closure.
+- Total tasks: 158 (T001–T158), continuos, únicos, 0 completados.
+- Checkpoints: 12 (A–L), cada uno con objetivo, precondiciones, tareas, regresión, gate y commit sugerido.
+- Gates: 12/12. Commits sugeridos: 12/12.
+- CSS types cubiertos: 15/15 (T037–T051). Ownership scenarios: 13 (T076–T088). Recovery states: T122–T126.
+- Outcomes/exits: T003/T104/T105/T103. Regresión 001–005 granular: T150–T154.
+- Trazabilidad: US 20/20, FR 68/68, SC 14/14, Constitution 17/17.
+- `partial`/`success` públicos: 0. `export` conectado a writer: 0. Flags fuera de alcance: 0.
+- NEEDS CLARIFICATION: 0. Contradicciones: 0.
