@@ -107,16 +107,16 @@ Every implementation task uses:
 
 **Independent test**: planning classifies every preset contribution against a host document as create, narrow update, unchanged, conflict, or skip; one blocking conflict makes the plan non-writable and no filesystem writes are possible.
 
-- [ ] T041 [P] [US17] Add failing equivalence tests for values, numbers (`1` vs `1.0`), arrays, objects, colors, composites, aliases, `$type`, effective inherited type, foundation level, inherited level, `$description`, unknown `$extensions`, unknown properties, and key order in `tests/unit/presets/preset-equivalence.test.ts`.
-- [ ] T042 [P] [US16] Add failing diff tests for `create` on missing groups and missing tokens, including `nodeKind: "group" | "token"` and deterministic intermediate group ordering in `tests/unit/presets/preset-diff-create.test.ts`.
-- [ ] T043 [P] [US17] Add failing diff tests for `update` limited to completing missing `$description` on an otherwise equivalent existing token, and never updating groups, `$value`, `$type`, aliases, foundation level, `$extensions`, or unknown properties in `tests/unit/presets/preset-diff-update.test.ts`.
-- [ ] T044 [P] [US17] Add failing diff tests for `unchanged` managed-content equivalence and `skip` for explicit preservation rules such as incompatible existing `$description` when other managed fields match in `tests/unit/presets/preset-diff-unchanged-skip.test.ts`.
-- [ ] T045 [P] [US6] Add failing conflict tests for stable codes: value, type, alias, foundation level, description incompatible, token-vs-group, group-vs-token, invalid foundation metadata, invalid preset, undeclared category, unsupported category, reserved path, external alias, limit, version, and concurrent modification in `tests/unit/presets/preset-conflicts.test.ts`.
-- [ ] T046 [US17] Implement structural managed-field equivalence in `src/domain/changes/equivalence.ts`.
-- [ ] T047 [US16] Implement deterministic diff planning for create/unchanged/update/skip/conflict in `src/application/presets/plan-preset-diff.ts`.
-- [ ] T048 [US6] Implement stable preset conflict construction with `code`, logical `path`, `severity`, sanitized `message`, `blocksWrite`, and `proposedAction` in `src/domain/presets/preset-conflict.ts`.
-- [ ] T049 [US6] Implement blocking rules so any blocking conflict cancels all writes and produces zero applied changes in `src/domain/changes/application-plan.ts`.
-- [ ] T050 [US12] Add deterministic plan tests that identical inputs produce deeply equal plans and no comparison mutates the host document in `tests/unit/presets/preset-plan-determinism.test.ts`.
+- [X] T041 [P] [US17] Add failing equivalence tests for values, numbers (`1` vs `1.0`), arrays, objects, colors, composites, aliases, `$type`, effective inherited type, foundation level, inherited level, `$description`, unknown `$extensions`, unknown properties, and key order in `tests/unit/presets/preset-equivalence.test.ts`.
+- [X] T042 [P] [US16] Add failing diff tests for `create` on missing groups and missing tokens, including `nodeKind: "group" | "token"` and deterministic intermediate group ordering in `tests/unit/presets/preset-diff-create.test.ts`.
+- [X] T043 [P] [US17] Add failing diff tests for `update` limited to completing missing `$description` on an otherwise equivalent existing token, and never updating groups, `$value`, `$type`, aliases, foundation level, `$extensions`, or unknown properties in `tests/unit/presets/preset-diff-update.test.ts`.
+- [X] T044 [P] [US17] Add failing diff tests for `unchanged` managed-content equivalence and `skip` for explicit preservation rules such as incompatible existing `$description` when other managed fields match in `tests/unit/presets/preset-diff-unchanged-skip.test.ts`.
+- [X] T045 [P] [US6] Add failing conflict tests for stable codes: value, type, alias, foundation level, description incompatible, token-vs-group, group-vs-token, invalid foundation metadata, invalid preset, undeclared category, unsupported category, reserved path, external alias, limit, version, and concurrent modification in `tests/unit/presets/preset-conflicts.test.ts`.
+- [X] T046 [US17] Implement structural managed-field equivalence in `src/domain/changes/equivalence.ts`.
+- [X] T047 [US16] Implement deterministic diff planning for create/unchanged/update/skip/conflict in `src/application/presets/plan-preset-diff.ts`.
+- [X] T048 [US6] Implement stable preset conflict construction with `code`, logical `path`, `severity`, sanitized `message`, `blocksWrite`, and `proposedAction` in `src/domain/presets/preset-conflict.ts`.
+- [X] T049 [US6] Implement blocking rules so any blocking conflict cancels all writes and produces zero applied changes in `src/domain/changes/application-plan.ts`.
+- [X] T050 [US12] Add deterministic plan tests that identical inputs produce deeply equal plans and no comparison mutates the host document in `tests/unit/presets/preset-plan-determinism.test.ts`.
 
 **Checkpoint gate**: `npm run typecheck`, `npm run lint`, targeted equivalence/diff/conflict tests, accumulated `npm test`, `npm run build`.
 **Recommended checkpoint commit**: `feat: plan preset changes deterministically`
