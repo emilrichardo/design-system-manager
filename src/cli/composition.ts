@@ -28,6 +28,12 @@ import { ValidateJsonReporter } from "../infrastructure/reporter/validate-json-r
 import { InspectJsonReporter } from "../infrastructure/reporter/inspect-json-reporter.js";
 import { FoundationsTerminalReporter } from "../infrastructure/reporter/foundations-terminal-reporter.js";
 import { FoundationsJsonReporter } from "../infrastructure/reporter/foundations-json-reporter.js";
+import type { ApplyPresetDependencies } from "../application/presets/preset-ports.js";
+import { createBundledPresetCatalog } from "../infrastructure/presets/bundled-preset-catalog.js";
+import { analyzePresetTokens } from "../infrastructure/presets/preset-token-analyzer.js";
+import { createPresetTargetReader, createSingleFileAtomicWriter } from "../infrastructure/fs/single-file-atomic-writer.js";
+import { PresetsTerminalReporter } from "../infrastructure/reporter/presets-terminal-reporter.js";
+import { PresetsJsonReporter } from "../infrastructure/reporter/presets-json-reporter.js";
 import type { CliIO } from "./io.js";
 
 export function createRealDependencies(io: CliIO): InitializeDependencies {
@@ -84,4 +90,29 @@ export function createFoundationsDependencies(io: CliIO, analyze: AnalyzeUseCase
 
 export function createFoundationsJsonDependencies(io: CliIO, analyze: AnalyzeUseCase): InspectFoundationsDependencies {
   return { analyze, reporter: new FoundationsJsonReporter(io) };
+}
+
+// Feature 005 — presets. `base` es el superconjunto de dependencias de los casos de uso (list/inspect/
+// plan/apply); cada caso de uso toma estructuralmente el subconjunto que necesita. El catálogo
+// empaquetado, el target reader y el writer atómico se resuelven vía `import.meta.url` (sin cwd). El
+// host se analiza con el MISMO `analyze` enlazado de `002`. Reporters humano y JSON construidos con io;
+// el comando selecciona uno por ejecución (un único adapter activo).
+export interface PresetsCliDependencies {
+  readonly base: ApplyPresetDependencies;
+  readonly terminal: PresetsTerminalReporter;
+  readonly json: PresetsJsonReporter;
+}
+
+export function createPresetsDependencies(io: CliIO, analyze: AnalyzeUseCase): PresetsCliDependencies {
+  return {
+    base: {
+      catalog: createBundledPresetCatalog(),
+      analyzeTokens: analyzePresetTokens,
+      analyzeHost: analyze,
+      targetReader: createPresetTargetReader(),
+      writer: createSingleFileAtomicWriter(),
+    },
+    terminal: new PresetsTerminalReporter(io),
+    json: new PresetsJsonReporter(io),
+  };
 }

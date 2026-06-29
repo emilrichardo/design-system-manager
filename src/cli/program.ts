@@ -15,15 +15,18 @@ import type {
   InspectDesignSystemDependencies,
 } from "../application/analysis-ports.js";
 import type { InspectFoundationsDependencies } from "../application/foundations/foundations-ports.js";
+import type { PresetsCliDependencies } from "./composition.js";
 import type { CliIO } from "./io.js";
-import { exitCodeForResult, exitCodeForOutcome, INTERNAL_ERROR_EXIT, USAGE_ERROR_EXIT } from "./exit-codes.js";
-import { writeInternalErrorJson } from "./json-error.js";
+import { exitCodeForResult, exitCodeForOutcome, exitCodeForPresetOutcome, INTERNAL_ERROR_EXIT, USAGE_ERROR_EXIT } from "./exit-codes.js";
+import type { PresetExitOutcome } from "./exit-codes.js";
+import { writeInternalErrorJson, writePresetsInternalErrorJson } from "./json-error.js";
 import { toFoundationsInternalErrorEnvelope } from "../application/foundations/json/map-internal-error.js";
 import { serializeFoundationsJsonV1 } from "../infrastructure/reporter/foundations-json-serializer.js";
 import { runInit } from "./commands/init.js";
 import { runValidate } from "./commands/validate.js";
 import { runInspect } from "./commands/inspect.js";
 import { runFoundations } from "./commands/foundations.js";
+import { runPresetsApply, runPresetsInspect, runPresetsList, runPresetsPlan } from "./commands/presets.js";
 
 /** Modo de presentación parseado por Commander para validate/inspect. */
 export interface CommandModeOptions {
@@ -37,6 +40,10 @@ export interface ProgramHandlers {
   onValidate: (opts: CommandModeOptions) => Promise<number>;
   onInspect: (opts: CommandModeOptions) => Promise<number>;
   onFoundations: (opts: CommandModeOptions) => Promise<number>;
+  onPresetsList: (opts: CommandModeOptions) => Promise<number>;
+  onPresetsInspect: (id: string, opts: CommandModeOptions) => Promise<number>;
+  onPresetsPlan: (id: string, opts: CommandModeOptions) => Promise<number>;
+  onPresetsApply: (id: string, opts: CommandModeOptions) => Promise<number>;
 }
 
 const JSON_FLAG_DESCRIPTION = "Emite el resultado como JSON estructurado.";
@@ -92,6 +99,49 @@ export function createProgram(handlers: ProgramHandlers): {
     state.code = await handlers.onFoundations({ json: options.json === true });
   });
 
+  // T094 (005) — grupo plural `presets` con subcomandos. `--json` es local a cada subcomando (no
+  // global); sin `--force`, `--category` ni `--dry-run`. `plan` es preview (no escribe); `apply` escribe.
+  const presets = program
+    .command("presets")
+    .description("Gestiona presets de Design System (catálogo empaquetado, solo lectura salvo `apply`).");
+  presets.exitOverride();
+
+  const presetsList = presets
+    .command("list")
+    .description("Lista los presets disponibles del catálogo empaquetado.")
+    .option("--json", JSON_FLAG_DESCRIPTION, false);
+  presetsList.exitOverride();
+  presetsList.action(async (options: { json?: boolean }) => {
+    state.code = await handlers.onPresetsList({ json: options.json === true });
+  });
+
+  const presetsInspect = presets
+    .command("inspect <id>")
+    .description("Inspecciona un preset (metadata, tokens, validación) sin escribir.")
+    .option("--json", JSON_FLAG_DESCRIPTION, false);
+  presetsInspect.exitOverride();
+  presetsInspect.action(async (id: string, options: { json?: boolean }) => {
+    state.code = await handlers.onPresetsInspect(id, { json: options.json === true });
+  });
+
+  const presetsPlan = presets
+    .command("plan <id>")
+    .description("Previsualiza la aplicación de un preset contra el Design System (NO escribe).")
+    .option("--json", JSON_FLAG_DESCRIPTION, false);
+  presetsPlan.exitOverride();
+  presetsPlan.action(async (id: string, options: { json?: boolean }) => {
+    state.code = await handlers.onPresetsPlan(id, { json: options.json === true });
+  });
+
+  const presetsApply = presets
+    .command("apply <id>")
+    .description("Aplica un preset al Design System mediante escritura atómica (recalcula el plan).")
+    .option("--json", JSON_FLAG_DESCRIPTION, false);
+  presetsApply.exitOverride();
+  presetsApply.action(async (id: string, options: { json?: boolean }) => {
+    state.code = await handlers.onPresetsApply(id, { json: options.json === true });
+  });
+
   return { program, getCode: () => state.code };
 }
 
@@ -110,6 +160,8 @@ export interface CliRuntime {
   /** Dependencias de `foundations` en modo textual/JSON. Opcionales para pruebas centradas en 001. */
   foundationsDeps?: InspectFoundationsDependencies;
   foundationsJsonDeps?: InspectFoundationsDependencies;
+  /** Dependencias del grupo `presets` (use cases + reporters humano/JSON). Opcional para pruebas de 001. */
+  presetsDeps?: PresetsCliDependencies;
   version: string;
 }
 
@@ -168,6 +220,35 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
     }
   };
 
+  // Presets: un solo adapter (reporter humano o JSON) por ejecución; una sola llamada al caso de uso;
+  // outcome semántico → exit via `exitCodeForPresetOutcome`. En JSON, una excepción inesperada produce
+  // un envelope de error interno PROPIO de presets en stderr (stdout vacío) con exit 70.
+  async function runPresetsMode<R extends { readonly outcome: PresetExitOutcome }>(
+    json: boolean,
+    command: "preset-list" | "preset-inspect" | "preset-plan" | "preset-apply",
+    run: (deps: PresetsCliDependencies) => Promise<R>,
+    render: (deps: PresetsCliDependencies, result: R) => void,
+  ): Promise<number> {
+    const deps = runtime.presetsDeps;
+    if (deps === undefined) {
+      if (json) writePresetsInternalErrorJson(runtime.io, command);
+      return INTERNAL_ERROR_EXIT;
+    }
+    if (!json) {
+      const result = await run(deps);
+      render(deps, result);
+      return exitCodeForPresetOutcome(result.outcome);
+    }
+    try {
+      const result = await run(deps);
+      render(deps, result);
+      return exitCodeForPresetOutcome(result.outcome);
+    } catch {
+      writePresetsInternalErrorJson(runtime.io, command);
+      return INTERNAL_ERROR_EXIT;
+    }
+  }
+
   const { program, getCode } = createProgram({
     version: runtime.version,
     io: runtime.io,
@@ -175,6 +256,14 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
     onValidate: ({ json }) => runValidateMode(json),
     onInspect: ({ json }) => runInspectMode(json),
     onFoundations: ({ json }) => runFoundationsMode(json),
+    onPresetsList: ({ json }) =>
+      runPresetsMode(json, "preset-list", (d) => runPresetsList(d.base), (d, r) => (json ? d.json : d.terminal).listCompleted(r)),
+    onPresetsInspect: (id, { json }) =>
+      runPresetsMode(json, "preset-inspect", (d) => runPresetsInspect(id, d.base), (d, r) => (json ? d.json : d.terminal).inspectCompleted(r)),
+    onPresetsPlan: (id, { json }) =>
+      runPresetsMode(json, "preset-plan", (d) => runPresetsPlan(id, runtime.cwd, d.base), (d, r) => (json ? d.json : d.terminal).planCompleted(r)),
+    onPresetsApply: (id, { json }) =>
+      runPresetsMode(json, "preset-apply", (d) => runPresetsApply(id, runtime.cwd, d.base), (d, r) => (json ? d.json : d.terminal).applyCompleted(r)),
   });
 
   try {

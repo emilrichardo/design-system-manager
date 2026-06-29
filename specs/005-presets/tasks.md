@@ -213,14 +213,14 @@ Every implementation task uses:
 
 **Independent test**: all subcommands behave correctly with fake dependencies and closed stdin; usage errors remain Commander errors and expected outcomes remain stdout results.
 
-- [ ] T090 [P] [US13] Add failing CLI command tests for `presets --help`, `presets list --help`, `presets inspect --help`, `presets plan --help`, `presets apply --help`, missing id, extra args, unknown options, local `--json`, rejected global `--json presets`, no prompts, no TTY, and closed stdin in `tests/cli/presets-commands.test.ts`.
-- [ ] T091 [P] [US11] Add failing CLI JSON stream tests for one stdout JSON and empty stderr for expected list/inspect/plan/apply outcomes, plus stdout empty/stderr safe JSON/exit 70 for internal errors in `tests/cli/presets-json-commands.test.ts`.
-- [ ] T092 [P] [US13] Add failing CLI outcome/exit matrix tests discriminated by command for success/applied 0, unchanged 2, invalid-preset 3, conflict 4, preset not-found 5, design-system not-found 5, read-error 6, write-error 6, verification-error 7, and internal-error 70 in `tests/cli/presets-exit-matrix.test.ts`.
-- [ ] T093 [US13] Implement `src/cli/commands/presets.ts` with subcommands `list`, `inspect <id>`, `plan <id>`, and `apply <id>`; accept only local `--json`; do not add `--force`, `--category`, or `--dry-run`.
-- [ ] T094 [US13] Register the plural `presets` command group in `src/cli/program.ts` without changing `init`, `validate`, `inspect`, or `foundations`.
-- [ ] T095 [US13] Add preset dependency composition for human and JSON modes in `src/cli/composition.ts` and `src/cli/index.ts`.
-- [ ] T096 [US11] Add preset JSON internal-error mapping through CLI error handling in `src/cli/program.ts` and `src/cli/json-error.ts`, without casting to 003/004 JSON unions.
-- [ ] T097 [US13] Ensure apply recalculates the plan internally and never depends on prior `plan` command output in `src/cli/commands/presets.ts`.
+- [X] T090 [P] [US13] Add failing CLI command tests for `presets --help`, `presets list --help`, `presets inspect --help`, `presets plan --help`, `presets apply --help`, missing id, extra args, unknown options, local `--json`, rejected global `--json presets`, no prompts, no TTY, and closed stdin in `tests/cli/presets-commands.test.ts`.
+- [X] T091 [P] [US11] Add failing CLI JSON stream tests for one stdout JSON and empty stderr for expected list/inspect/plan/apply outcomes, plus stdout empty/stderr safe JSON/exit 70 for internal errors in `tests/cli/presets-json-commands.test.ts`.
+- [X] T092 [P] [US13] Add failing CLI outcome/exit matrix tests discriminated by command for success/applied 0, unchanged 2, invalid-preset 3, conflict 4, preset not-found 5, design-system not-found 5, read-error 6, write-error 6, verification-error 7, and internal-error 70 in `tests/cli/presets-exit-matrix.test.ts`.
+- [X] T093 [US13] Implement `src/cli/commands/presets.ts` with subcommands `list`, `inspect <id>`, `plan <id>`, and `apply <id>`; accept only local `--json`; do not add `--force`, `--category`, or `--dry-run`.
+- [X] T094 [US13] Register the plural `presets` command group in `src/cli/program.ts` without changing `init`, `validate`, `inspect`, or `foundations`.
+- [X] T095 [US13] Add preset dependency composition for human and JSON modes in `src/cli/composition.ts` and `src/cli/index.ts`.
+- [X] T096 [US11] Add preset JSON internal-error mapping through CLI error handling in `src/cli/program.ts` and `src/cli/json-error.ts`, without casting to 003/004 JSON unions.
+- [X] T097 [US13] Ensure apply recalculates the plan internally and never depends on prior `plan` command output in `src/cli/commands/presets.ts`.
 
 **Checkpoint gate**: `npm run typecheck`, `npm run lint`, targeted CLI command tests, accumulated `npm test`, `npm run build`.
 **Recommended checkpoint commit**: `feat: add presets cli commands`

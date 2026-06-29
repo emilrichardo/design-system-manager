@@ -7,6 +7,7 @@ import {
   createFoundationsJsonDependencies,
   createInspectDependencies,
   createInspectJsonDependencies,
+  createPresetsDependencies,
   createRealDependencies,
   createValidateDependencies,
   createValidateJsonDependencies,
@@ -36,6 +37,7 @@ try {
     inspectJsonDeps: createInspectJsonDependencies(io, analyze),
     foundationsDeps: createFoundationsDependencies(io, analyze),
     foundationsJsonDeps: createFoundationsJsonDependencies(io, analyze),
+    presetsDeps: createPresetsDependencies(io, analyze),
     version: readCliVersion(),
   });
   process.exitCode = code;
