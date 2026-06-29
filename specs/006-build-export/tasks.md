@@ -51,18 +51,18 @@
 
 ### Tasks
 
-- [ ] T014 [US20] Crear `src/domain/build-export/normalized-token.ts` con `NormalizedBuildToken` (path, segments, category, foundationLevel, effectiveType, sourceValue, resolvedValue, aliasOf, aliasChain, description, trust, order, compatibility) y `NormalizedTokenSet` (source, tokens, byPath, warnings); readonly y congelado.
-- [ ] T015 [US20] Crear `src/domain/build-export/build-token-order.ts` con el comparador canónico único: orden de categoría foundation → path padres-antes-que-hijos → comparación bytewise por code point (sin `localeCompare`).
-- [ ] T016 [US06] Crear `src/application/build-export/create-build-projection.ts`: mapea `ResolvedTokenView` → `NormalizedTokenSet`, reutiliza UNA proyección de foundations para category/foundationLevel y el alias inmediato del grafo existente.
-- [ ] T017 [US07] Crear `src/application/build-export/compatibility.ts` para anotar `NormalizedBuildToken.compatibility` (representabilidad por formato) sin renderizar todavía.
-- [ ] T018 [US08] Añadir en `create-build-projection.ts` el rechazo de tokens con tipo no resoluble, alias inválido, alias-to-group, cycle o alias no confiable, y la exclusión de grupos (no se emiten como tokens).
-- [ ] T019 [US20] Garantizar en `normalized-token.ts`/`create-build-projection.ts` copias defensivas, valores JSON-safe y congelamiento de colecciones anidadas.
-- [ ] T020 [P] [US20] Crear `tests/domain/build-export/build-token-order.test.ts`: orden por categoría, padres antes que descendientes, code point, sin locale.
-- [ ] T021 [P] [US20] Crear `tests/application/build-export/create-build-projection.test.ts`: entrada inmutable, copias defensivas, distinto insertion order → misma proyección.
-- [ ] T022 [P] [US06] Crear `tests/integration/build-export/build-projection-aliases.test.ts`: alias válido (aliasOf inmediato), alias roto, cycle y alias-to-group reportados por el análisis (rechazados, no proyectados).
-- [ ] T023 [US18] Crear `tests/integration/build-export/projection-single-foundation.test.ts` con spy: `foundation projections:1`; category/foundationLevel no se recalculan por renderer.
-- [ ] T024 [US08] Crear `tests/fixtures/build-export/projection/source.tokens.json` (tokens color/dimension/number + un alias) y un test que confirme grupos excluidos y tokens inválidos rechazados.
-- [ ] T025 Gate B: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T014 [US20] Crear `src/domain/build-export/normalized-token.ts` con `NormalizedBuildToken` (path, segments, category, foundationLevel, effectiveType, sourceValue, resolvedValue, aliasOf, aliasChain, description, trust, order, compatibility) y `NormalizedTokenSet` (source, tokens, byPath, warnings); readonly y congelado.
+- [X] T015 [US20] Crear `src/domain/build-export/build-token-order.ts` con el comparador canónico único: orden de categoría foundation → path padres-antes-que-hijos → comparación bytewise por code point (sin `localeCompare`).
+- [X] T016 [US06] Crear `src/application/build-export/create-build-projection.ts`: mapea `ResolvedTokenView` → `NormalizedTokenSet`, reutiliza UNA proyección de foundations para category/foundationLevel y el alias inmediato del grafo existente.
+- [X] T017 [US07] Crear `src/application/build-export/compatibility.ts` para anotar `NormalizedBuildToken.compatibility` (representabilidad por formato) sin renderizar todavía.
+- [X] T018 [US08] Añadir en `create-build-projection.ts` el rechazo de tokens con tipo no resoluble, alias inválido, alias-to-group, cycle o alias no confiable, y la exclusión de grupos (no se emiten como tokens).
+- [X] T019 [US20] Garantizar en `normalized-token.ts`/`create-build-projection.ts` copias defensivas, valores JSON-safe y congelamiento de colecciones anidadas.
+- [X] T020 [P] [US20] Crear `tests/domain/build-export/build-token-order.test.ts`: orden por categoría, padres antes que descendientes, code point, sin locale.
+- [X] T021 [P] [US20] Crear `tests/application/build-export/create-build-projection.test.ts`: entrada inmutable, copias defensivas, distinto insertion order → misma proyección.
+- [X] T022 [P] [US06] Crear `tests/integration/build-export/build-projection-aliases.test.ts`: alias válido (aliasOf inmediato), alias roto, cycle y alias-to-group reportados por el análisis (rechazados, no proyectados).
+- [X] T023 [US18] Crear `tests/integration/build-export/projection-single-foundation.test.ts` con spy: `foundation projections:1`; category/foundationLevel no se recalculan por renderer.
+- [X] T024 [US08] Crear `tests/fixtures/build-export/projection/source.tokens.json` (tokens color/dimension/number + un alias) y un test que confirme grupos excluidos y tokens inválidos rechazados.
+- [X] T025 Gate B: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: T022 preserva los errores contractuales de alias de `002`.
 **Suggested commit**: `feat: add normalized build projection and canonical order`

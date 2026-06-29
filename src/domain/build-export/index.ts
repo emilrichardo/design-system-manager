@@ -24,3 +24,13 @@ export type {
   BuildVerification,
 } from "./verification.js";
 export { VERIFICATION_CHECK_ORDER, orderVerificationChecks } from "./verification.js";
+
+export type {
+  FormatCompatibility,
+  BuildProjectionIssue,
+  NormalizedBuildToken,
+  NormalizedTokenSet,
+} from "./normalized-token.js";
+
+export type { OrderableToken } from "./build-token-order.js";
+export { compareTokenPath, compareCanonical, orderCanonical } from "./build-token-order.js";
