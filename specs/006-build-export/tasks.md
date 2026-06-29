@@ -118,12 +118,12 @@
 
 ### Tasks
 
-- [ ] T055 [US06] Crear `src/application/build-export/resolved-tokens-mapper.ts` con los DTO `ResolvedTokensV1` (`formatVersion`, `source {path,hash}`, `tokens`) y `ResolvedTokenV1` (`value`, `aliasOf`, `type`, `category`, `foundationLevel`, `description`); flat record por token path; `aliasOf` inmediato; null policy por campo.
-- [ ] T056 [US06] Crear `src/infrastructure/build-export/json-renderer.ts` con `serializeResolvedTokensV1`: `JSON.stringify(envelope, null, 2)` + LF final, UTF-8 sin BOM, `formatVersion` primera clave, claves de token en orden canónico, campos en orden de contrato.
-- [ ] T057 [P] [US06] Crear `tests/application/build-export/resolved-tokens-mapper.test.ts`: flat record, valor resuelto, alias inmediato, null policy de `aliasOf`/`category`/`description`, orden de campos.
-- [ ] T058 [P] [US20] Crear `tests/infrastructure/build-export/json-renderer.test.ts`: parseable, dos espacios, newline final único, sin BOM, orden de tokens canónico, `formatVersion` 1.0.0, arrays/objetos/strings JSON-safe.
-- [ ] T059 [US06] Crear `tests/integration/build-export/resolved-tokens-no-leak.test.ts`: NO expone raw bytes, decoded/parsed source, trust interno, alias chain interna, `$extensions` desconocidas, rutas absolutas, errores crudos ni stack.
-- [ ] T060 Gate D: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T055 [US06] Crear `src/application/build-export/resolved-tokens-mapper.ts` con los DTO `ResolvedTokensV1` (`formatVersion`, `source {path,hash}`, `tokens`) y `ResolvedTokenV1` (`value`, `aliasOf`, `type`, `category`, `foundationLevel`, `description`); flat record por token path; `aliasOf` inmediato; null policy por campo.
+- [X] T056 [US06] Crear `src/infrastructure/build-export/json-renderer.ts` con `serializeResolvedTokensV1`: `JSON.stringify(envelope, null, 2)` + LF final, UTF-8 sin BOM, `formatVersion` primera clave, claves de token en orden canónico, campos en orden de contrato.
+- [X] T057 [P] [US06] Crear `tests/application/build-export/resolved-tokens-mapper.test.ts`: flat record, valor resuelto, alias inmediato, null policy de `aliasOf`/`category`/`description`, orden de campos.
+- [X] T058 [P] [US20] Crear `tests/infrastructure/build-export/json-renderer.test.ts`: parseable, dos espacios, newline final único, sin BOM, orden de tokens canónico, `formatVersion` 1.0.0, arrays/objetos/strings JSON-safe.
+- [X] T059 [US06] Crear `tests/integration/build-export/resolved-tokens-no-leak.test.ts`: NO expone raw bytes, decoded/parsed source, trust interno, alias chain interna, `$extensions` desconocidas, rutas absolutas, errores crudos ni stack.
+- [X] T060 Gate D: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: ninguna; contrato JSON nuevo e independiente de `003`/`004`/`005`.
 **Suggested commit**: `feat: add resolved tokens json renderer`
