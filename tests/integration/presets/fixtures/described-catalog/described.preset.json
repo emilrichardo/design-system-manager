@@ -1,0 +1,17 @@
+{
+  "id": "described",
+  "name": "Described",
+  "description": "A preset whose token carries a $description (to exercise the narrow update path).",
+  "version": "1.0.0",
+  "includedCategories": ["spacing"],
+  "tokens": {
+    "spacing": {
+      "100": {
+        "$type": "dimension",
+        "$extensions": { "ar.neuraz.design-system-manager": { "foundation": { "level": "primitive" } } },
+        "$description": "Base spacing step.",
+        "$value": { "value": 4, "unit": "px" }
+      }
+    }
+  }
+}

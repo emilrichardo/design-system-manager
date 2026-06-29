@@ -1,0 +1,11 @@
+{
+  "id": "bad",
+  "name": "Bad",
+  "description": "Invalid: token under an undeclared category.",
+  "version": "1.0.0",
+  "includedCategories": ["color"],
+  "tokens": {
+    "color": { "$type": "color", "a": { "$value": { "colorSpace": "srgb", "components": [0, 0, 0] } } },
+    "spacing": { "$type": "dimension", "x": { "$value": { "value": 1, "unit": "px" } } }
+  }
+}
