@@ -19,7 +19,7 @@ const ARTIFACT_FILENAMES: Readonly<Record<BuildFormat, string>> = {
 const CONTENT_TYPES: Readonly<Record<BuildFormat, string>> = {
   css: "text/css; charset=utf-8",
   json: "application/json; charset=utf-8",
-  typescript: "application/typescript; charset=utf-8",
+  typescript: "text/typescript; charset=utf-8",
 };
 
 /** Guard de runtime: rechaza cualquier valor fuera de la unión (incluye `ts`). */

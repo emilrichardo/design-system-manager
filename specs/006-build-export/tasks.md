@@ -137,13 +137,13 @@
 
 ### Tasks
 
-- [ ] T061 [US06] Crear `src/infrastructure/build-export/ts-renderer.ts`: emitir `export const tokens = { ... } as const;`, `export const tokenMetadata = { ... } as const;`, `export type TokenPath = keyof typeof tokens;`; flat record; claves siempre entrecomilladas; valores resueltos; metadata (`aliasOf` inmediato, `type`, `category`, `foundationLevel`, `description`); orden canónico; newline final; cero imports y cero dependencia runtime del manager.
-- [ ] T062 [US20] Crear `src/infrastructure/build-export/ts-literal.ts` (serializer de literales TS-safe basado en `JSON.stringify`): escapar comillas, backslash, Unicode, U+2028, U+2029 y `</script>`; arrays/objetos; números finitos; rechazar `NaN`/Infinity.
-- [ ] T063 [P] [US20] Crear `tests/infrastructure/build-export/ts-literal.test.ts`: U+2028/U+2029, `</script>`, controles, comillas/backslash; rechazo de `NaN`/Infinity.
-- [ ] T064 [P] [US06] Crear `tests/infrastructure/build-export/ts-renderer-shape.test.ts`: exports `tokens`/`tokenMetadata`/`TokenPath`, contrato exacto de metadata, ausencia de imports, null policy.
-- [ ] T065 [US06] Crear `tests/integration/build-export/ts-validation-no-exec.test.ts`: validar sintaxis con la dependencia `typescript` (`transpileModule`/`tsc --noEmit`); sin `eval`, sin import dinámico, sin ejecutar el artifact; comprobar exports esperados y ausencia de imports.
-- [ ] T066 [P] [US20] Crear `tests/infrastructure/build-export/ts-determinism.test.ts`: bytes deterministas; identificador de formato normalizado `typescript`; filename `tokens.ts`.
-- [ ] T067 Gate E: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T061 [US06] Crear `src/infrastructure/build-export/ts-renderer.ts`: emitir `export const tokens = { ... } as const;`, `export const tokenMetadata = { ... } as const;`, `export type TokenPath = keyof typeof tokens;`; flat record; claves siempre entrecomilladas; valores resueltos; metadata (`aliasOf` inmediato, `type`, `category`, `foundationLevel`, `description`); orden canónico; newline final; cero imports y cero dependencia runtime del manager.
+- [X] T062 [US20] Crear `src/infrastructure/build-export/ts-literal.ts` (serializer de literales TS-safe basado en `JSON.stringify`): escapar comillas, backslash, Unicode, U+2028, U+2029 y `</script>`; arrays/objetos; números finitos; rechazar `NaN`/Infinity.
+- [X] T063 [P] [US20] Crear `tests/infrastructure/build-export/ts-literal.test.ts`: U+2028/U+2029, `</script>`, controles, comillas/backslash; rechazo de `NaN`/Infinity.
+- [X] T064 [P] [US06] Crear `tests/infrastructure/build-export/ts-renderer-shape.test.ts`: exports `tokens`/`tokenMetadata`/`TokenPath`, contrato exacto de metadata, ausencia de imports, null policy.
+- [X] T065 [US06] Crear `tests/integration/build-export/ts-validation-no-exec.test.ts`: validar sintaxis con la dependencia `typescript` (`transpileModule`/`tsc --noEmit`); sin `eval`, sin import dinámico, sin ejecutar el artifact; comprobar exports esperados y ausencia de imports.
+- [X] T066 [P] [US20] Crear `tests/infrastructure/build-export/ts-determinism.test.ts`: bytes deterministas; identificador de formato normalizado `typescript`; filename `tokens.ts`.
+- [X] T067 Gate E: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: ninguna; TS es nuevo.
 **Suggested commit**: `feat: add typescript renderer`
