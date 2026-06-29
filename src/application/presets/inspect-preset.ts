@@ -15,6 +15,7 @@ import type {
   PresetTokenInspection,
 } from "../../domain/presets/preset-envelope.js";
 import type { PresetValidation } from "../../domain/presets/preset-validation.js";
+import type { InspectPreset } from "./preset-ports.js";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -89,3 +90,16 @@ export function presetInspection(
     validation,
   };
 }
+
+/**
+ * Caso de uso headless de inspección. Distingue preset no encontrado, encontrado pero inválido y
+ * válido, conservando siempre la inspección recuperable. Surface `invalid-preset` de forma segura para
+ * assets empaquetados rotos (sin lanzar). No escribe; no resuelve el proyecto host.
+ */
+export const inspectPreset: InspectPreset = async (input, deps) => {
+  const envelope = await deps.catalog.get(input.id);
+  if (envelope === null) return { outcome: "not-found", inspection: null };
+  const validation = deps.validator.validate(envelope);
+  const inspection = presetInspection(envelope, validation);
+  return { outcome: validation.valid ? "success" : "invalid-preset", inspection };
+};

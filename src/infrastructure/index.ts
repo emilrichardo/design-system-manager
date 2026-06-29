@@ -45,3 +45,12 @@ export type {
 } from "./presets/bundled-preset-catalog.js";
 export { readJsonAsset } from "./presets/preset-asset-reader.js";
 export type { AssetReadResult } from "./presets/preset-asset-reader.js";
+// Feature 005 — validación de presets en memoria (reutiliza el motor DTCG de 002 y foundations de 004).
+export { validatePresetEnvelope } from "./presets/preset-envelope-validator.js";
+export type { PresetEnvelopeValidationResult } from "./presets/preset-envelope-validator.js";
+export {
+  analyzePresetTokens,
+  analyzePresetTokensPort,
+  createPresetValidator,
+} from "./presets/preset-token-analyzer.js";
+export type { AnalyzePresetTokensDeps } from "./presets/preset-token-analyzer.js";

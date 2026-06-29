@@ -4,14 +4,30 @@ import { noLimitsReached } from "../traversal/limits.js";
 export type PresetValidationIssueSeverity = "error" | "warning";
 
 export type PresetValidationIssueCode =
+  // envelope / metadata (Checkpoint A + C)
   | "preset-envelope-invalid"
+  | "preset-field-unknown"
+  | "preset-tokens-empty"
   | "preset-id-invalid"
   | "preset-version-invalid"
   | "preset-name-invalid"
   | "preset-description-invalid"
   | "preset-category-unsupported"
   | "preset-category-duplicate"
-  | "preset-category-order-invalid";
+  | "preset-category-order-invalid"
+  // DTCG / foundations / categories / aliases / limits (Checkpoint C)
+  | "preset-dtcg-invalid"
+  | "preset-type-mismatch"
+  | "preset-foundation-metadata-invalid"
+  | "preset-token-unclassified"
+  | "preset-token-unresolved"
+  | "preset-category-undeclared"
+  | "preset-category-unused"
+  | "preset-alias-missing"
+  | "preset-alias-cycle"
+  | "preset-alias-to-group"
+  | "preset-reference-external"
+  | "preset-limit-exceeded";
 
 export interface PresetValidationIssue {
   readonly code: PresetValidationIssueCode;

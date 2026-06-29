@@ -69,15 +69,15 @@ Every implementation task uses:
 
 **Independent test**: invalid envelope, metadata, DTCG, aliases, categories, foundation metadata, unsupported content, and limits produce sanitized validation results and block write eligibility.
 
-- [ ] T025 [P] [US2] Add failing validation tests for required fields, unknown top-level fields, nulls, invalid id/name/description/version, duplicate ids, duplicate categories, unknown categories, and empty tokens in `tests/unit/presets/preset-envelope-validator.test.ts`.
-- [ ] T026 [P] [US15] Add failing validation tests for declared category without tokens, tokens under undeclared category, unsupported category, reserved path, component tokens, themes, dark/light variants, scripts, URLs, dependencies, CSS, SCSS, and executable-like content in `tests/unit/presets/preset-content-rules.test.ts`.
-- [ ] T027 [P] [US9] Add failing in-memory DTCG/foundations validation tests for invalid DTCG structure, invalid type, unsupported type/category pairing, invalid Neuraz foundation metadata, missing/invalid inherited level, alias missing, alias cycle, external alias, and traversal limits in `tests/unit/presets/preset-dtcg-validation.test.ts`.
-- [ ] T028 [US2] Implement envelope and metadata validation in `src/infrastructure/presets/preset-envelope-validator.ts`.
-- [ ] T029 [US9] Implement in-memory preset token analysis that reuses the `002` traversal/type/alias/limit functions and `004` foundation category/level projection in `src/infrastructure/presets/preset-token-analyzer.ts`.
-- [ ] T030 [US15] Implement declared-category reconciliation between `includedCategories` and analyzed token paths in `src/application/presets/validate-preset.ts`.
-- [ ] T031 [US2] Map validation failures to safe preset conflicts with stable codes and no stacks, absolute paths, environment variables, arbitrary token values, or full token documents in `src/application/presets/validate-preset.ts`.
-- [ ] T032 [US2] Wire list/inspect to surface `invalid-preset` safely for broken bundled assets without crashing in `src/application/presets/list-presets.ts` and `src/application/presets/inspect-preset.ts`.
-- [ ] T033 [US9] Add regression tests proving preset validation reuses 002/004 behavior and does not materialize temporary projects in `tests/integration/presets/preset-validation-reuse.test.ts`.
+- [X] T025 [P] [US2] Add failing validation tests for required fields, unknown top-level fields, nulls, invalid id/name/description/version, duplicate ids, duplicate categories, unknown categories, and empty tokens in `tests/unit/presets/preset-envelope-validator.test.ts`.
+- [X] T026 [P] [US15] Add failing validation tests for declared category without tokens, tokens under undeclared category, unsupported category, reserved path, component tokens, themes, dark/light variants, scripts, URLs, dependencies, CSS, SCSS, and executable-like content in `tests/unit/presets/preset-content-rules.test.ts`.
+- [X] T027 [P] [US9] Add failing in-memory DTCG/foundations validation tests for invalid DTCG structure, invalid type, unsupported type/category pairing, invalid Neuraz foundation metadata, missing/invalid inherited level, alias missing, alias cycle, external alias, and traversal limits in `tests/unit/presets/preset-dtcg-validation.test.ts`.
+- [X] T028 [US2] Implement envelope and metadata validation in `src/infrastructure/presets/preset-envelope-validator.ts`.
+- [X] T029 [US9] Implement in-memory preset token analysis that reuses the `002` traversal/type/alias/limit functions and `004` foundation category/level projection in `src/infrastructure/presets/preset-token-analyzer.ts`.
+- [X] T030 [US15] Implement declared-category reconciliation between `includedCategories` and analyzed token paths in `src/application/presets/validate-preset.ts`.
+- [X] T031 [US2] Map validation failures to safe preset conflicts with stable codes and no stacks, absolute paths, environment variables, arbitrary token values, or full token documents in `src/application/presets/validate-preset.ts`.
+- [X] T032 [US2] Wire list/inspect to surface `invalid-preset` safely for broken bundled assets without crashing in `src/application/presets/list-presets.ts` and `src/application/presets/inspect-preset.ts`.
+- [X] T033 [US9] Add regression tests proving preset validation reuses 002/004 behavior and does not materialize temporary projects in `tests/integration/presets/preset-validation-reuse.test.ts`.
 
 **Checkpoint gate**: `npm run typecheck`, `npm run lint`, targeted validation tests, accumulated `npm test`, `npm run build`.
 **Recommended checkpoint commit**: `feat: validate preset envelopes in memory`
