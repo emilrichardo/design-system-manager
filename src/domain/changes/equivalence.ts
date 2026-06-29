@@ -6,6 +6,7 @@
 // aparte (no es diferencia de equivalencia administrada). Sin presets/CLI/JSON/filesystem.
 import type { FoundationCategoryRef } from "../foundations/category-state.js";
 import type { FoundationLevel } from "../foundations/foundation-level.js";
+import type { ProposedTokenFragment } from "./token-change.js";
 import type { TokenChangeNodeKind } from "./token-change.js";
 
 /** Nodo normalizado y comparable (candidato u host). Solo datos ya analizados; sin AST mutable/Error. */
@@ -21,6 +22,7 @@ export interface ManagedNode {
   /** Foundation level efectivo ya resuelto por `004`. */
   readonly level: FoundationLevel;
   readonly description: string | null;
+  readonly fragment?: ProposedTokenFragment | null;
 }
 
 /** Campo administrado que difiere primero (prioridad alias/value → type → level), o `null` si equivalen. */

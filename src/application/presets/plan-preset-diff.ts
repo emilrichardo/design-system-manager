@@ -55,7 +55,17 @@ function plainChange(
   operation: "create" | "unchanged" | "skip",
   reason: string,
 ): TokenChange {
-  return { path: node.path, nodeKind: node.nodeKind, category, level: node.level, operation, reason, blocksWrite: false, conflict: null, proposedToken: null };
+  return {
+    path: node.path,
+    nodeKind: node.nodeKind,
+    category,
+    level: node.level,
+    operation,
+    reason,
+    blocksWrite: false,
+    conflict: null,
+    proposedToken: operation === "create" ? (node.fragment ?? null) : null,
+  };
 }
 
 function descriptionUpdate(node: ManagedNode, category: FoundationCategoryId): TokenChange {

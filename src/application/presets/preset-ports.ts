@@ -8,6 +8,7 @@ import type {
 } from "../../domain/presets/index.js";
 import type { PresetApplicationPlan, PresetNotFoundResource } from "../../domain/presets/preset-application-plan.js";
 import type { AnalyzeUseCase } from "../analysis-ports.js";
+import type { PresetTargetReader, SingleFileAtomicWriter } from "./single-file-writer-port.js";
 import type {
   AliasState,
   NodeKind,
@@ -136,6 +137,10 @@ export interface PlanPresetApplicationDependencies {
 
 export interface ApplyPresetDependencies {
   readonly catalog: PresetCatalogPort;
+  readonly analyzeTokens: AnalyzePresetTokens;
+  readonly analyzeHost: AnalyzeUseCase;
+  readonly targetReader: PresetTargetReader;
+  readonly writer: SingleFileAtomicWriter;
 }
 
 export type ListPresets = (deps: ListPresetsDependencies) => Promise<PresetListResult>;

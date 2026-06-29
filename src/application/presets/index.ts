@@ -9,3 +9,7 @@ export * from "./plan-preset-application.js";
 export * from "./json/index.js";
 export * from "./preserve-host-document.js";
 export * from "./build-preset-candidate-document.js";
+export * from "./single-file-writer-port.js";
+export * from "./verify-preset-candidate.js";
+export * from "./verify-preset-application.js";
+export * from "./apply-preset.js";

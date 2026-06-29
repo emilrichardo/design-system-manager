@@ -23,6 +23,24 @@ function aliasTargetOf(node: Record<string, unknown>): string | null {
   return match ? (match[1] as string) : null;
 }
 
+function cloneJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(cloneJson);
+  if (isRecord(value)) {
+    const cloned: Record<string, unknown> = {};
+    for (const [key, child] of Object.entries(value)) cloned[key] = cloneJson(child);
+    return cloned;
+  }
+  return value;
+}
+
+function groupFragment(node: Record<string, unknown>): Record<string, unknown> | null {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(node)) {
+    if (key.startsWith("$")) out[key] = cloneJson(value);
+  }
+  return Object.keys(out).length === 0 ? null : out;
+}
+
 function walk(
   node: Record<string, unknown>,
   segments: readonly string[],
@@ -41,6 +59,7 @@ function walk(
       effectiveType: known?.effectiveType ?? null,
       level: known?.level ?? "unclassified",
       description: typeof node.$description === "string" ? node.$description : null,
+      fragment: cloneJson(node) as Record<string, unknown>,
     });
     return;
   }
@@ -55,6 +74,7 @@ function walk(
       effectiveType: null,
       level: "unclassified",
       description: null,
+      fragment: groupFragment(node),
     });
   }
   for (const key of Object.keys(node)) {
