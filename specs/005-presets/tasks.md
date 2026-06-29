@@ -90,13 +90,13 @@ Every implementation task uses:
 
 **Independent test**: a generic `TokenChangeSet` represents DTCG create/update/unchanged/conflict/skip changes independent of preset catalog metadata.
 
-- [ ] T034 [P] [US10] Add failing tests for deterministic ordering of `TokenChangeSet` by canonical category order then preset insertion order in `tests/unit/changes/token-change-order.test.ts`.
-- [ ] T035 [P] [US10] Add failing tests proving the generic change model can represent DTCG changes produced by an arbitrary in-memory source with no preset fields in `tests/unit/changes/source-agnostic-plan.test.ts`.
-- [ ] T036 [P] [US3] Add failing summary tests for create/update/unchanged/conflict/skip/total/blockingConflicts/wouldWrite counts in `tests/unit/changes/application-summary.test.ts`.
-- [ ] T037 [US10] Implement change-set construction, canonical ordering, and source-agnostic invariants in `src/domain/changes/token-change-set.ts`.
-- [ ] T038 [US3] Implement generic application summary derivation in `src/domain/changes/application-summary.ts`.
-- [ ] T039 [US3] Implement generic `ApplicationPlan` construction and writable/blocking rules in `src/domain/changes/application-plan.ts`.
-- [ ] T040 [US3] Add preset wrapper mapping from validated preset token summaries to generic token changes in `src/application/presets/normalize-preset-change-set.ts`.
+- [X] T034 [P] [US10] Add failing tests for deterministic ordering of `TokenChangeSet` by canonical category order then preset insertion order in `tests/unit/changes/token-change-order.test.ts`.
+- [X] T035 [P] [US10] Add failing tests proving the generic change model can represent DTCG changes produced by an arbitrary in-memory source with no preset fields in `tests/unit/changes/source-agnostic-plan.test.ts`.
+- [X] T036 [P] [US3] Add failing summary tests for create/update/unchanged/conflict/skip/total/blockingConflicts/wouldWrite counts in `tests/unit/changes/application-summary.test.ts`.
+- [X] T037 [US10] Implement change-set construction, canonical ordering, and source-agnostic invariants in `src/domain/changes/token-change-set.ts`.
+- [X] T038 [US3] Implement generic application summary derivation in `src/domain/changes/application-summary.ts`.
+- [X] T039 [US3] Implement generic `ApplicationPlan` construction and writable/blocking rules in `src/domain/changes/application-plan.ts`.
+- [X] T040 [US3] Add preset wrapper mapping from validated preset token summaries to generic token changes in `src/application/presets/normalize-preset-change-set.ts`.
 
 **Checkpoint gate**: `npm run typecheck`, `npm run lint`, targeted changes tests, accumulated `npm test`, `npm run build`.
 **Recommended checkpoint commit**: `feat: add reusable token change planning model`

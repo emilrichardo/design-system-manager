@@ -1,5 +1,6 @@
 import type { StructuralState } from "../analysis/structural-state.js";
-import type { ApplicationPlan, ApplicationSummary } from "../changes/application-plan.js";
+import type { ApplicationPlan } from "../changes/application-plan.js";
+import type { ApplicationSummary } from "../changes/application-summary.js";
 import type { PresetMetadata } from "./preset-envelope.js";
 
 export const PRESET_APPLICATION_TARGET_FILE = "design-system/tokens/base.tokens.json";
