@@ -76,35 +76,35 @@
 
 ### Tasks
 
-- [ ] T026 [US11] Crear `src/domain/build-export/css-name.ts` con `tokenPathToCssCustomPropertyName(path)` = `"--"` + segments unidos por `-`; cada segmento valida `^[A-Za-z0-9_][A-Za-z0-9_-]*$`; case preservado; puntos solo como separadores; sin lowercasing, sin normalización Unicode, sin identifier escaping.
-- [ ] T027 [P] [US11] Crear `tests/domain/build-export/css-name.test.ts`: segmento vacío, Unicode, espacio, slash, backslash y caracteres fuera del subconjunto → `unsupported-value`/`css-name-invalid` (format `css`, tokenPath, wrote:false); case preservado; sin lowercase ni normalización.
-- [ ] T028 [US11] Crear en `src/domain/build-export/css-name.ts` el detector de colisiones (mapa global nombre→path antes de producir bytes): `foo.bar-baz` y `foo-bar.baz` colisionan en `--foo-bar-baz` → `unsupported-value`/`css-name-collision`, wrote:false.
-- [ ] T029 [P] [US11] Crear `tests/domain/build-export/css-name-collision.test.ts` con el caso `foo.bar-baz`/`foo-bar.baz` y verificación de que nunca se elige uno silenciosamente.
-- [ ] T030 [US20] Crear `src/infrastructure/build-export/css-string.ts` (escaping de valores string entre comillas dobles, separado de la validación de identifiers): backslash, comilla doble, LF, CR, form feed, NULL, controles C0, DEL; escapes hex con espacio terminador; UTF-8; independiente de locale.
-- [ ] T031 [P] [US20] Crear `tests/infrastructure/build-export/css-string.test.ts` con fixtures byte-exactos de `research.md` (comillas, salto de línea, NULL, tab) y controles C0/DEL.
-- [ ] T032 [US07] Crear en `src/infrastructure/build-export/css-renderer.ts` el serializer de `number` (SUPPORTED): decimal más corto estable, menos-cero a cero, sin locale, sin notación científica; rechazo defensivo de NaN/Infinity → `css-number-invalid`.
-- [ ] T033 [US07] Añadir en `src/infrastructure/build-export/css-renderer.ts` los serializers CONDITIONALLY_SUPPORTED: `color` (solo `hex`, alpha ausente o 1; `#rrggbb` minúscula), `dimension` (`px|rem|em|%`), `duration` (`ms|s`), `fontWeight` (entero 1..1000 o `normal|bold`), `fontFamily` (lista coma+espacio; keywords genéricos sin comillas), `cubicBezier` (`x1`/`x2` en 0..1), `string`.
-- [ ] T034 [US07] Añadir en `src/infrastructure/build-export/css-renderer.ts` el reconocimiento de tipos UNSUPPORTED_IN_CSS_V1 (`boolean`, `strokeStyle`, `border`, `transition`, `shadow`, `gradient`, `typography`) → `unsupported-value` con format `css`, tokenPath, type y stable code (`css-boolean-unsupported`, `css-type-unsupported`).
-- [ ] T035 [US05] Añadir en `src/infrastructure/build-export/css-renderer.ts` la emisión de aliases `var(--<immediate-target>)`: el target debe existir, ser token, tener CSS name válido, generar declaration, ser representable y compatible; si no → `unsupported-value`/`css-alias-target-unrenderable`; sin fallback silencioso al valor final.
-- [ ] T036 [US01] Completar `src/infrastructure/build-export/css-renderer.ts`: ensamblar bloque `:root`, declaraciones en orden canónico, newline final, UTF-8 sin BOM; all-or-nothing: si cualquier token es no soportado, retornar `unsupported-value` y cero bytes CSS.
-- [ ] T037 [P] [US07] Crear `tests/infrastructure/build-export/css-type-color.test.ts`: hex válido; alpha distinto de 1 / shape inválida → `css-color-unsupported-shape`.
-- [ ] T038 [P] [US07] Crear `tests/infrastructure/build-export/css-type-dimension.test.ts`: `16px`/`rem`/`em`/`%`; unidad inválida/whitespace/no-finito → `css-dimension-unsupported-shape`.
-- [ ] T039 [P] [US07] Crear `tests/infrastructure/build-export/css-type-number.test.ts`: `0.875`; menos-cero a cero; NaN/Infinity → `css-number-invalid`.
-- [ ] T040 [P] [US07] Crear `tests/infrastructure/build-export/css-type-string.test.ts`: string entrecomillado/escapado; gating de tipo → `css-string-unsupported-type`.
-- [ ] T041 [P] [US07] Crear `tests/infrastructure/build-export/css-type-boolean.test.ts`: cualquier boolean → `css-boolean-unsupported` (UNSUPPORTED).
-- [ ] T042 [P] [US07] Crear `tests/infrastructure/build-export/css-type-font-family.test.ts`: lista/keyword genérico sin comillas; shape inválida → `css-font-family-unsupported-shape`.
-- [ ] T043 [P] [US07] Crear `tests/infrastructure/build-export/css-type-font-weight.test.ts`: `700`/`normal`/`bold`; otro → `css-font-weight-unsupported-shape`.
-- [ ] T044 [P] [US07] Crear `tests/infrastructure/build-export/css-type-duration.test.ts`: `120ms`/`s`; unidad inválida → `css-duration-unsupported-shape`.
-- [ ] T045 [P] [US07] Crear `tests/infrastructure/build-export/css-type-cubic-bezier.test.ts`: `cubic-bezier(0.4, 0, 0.2, 1)`; `x` fuera de 0..1 → `css-cubic-bezier-unsupported-shape`.
-- [ ] T046 [P] [US07] Crear `tests/infrastructure/build-export/css-type-stroke-style.test.ts`: cualquier valor → `css-type-unsupported`.
-- [ ] T047 [P] [US07] Crear `tests/infrastructure/build-export/css-type-border.test.ts`: cualquier valor → `css-type-unsupported`.
-- [ ] T048 [P] [US07] Crear `tests/infrastructure/build-export/css-type-transition.test.ts`: cualquier valor → `css-type-unsupported`.
-- [ ] T049 [P] [US07] Crear `tests/infrastructure/build-export/css-type-shadow.test.ts`: cualquier valor → `css-type-unsupported`.
-- [ ] T050 [P] [US07] Crear `tests/infrastructure/build-export/css-type-gradient.test.ts`: cualquier valor → `css-type-unsupported`.
-- [ ] T051 [P] [US07] Crear `tests/infrastructure/build-export/css-type-typography.test.ts`: cualquier valor → `css-type-unsupported`.
-- [ ] T052 [US05] Crear `tests/integration/build-export/css-aliases.test.ts`: alias directo, cadena, missing, alias-to-group, cycle, target con nombre inválido, target no representable → `unsupported-value`; cero fallback silencioso.
-- [ ] T053 [US08] Crear `tests/integration/build-export/css-all-or-nothing.test.ts`: un token no soportado → renderer retorna `unsupported-value` y cero bytes CSS (sin CSS parcial).
-- [ ] T054 Gate C: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T026 [US11] Crear `src/domain/build-export/css-name.ts` con `tokenPathToCssCustomPropertyName(path)` = `"--"` + segments unidos por `-`; cada segmento valida `^[A-Za-z0-9_][A-Za-z0-9_-]*$`; case preservado; puntos solo como separadores; sin lowercasing, sin normalización Unicode, sin identifier escaping.
+- [X] T027 [P] [US11] Crear `tests/domain/build-export/css-name.test.ts`: segmento vacío, Unicode, espacio, slash, backslash y caracteres fuera del subconjunto → `unsupported-value`/`css-name-invalid` (format `css`, tokenPath, wrote:false); case preservado; sin lowercase ni normalización.
+- [X] T028 [US11] Crear en `src/domain/build-export/css-name.ts` el detector de colisiones (mapa global nombre→path antes de producir bytes): `foo.bar-baz` y `foo-bar.baz` colisionan en `--foo-bar-baz` → `unsupported-value`/`css-name-collision`, wrote:false.
+- [X] T029 [P] [US11] Crear `tests/domain/build-export/css-name-collision.test.ts` con el caso `foo.bar-baz`/`foo-bar.baz` y verificación de que nunca se elige uno silenciosamente.
+- [X] T030 [US20] Crear `src/infrastructure/build-export/css-string.ts` (escaping de valores string entre comillas dobles, separado de la validación de identifiers): backslash, comilla doble, LF, CR, form feed, NULL, controles C0, DEL; escapes hex con espacio terminador; UTF-8; independiente de locale.
+- [X] T031 [P] [US20] Crear `tests/infrastructure/build-export/css-string.test.ts` con fixtures byte-exactos de `research.md` (comillas, salto de línea, NULL, tab) y controles C0/DEL.
+- [X] T032 [US07] Crear en `src/infrastructure/build-export/css-renderer.ts` el serializer de `number` (SUPPORTED): decimal más corto estable, menos-cero a cero, sin locale, sin notación científica; rechazo defensivo de NaN/Infinity → `css-number-invalid`.
+- [X] T033 [US07] Añadir en `src/infrastructure/build-export/css-renderer.ts` los serializers CONDITIONALLY_SUPPORTED: `color` (solo `hex`, alpha ausente o 1; `#rrggbb` minúscula), `dimension` (`px|rem|em|%`), `duration` (`ms|s`), `fontWeight` (entero 1..1000 o `normal|bold`), `fontFamily` (lista coma+espacio; keywords genéricos sin comillas), `cubicBezier` (`x1`/`x2` en 0..1), `string`.
+- [X] T034 [US07] Añadir en `src/infrastructure/build-export/css-renderer.ts` el reconocimiento de tipos UNSUPPORTED_IN_CSS_V1 (`boolean`, `strokeStyle`, `border`, `transition`, `shadow`, `gradient`, `typography`) → `unsupported-value` con format `css`, tokenPath, type y stable code (`css-boolean-unsupported`, `css-type-unsupported`).
+- [X] T035 [US05] Añadir en `src/infrastructure/build-export/css-renderer.ts` la emisión de aliases `var(--<immediate-target>)`: el target debe existir, ser token, tener CSS name válido, generar declaration, ser representable y compatible; si no → `unsupported-value`/`css-alias-target-unrenderable`; sin fallback silencioso al valor final.
+- [X] T036 [US01] Completar `src/infrastructure/build-export/css-renderer.ts`: ensamblar bloque `:root`, declaraciones en orden canónico, newline final, UTF-8 sin BOM; all-or-nothing: si cualquier token es no soportado, retornar `unsupported-value` y cero bytes CSS.
+- [X] T037 [P] [US07] Crear `tests/infrastructure/build-export/css-type-color.test.ts`: hex válido; alpha distinto de 1 / shape inválida → `css-color-unsupported-shape`.
+- [X] T038 [P] [US07] Crear `tests/infrastructure/build-export/css-type-dimension.test.ts`: `16px`/`rem`/`em`/`%`; unidad inválida/whitespace/no-finito → `css-dimension-unsupported-shape`.
+- [X] T039 [P] [US07] Crear `tests/infrastructure/build-export/css-type-number.test.ts`: `0.875`; menos-cero a cero; NaN/Infinity → `css-number-invalid`.
+- [X] T040 [P] [US07] Crear `tests/infrastructure/build-export/css-type-string.test.ts`: string entrecomillado/escapado; gating de tipo → `css-string-unsupported-type`.
+- [X] T041 [P] [US07] Crear `tests/infrastructure/build-export/css-type-boolean.test.ts`: cualquier boolean → `css-boolean-unsupported` (UNSUPPORTED).
+- [X] T042 [P] [US07] Crear `tests/infrastructure/build-export/css-type-font-family.test.ts`: lista/keyword genérico sin comillas; shape inválida → `css-font-family-unsupported-shape`.
+- [X] T043 [P] [US07] Crear `tests/infrastructure/build-export/css-type-font-weight.test.ts`: `700`/`normal`/`bold`; otro → `css-font-weight-unsupported-shape`.
+- [X] T044 [P] [US07] Crear `tests/infrastructure/build-export/css-type-duration.test.ts`: `120ms`/`s`; unidad inválida → `css-duration-unsupported-shape`.
+- [X] T045 [P] [US07] Crear `tests/infrastructure/build-export/css-type-cubic-bezier.test.ts`: `cubic-bezier(0.4, 0, 0.2, 1)`; `x` fuera de 0..1 → `css-cubic-bezier-unsupported-shape`.
+- [X] T046 [P] [US07] Crear `tests/infrastructure/build-export/css-type-stroke-style.test.ts`: cualquier valor → `css-type-unsupported`.
+- [X] T047 [P] [US07] Crear `tests/infrastructure/build-export/css-type-border.test.ts`: cualquier valor → `css-type-unsupported`.
+- [X] T048 [P] [US07] Crear `tests/infrastructure/build-export/css-type-transition.test.ts`: cualquier valor → `css-type-unsupported`.
+- [X] T049 [P] [US07] Crear `tests/infrastructure/build-export/css-type-shadow.test.ts`: cualquier valor → `css-type-unsupported`.
+- [X] T050 [P] [US07] Crear `tests/infrastructure/build-export/css-type-gradient.test.ts`: cualquier valor → `css-type-unsupported`.
+- [X] T051 [P] [US07] Crear `tests/infrastructure/build-export/css-type-typography.test.ts`: cualquier valor → `css-type-unsupported`.
+- [X] T052 [US05] Crear `tests/integration/build-export/css-aliases.test.ts`: alias directo, cadena, missing, alias-to-group, cycle, target con nombre inválido, target no representable → `unsupported-value`; cero fallback silencioso.
+- [X] T053 [US08] Crear `tests/integration/build-export/css-all-or-nothing.test.ts`: un token no soportado → renderer retorna `unsupported-value` y cero bytes CSS (sin CSS parcial).
+- [X] T054 Gate C: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: ninguna; CSS es nuevo.
 **Suggested commit**: `feat: add deterministic css renderer with full type matrix`

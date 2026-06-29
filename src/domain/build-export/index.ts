@@ -34,3 +34,6 @@ export type {
 
 export type { OrderableToken } from "./build-token-order.js";
 export { compareTokenPath, compareCanonical, orderCanonical } from "./build-token-order.js";
+
+export type { CssNameValidation, CssNameCollision, CssNameMapResult } from "./css-name.js";
+export { tokenPathToCssCustomPropertyName, validateCssCustomPropertyName, buildCssNameMap } from "./css-name.js";
