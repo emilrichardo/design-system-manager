@@ -169,14 +169,14 @@ Every implementation task uses:
 
 **Independent test**: candidate generation creates only authorized groups/tokens or narrow description updates, preserves everything else semantically, and produces byte identity whenever no write should occur.
 
-- [ ] T068 [P] [US18] Add failing candidate merge tests for preserving tokens, groups, categories not included, unknown `$extensions`, unknown properties, existing descriptions, unmanaged metadata, and existing order where possible in `tests/unit/presets/preset-candidate-document.test.ts`.
-- [ ] T069 [P] [US16] Add failing candidate merge tests for deterministic inserted groups/tokens, canonical category insertion, preset insertion order, group/token distinction, and no wholesale document replacement in `tests/unit/presets/preset-candidate-insert-order.test.ts`.
-- [ ] T070 [P] [US17] Add failing candidate tests proving value/type/alias/foundation-level replacement, delete operations, config/manifest writes, extension wholesale replacement, destructive normalization, and arbitrary reordering never occur in `tests/unit/presets/preset-candidate-safety.test.ts`.
-- [ ] T071 [US4] Implement in-memory candidate document builder in `src/application/presets/build-preset-candidate-document.ts`.
-- [ ] T072 [US7] Implement preservation helpers for object copy-through, managed field insertion, `$extensions` merge rules, and deterministic JSON serialization in `src/application/presets/preserve-host-document.ts`.
-- [ ] T073 [US12] Use approved write serialization `JSON.stringify(document, null, 2) + "\n"` for successful writes in `src/infrastructure/serialization/json.ts` or a preset-specific adapter if the existing serializer cannot be reused.
-- [ ] T074 [US3] Add byte-identity tests for plan, unchanged apply, blocking conflict, read-error, write-error before rename, and errors before replacement in `tests/integration/presets/no-write-byte-identity.test.ts`.
-- [ ] T075 [US4] Add integration tests distinguishing semantic preservation after successful write from byte identity for no-write paths in `tests/integration/presets/preset-preservation.test.ts`.
+- [X] T068 [P] [US18] Add failing candidate merge tests for preserving tokens, groups, categories not included, unknown `$extensions`, unknown properties, existing descriptions, unmanaged metadata, and existing order where possible in `tests/unit/presets/preset-candidate-document.test.ts`.
+- [X] T069 [P] [US16] Add failing candidate merge tests for deterministic inserted groups/tokens, canonical category insertion, preset insertion order, group/token distinction, and no wholesale document replacement in `tests/unit/presets/preset-candidate-insert-order.test.ts`.
+- [X] T070 [P] [US17] Add failing candidate tests proving value/type/alias/foundation-level replacement, delete operations, config/manifest writes, extension wholesale replacement, destructive normalization, and arbitrary reordering never occur in `tests/unit/presets/preset-candidate-safety.test.ts`.
+- [X] T071 [US4] Implement in-memory candidate document builder in `src/application/presets/build-preset-candidate-document.ts`.
+- [X] T072 [US7] Implement preservation helpers for object copy-through, managed field insertion, `$extensions` merge rules, and deterministic JSON serialization in `src/application/presets/preserve-host-document.ts`.
+- [X] T073 [US12] Use approved write serialization `JSON.stringify(document, null, 2) + "\n"` for successful writes in `src/infrastructure/serialization/json.ts` or a preset-specific adapter if the existing serializer cannot be reused.
+- [X] T074 [US3] Add byte-identity tests for plan, unchanged apply, blocking conflict, read-error, write-error before rename, and errors before replacement in `tests/integration/presets/no-write-byte-identity.test.ts`.
+- [X] T075 [US4] Add integration tests distinguishing semantic preservation after successful write from byte identity for no-write paths in `tests/integration/presets/preset-preservation.test.ts`.
 
 **Checkpoint gate**: `npm run typecheck`, `npm run lint`, targeted candidate/preservation tests, accumulated `npm test`, `npm run build`.
 **Recommended checkpoint commit**: `feat: build preset candidate documents`

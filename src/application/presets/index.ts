@@ -7,3 +7,5 @@ export * from "./plan-preset-diff.js";
 export * from "./project-managed-nodes.js";
 export * from "./plan-preset-application.js";
 export * from "./json/index.js";
+export * from "./preserve-host-document.js";
+export * from "./build-preset-candidate-document.js";

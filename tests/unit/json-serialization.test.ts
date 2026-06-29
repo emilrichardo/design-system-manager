@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { serializeJson } from "../../src/infrastructure/serialization/json.js";
+import { serializeJson, serializePresetCandidateDocument } from "../../src/infrastructure/serialization/json.js";
 import { prepareFiles } from "../../src/infrastructure/serialization/prepare-files.js";
 import { MANAGED_FILES } from "../../src/domain/plan/managed-files.js";
 import { validIdentity, validTokens } from "../fixtures/documents.js";
@@ -49,5 +49,14 @@ describe("prepareFiles (T035)", () => {
     const parsed = JSON.parse(tokens.content);
     expect(parsed.color.base["blue-500"].$value.colorSpace).toBe("srgb");
     expect(parsed.color.brand.primary.$value).toBe("{color.base.blue-500}");
+  });
+});
+
+describe("serializePresetCandidateDocument (T073)", () => {
+  it("usa la misma serializacion aprobada para writes: JSON.stringify(document, null, 2) + newline", () => {
+    const doc = { color: { brand: { $value: "#fff", $type: "color" } } };
+
+    expect(serializePresetCandidateDocument(doc)).toBe(`${JSON.stringify(doc, null, 2)}\n`);
+    expect(serializePresetCandidateDocument(doc)).toBe(serializeJson(doc));
   });
 });
