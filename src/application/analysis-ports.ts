@@ -39,6 +39,13 @@ export interface ManagedDocumentReadRequest {
   readonly relativePath: string;
   /** Presupuesto de tamaño en bytes para este documento (límite duro de lectura). */
   readonly maxBytes: number;
+  /**
+   * Captura opt-in de los bytes crudos exactos en el resultado (006 source snapshot). Por defecto
+   * `false`/ausente: los consumidores históricos (002/003/004) no la activan y su comportamiento no
+   * cambia. Cuando es `true`, el resultado exitoso incluye `rawBytes` (los bytes exactos leídos, antes
+   * de eliminar un BOM), sin alterar `content`/`sizeBytes`.
+   */
+  readonly captureSource?: boolean;
 }
 
 /** Motivo de fallo de lectura (flujo normal, NO excepción). */
@@ -59,6 +66,8 @@ export type ManagedDocumentReadResult =
       readonly relativePath: string;
       readonly content: string;
       readonly sizeBytes: number;
+      /** Bytes crudos exactos; presente solo cuando la petición fijó `captureSource: true` (006). */
+      readonly rawBytes?: Uint8Array;
     }
   | { readonly ok: false; readonly reason: ManagedReadFailure; readonly message: string };
 

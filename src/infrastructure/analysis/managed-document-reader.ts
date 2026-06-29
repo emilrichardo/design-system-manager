@@ -112,6 +112,11 @@ export function createManagedDocumentReader(deps: ManagedDocumentReaderDeps): Ma
       // BOM UTF-8 inicial: se elimina de forma consistente (el parseo posterior no lo tolera).
       const content = decoded.charCodeAt(0) === 0xfeff ? decoded.slice(1) : decoded;
 
+      // Captura opt-in de bytes crudos exactos (006 source snapshot). No altera content/sizeBytes ni el
+      // comportamiento de los consumidores históricos (que no fijan `captureSource`).
+      if (request.captureSource === true) {
+        return { ok: true, document, relativePath, content, sizeBytes: bytes.byteLength, rawBytes: Uint8Array.from(bytes) };
+      }
       return { ok: true, document, relativePath, content, sizeBytes: bytes.byteLength };
     },
   };
