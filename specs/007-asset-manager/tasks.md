@@ -61,23 +61,23 @@ cabecera, validación de fuentes, sanitización de SVG, hashing y lectura del st
 
 ### Tasks
 
-- [ ] T009 [US1] Crear `src/infrastructure/assets/hash.ts` (SHA-256 lowercase hex sobre bytes exactos) o
+- [X] T009 [US1] Crear `src/infrastructure/assets/hash.ts` (SHA-256 lowercase hex sobre bytes exactos) o
   reusar el primitivo equivalente sin acoplar código de build.
-- [ ] T010 [US2] Crear `src/infrastructure/assets/mime-detector.ts`: MIME por firma (font/raster/svg),
+- [X] T010 [US2] Crear `src/infrastructure/assets/mime-detector.ts`: MIME por firma (font/raster/svg),
   extensión solo como pista; desconocido → `null`.
-- [ ] T011 [US13] Crear `src/infrastructure/assets/dimension-reader.ts`: PNG/JPEG/GIF/WebP/AVIF por
+- [X] T011 [US13] Crear `src/infrastructure/assets/dimension-reader.ts`: PNG/JPEG/GIF/WebP/AVIF por
   cabecera y SVG por `width`/`height`/`viewBox`; undeterminable → `null` (sin adivinar).
-- [ ] T012 [US8] Crear `src/infrastructure/assets/font-validator.ts`: firmas `wOF2`/`wOFF`/sfnt y
+- [X] T012 [US8] Crear `src/infrastructure/assets/font-validator.ts`: firmas `wOF2`/`wOFF`/sfnt y
   estructura mínima; sin conversión.
-- [ ] T013 [US5] Crear `src/infrastructure/assets/svg-sanitizer.ts`: allowlist; elimina script/handlers/
+- [X] T013 [US5] Crear `src/infrastructure/assets/svg-sanitizer.ts`: allowlist; elimina script/handlers/
   refs externas/foreignObject/DOCTYPE/entidades; `safe:false`+`bytes:null` cuando no es saneable.
-- [ ] T014 [US11] Crear `src/infrastructure/assets/asset-store-reader.ts`: lee `assets.json`, estados de
+- [X] T014 [US11] Crear `src/infrastructure/assets/asset-store-reader.ts`: lee `assets.json`, estados de
   paths (lstat, sin seguir symlinks), nodos desconocidos, defensa de contención.
-- [ ] T015 [P] [US5] Crear `tests/integration/assets/svg-sanitizer.test.ts`: script/onload/href externo
+- [X] T015 [P] [US5] Crear `tests/integration/assets/svg-sanitizer.test.ts`: script/onload/href externo
   removidos; SVG no saneable bloqueado; bytes saneados deterministas.
-- [ ] T016 [P] [US13] Crear `tests/integration/assets/probes.test.ts`: MIME por firma, dimensiones por
+- [X] T016 [P] [US13] Crear `tests/integration/assets/probes.test.ts`: MIME por firma, dimensiones por
   formato, fuente válida vs mislabeled, hashing determinista.
-- [ ] T017 Gate B: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T017 Gate B: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: confirmar que no se toca tokens/host/build (solo `design-system/assets/**`).
 **Suggested commit**: `feat: add asset probes, font validation and svg sanitization`
