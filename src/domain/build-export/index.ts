@@ -53,6 +53,17 @@ export type {
 } from "./build-result.js";
 
 export type {
+  RequiredPathState,
+  RequiredPathStatus,
+  UnknownOutputNode,
+  RawNodeKind,
+  RawOutputNode,
+  BuildSnapshot,
+  PublicationState,
+} from "./build-snapshot.js";
+export { PUBLICATION_STATES, COMMIT_POINT } from "./build-snapshot.js";
+
+export type {
   VerificationStatus,
   VerificationCheckKind,
   VerificationCheck,

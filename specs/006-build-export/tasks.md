@@ -237,16 +237,16 @@
 
 ### Tasks
 
-- [ ] T109 [US10] Crear `src/domain/build-export/build-snapshot.ts` con `BuildSnapshot`, `UnknownOutputNode` (`kind` `regular-file|regular-directory|unsupported`, `depth`, `byteLength`, `copyAction`) y `requiredPathStates` (`file|dir|symlink|absent|other`).
-- [ ] T110 [US10] Crear `src/infrastructure/build-export/snapshot-reader.ts` (extensión del lector de output dir): estados de required paths, parents, defensa de symlink/containment; sin seguir symlinks.
-- [ ] T111 [US10] Crear `src/application/build-export/classify-unknown-nodes.ts`: permitir solo archivos/directorios regulares; rechazar symlink/socket/FIFO/block/char/special/path-escape → `conflict`/`unsupported-unknown-node`.
-- [ ] T112 [US10] Añadir límites reusando `src/domain/traversal/limits.ts` (`ANALYSIS_LIMITS`): cantidad de unknown nodes ≤ `maxNodes` (100000), profundidad ≤ `maxDepth` (32), bytes totales ≤ `maxTotalBytes` (16 MiB), por-archivo ≤ ese presupuesto; longitud de path reusando los límites de path existentes.
-- [ ] T113 [P] [US10] Crear `tests/integration/build-export/unknown-nodes-kinds.test.ts`: archivo/dir regular permitidos; symlink, FIFO, socket, device (vía seam/fake), special y path traversal rechazados; cambio de node kind concurrente.
-- [ ] T114 [P] [US10] Crear `tests/integration/build-export/unknown-nodes-limits.test.ts`: límite exacto, límite+1, directorios anidados, directorio vacío.
-- [ ] T115 [US12] Crear `src/application/build-export/concurrency.ts`: reread byte-only del source → SHA-256 vs `sourceHash`; rechequear build manifest bytes/hash, managed artifacts, required path node kinds, symlink state, output root y parent; sin decode/parse/analyze; mismatch → `conflict`/`source-modified`, `wrote:false`.
-- [ ] T116 [P] [US12] Crear `tests/integration/build-export/concurrency.test.ts`: una prueba por modificación concurrente (source bytes, build manifest, managed artifacts, required paths, unknown nodes, output root, parent, node kinds, symlinks, ownership) → `conflict`/`wrote:false`.
-- [ ] T117 [P] [US12] Crear `tests/integration/build-export/concurrency-not-mtime.test.ts`: la detección usa bytes/hash, no mtime/size.
-- [ ] T118 Gate I: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T109 [US10] Crear `src/domain/build-export/build-snapshot.ts` con `BuildSnapshot`, `UnknownOutputNode` (`kind` `regular-file|regular-directory|unsupported`, `depth`, `byteLength`, `copyAction`) y `requiredPathStates` (`file|dir|symlink|absent|other`).
+- [X] T110 [US10] Crear `src/infrastructure/build-export/snapshot-reader.ts` (extensión del lector de output dir): estados de required paths, parents, defensa de symlink/containment; sin seguir symlinks.
+- [X] T111 [US10] Crear `src/application/build-export/classify-unknown-nodes.ts`: permitir solo archivos/directorios regulares; rechazar symlink/socket/FIFO/block/char/special/path-escape → `conflict`/`unsupported-unknown-node`.
+- [X] T112 [US10] Añadir límites reusando `src/domain/traversal/limits.ts` (`ANALYSIS_LIMITS`): cantidad de unknown nodes ≤ `maxNodes` (100000), profundidad ≤ `maxDepth` (32), bytes totales ≤ `maxTotalBytes` (16 MiB), por-archivo ≤ ese presupuesto; longitud de path reusando los límites de path existentes.
+- [X] T113 [P] [US10] Crear `tests/integration/build-export/unknown-nodes-kinds.test.ts`: archivo/dir regular permitidos; symlink, FIFO, socket, device (vía seam/fake), special y path traversal rechazados; cambio de node kind concurrente.
+- [X] T114 [P] [US10] Crear `tests/integration/build-export/unknown-nodes-limits.test.ts`: límite exacto, límite+1, directorios anidados, directorio vacío.
+- [X] T115 [US12] Crear `src/application/build-export/concurrency.ts`: reread byte-only del source → SHA-256 vs `sourceHash`; rechequear build manifest bytes/hash, managed artifacts, required path node kinds, symlink state, output root y parent; sin decode/parse/analyze; mismatch → `conflict`/`source-modified`, `wrote:false`.
+- [X] T116 [P] [US12] Crear `tests/integration/build-export/concurrency.test.ts`: una prueba por modificación concurrente (source bytes, build manifest, managed artifacts, required paths, unknown nodes, output root, parent, node kinds, symlinks, ownership) → `conflict`/`wrote:false`.
+- [X] T117 [P] [US12] Crear `tests/integration/build-export/concurrency-not-mtime.test.ts`: la detección usa bytes/hash, no mtime/size.
+- [X] T118 Gate I: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: ninguna; snapshot/concurrencia son nuevos.
 **Suggested commit**: `feat: add output snapshot, unknown-node safety and concurrency checks`
