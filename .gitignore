@@ -8,3 +8,7 @@ dist/
 
 # Agent folders may store credentials/auth artifacts
 .claude/settings.local.json
+
+# Agent supervisor handoff artifacts (local, non-deterministic; never committed)
+.agent-handoff.json
+.agent-handoff.md
