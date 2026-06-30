@@ -33,3 +33,6 @@ export { ASSET_OUTCOMES, wroteInvariantHolds, recoveryInvariantHolds } from "./a
 
 export type { OrderableAsset } from "./asset-order.js";
 export { compareAssets, orderAssets } from "./asset-order.js";
+
+export type { AssetLimits } from "./asset-limits.js";
+export { ASSET_LIMITS } from "./asset-limits.js";
