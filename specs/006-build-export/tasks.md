@@ -192,14 +192,14 @@
 
 ### Tasks
 
-- [ ] T090 [US18] Finalizar `src/application/build-export/build-ports.ts`: interfaces `ArtifactRenderer`, `ArtifactSetWriter` (`ArtifactSetWriteRequest`/`ArtifactSetWriteResult`), `BuildOutputInspector`, `SourceSnapshotReader`; dominio/aplicación sin filesystem/Commander/stdout/npm.
-- [ ] T091 [US01] Crear `src/application/build-export/build-design-system.ts`: una snapshot → proyección → render de los 3 formatos en memoria → manifest → writer; all-or-nothing: si cualquier renderer da `unsupported-value`, retornar ese outcome con `wrote:false` sin invocar writer ni crear staging; produce `BuildResult`.
-- [ ] T092 [US02] Crear `src/application/build-export/export-design-system-artifact.ts`: resolve host → lectura semántica → validación → normalización → seleccionar UN renderer → devolver `bytes`/`contentType`/`logicalFilename`; nunca writer/manifest/output-inspector/staging/backup/reread/mtime; produce `ExportResult`.
-- [ ] T093 [P] [US01] Crear `tests/application/build-export/build-use-case.test.ts`: `built` renderiza los 3 y luego escribe; fallo de renderer bloquea antes de cualquier escritura (spy `writer calls:0`, sin staging); prior output intacto.
-- [ ] T094 [P] [US18] Crear `tests/application/build-export/export-read-only.test.ts` con spies/fakes: `writer calls:0`, `output inspector calls:0`, `manifest builder calls:0`, `concurrency rereads:0`, `filesystem writes:0`.
-- [ ] T095 [P] [US02] Crear `tests/application/build-export/export-outcomes.test.ts`: `exported`, `invalid-design-system`, `unsupported-value`, `not-found`, `read-error`.
-- [ ] T096 [US08] Crear `tests/integration/build-export/build-blocks-partial.test.ts`: CSS no soportado → `unsupported-value`; JSON/TS no publicados; sin manifest; prior output intacto.
-- [ ] T097 Gate G: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T090 [US18] Finalizar `src/application/build-export/build-ports.ts`: interfaces `ArtifactRenderer`, `ArtifactSetWriter` (`ArtifactSetWriteRequest`/`ArtifactSetWriteResult`), `BuildOutputInspector`, `SourceSnapshotReader`; dominio/aplicación sin filesystem/Commander/stdout/npm.
+- [X] T091 [US01] Crear `src/application/build-export/build-design-system.ts`: una snapshot → proyección → render de los 3 formatos en memoria → manifest → writer; all-or-nothing: si cualquier renderer da `unsupported-value`, retornar ese outcome con `wrote:false` sin invocar writer ni crear staging; produce `BuildResult`.
+- [X] T092 [US02] Crear `src/application/build-export/export-design-system-artifact.ts`: resolve host → lectura semántica → validación → normalización → seleccionar UN renderer → devolver `bytes`/`contentType`/`logicalFilename`; nunca writer/manifest/output-inspector/staging/backup/reread/mtime; produce `ExportResult`.
+- [X] T093 [P] [US01] Crear `tests/application/build-export/build-use-case.test.ts`: `built` renderiza los 3 y luego escribe; fallo de renderer bloquea antes de cualquier escritura (spy `writer calls:0`, sin staging); prior output intacto.
+- [X] T094 [P] [US18] Crear `tests/application/build-export/export-read-only.test.ts` con spies/fakes: `writer calls:0`, `output inspector calls:0`, `manifest builder calls:0`, `concurrency rereads:0`, `filesystem writes:0`.
+- [X] T095 [P] [US02] Crear `tests/application/build-export/export-outcomes.test.ts`: `exported`, `invalid-design-system`, `unsupported-value`, `not-found`, `read-error`.
+- [X] T096 [US08] Crear `tests/integration/build-export/build-blocks-partial.test.ts`: CSS no soportado → `unsupported-value`; JSON/TS no publicados; sin manifest; prior output intacto.
+- [X] T097 Gate G: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: ninguna directa; usa el motor reutilizado de A/B.
 **Suggested commit**: `feat: add build and export use cases`

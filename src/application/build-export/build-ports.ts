@@ -3,7 +3,13 @@
 // análisis de `002` (DesignSystemAnalysis, TokenNodeSummary) y la inspección de foundations de `004`.
 import type { DesignSystemAnalysis } from "../../domain/analysis/design-system-analysis.js";
 import type { AliasState, NodeTrust } from "../../domain/analysis/token-node-summary.js";
+import type { BuildArtifact } from "../../domain/build-export/artifact.js";
+import type { BuildFormat } from "../../domain/build-export/build-format.js";
+import type { BuildConflict } from "../../domain/build-export/build-outcome.js";
+import type { BuildVerification } from "../../domain/build-export/verification.js";
+import type { NormalizedTokenSet } from "../../domain/build-export/normalized-token.js";
 import type { FoundationsInspection } from "../foundations/foundations-ports.js";
+import type { PreviousBuildManifestInput, RequiredPathNode } from "./ownership.js";
 
 /** Registro de resolución por token, derivado del análisis único (sin segundo grafo de aliases). */
 export interface ResolvedTokenRecord {
@@ -69,4 +75,82 @@ export type SourceSnapshotResult =
 /** Puerto: produce el snapshot semántico a partir del directorio de ejecución del host. */
 export interface SourceSnapshotReader {
   read(input: { readonly executionDir: string }): Promise<SourceSnapshotResult>;
+}
+
+// ── T090 (006) — Puertos de renderer, ownership inspector y writer (inyectados; sin infra aquí) ──
+
+/** Error seguro de un renderer (sin `Error`/stack/rutas absolutas). */
+export interface ArtifactRenderError {
+  readonly format: BuildFormat;
+  readonly code: string;
+  readonly tokenPath: string | null;
+  readonly type: string | null;
+  readonly message: string;
+}
+
+/** Resultado normalizado de un renderer: artifact completo o `unsupported-value` con errores. */
+export type ArtifactRenderResult =
+  | { readonly outcome: "rendered"; readonly artifact: BuildArtifact }
+  | { readonly outcome: "unsupported-value"; readonly errors: readonly ArtifactRenderError[] };
+
+/** Puerto de renderer puro por formato; recibe el `NormalizedTokenSet` y no lo muta. */
+export interface ArtifactRenderer {
+  readonly format: BuildFormat;
+  render(set: NormalizedTokenSet): ArtifactRenderResult;
+}
+
+/** Inspección del output provista por infraestructura (Checkpoint I); el clasificador es puro. */
+export interface BuildOutputInspection {
+  readonly previousManifest: PreviousBuildManifestInput;
+  readonly artifactNodes: readonly RequiredPathNode[];
+}
+
+/** Puerto: inspecciona `design-system/build/` y devuelve el estado para clasificar ownership. */
+export interface BuildOutputInspector {
+  inspect(): Promise<BuildOutputInspection>;
+}
+
+/** Manifest candidato (bytes + hash) para el writer. */
+export interface CandidateManifestInput {
+  readonly relativePath: string;
+  readonly bytes: Uint8Array;
+  readonly contentHash: string;
+  readonly byteLength: number;
+}
+
+/** Petición de publicación del conjunto completo (sin publicaciones parciales). */
+export interface ArtifactSetWriteRequest {
+  readonly outputRoot: string;
+  readonly artifacts: readonly BuildArtifact[];
+  readonly manifest: CandidateManifestInput;
+  readonly strategy: "candidate-directory-set-v1";
+  readonly expectedHashes: {
+    readonly source: string;
+    readonly artifacts: Readonly<Record<string, string>>;
+    readonly buildManifest: string;
+  };
+}
+
+export type ArtifactSetWriteOutcome =
+  | "published"
+  | "unchanged"
+  | "conflict"
+  | "unsafe-target"
+  | "write-error"
+  | "verification-error";
+
+export interface ArtifactSetWriteResult {
+  readonly outcome: ArtifactSetWriteOutcome;
+  readonly wrote: boolean;
+  readonly outputAvailable: boolean;
+  readonly backupRelativePath: string | null;
+  readonly recoveryRequired: boolean;
+  readonly verification: BuildVerification | null;
+  readonly conflicts: readonly BuildConflict[];
+  readonly error: { readonly code: string; readonly message: string } | null;
+}
+
+/** Puerto del writer transaccional (implementación real en el Checkpoint J). */
+export interface ArtifactSetWriter {
+  write(request: ArtifactSetWriteRequest): Promise<ArtifactSetWriteResult>;
 }

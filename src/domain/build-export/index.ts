@@ -44,6 +44,15 @@ export type {
 } from "./build-plan.js";
 
 export type {
+  BuildManifestSummary,
+  BuildSourceRef,
+  BuildResult,
+  ExportSuccess,
+  ExportFailure,
+  ExportResult,
+} from "./build-result.js";
+
+export type {
   VerificationStatus,
   VerificationCheckKind,
   VerificationCheck,
