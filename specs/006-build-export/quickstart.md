@@ -1,7 +1,8 @@
-# Quickstart: Build and Export (planned behavior)
+# Quickstart: Build and Export
 
-This document describes the expected behavior after `006-build-export` is implemented. The commands are
-not implemented by this planning phase.
+This document describes the reproducible `build`/`export` flow now implemented by `006-build-export`,
+with its outcomes and exit codes. The commands `neuraz-ds build`, `neuraz-ds build --json` and
+`neuraz-ds export css|json|typescript` are available from the installed package.
 
 ## Prerequisites
 
@@ -9,27 +10,43 @@ not implemented by this planning phase.
 - A project with `@neuraz/design-system-manager` installed.
 - A local Design System initialized with `design-system/tokens/base.tokens.json`.
 
-## Planned Flow
+## Reproducible Flow
 
 ```bash
-neuraz-ds init
-neuraz-ds presets apply neutral-base
-neuraz-ds build
-neuraz-ds build --json
-neuraz-ds export css
-neuraz-ds export json
-neuraz-ds export typescript
+neuraz-ds init                      # crea el Design System local (interactivo)
+neuraz-ds presets apply neutral-base # opcional: añade tokens de un preset
+neuraz-ds build                     # → built / exit 0 (primera vez)
+neuraz-ds build                     # → unchanged / exit 2 (idempotente)
+neuraz-ds build --json              # un BuildJsonEnvelopeV1 a stdout
+neuraz-ds export css                # bytes de tokens.css a stdout (read-only)
+neuraz-ds export json               # bytes de tokens.resolved.json
+neuraz-ds export typescript         # bytes de tokens.ts
 ```
+
+## Outcomes and Exit Codes
+
+| Command | Outcome | Exit |
+|---|---|---:|
+| `build` | `built` | 0 |
+| `build` | `unchanged` | 2 |
+| `build` | `invalid-design-system` | 3 |
+| `build` | `unsupported-value` / `conflict` | 4 |
+| `build` | `not-found` | 5 |
+| `build` | `read-error` / `write-error` | 6 |
+| `build` | `verification-error` | 7 |
+| `export` | `exported` | 0 |
+| `export` | `invalid-design-system` | 3 |
+| `export` | `unsupported-value` | 4 |
+| `export` | `not-found` | 5 |
+| `export` | `read-error` | 6 |
 
 ## First Build
 
-Planned command:
-
 ```bash
 neuraz-ds build
 ```
 
-Expected behavior:
+Behavior:
 
 - Performs one semantic read of `design-system/tokens/base.tokens.json`: raw bytes, UTF-8 decode,
   JSON parse, DTCG analysis, alias graph, type resolution and foundation projection happen once.
@@ -188,17 +205,15 @@ Build/export must not:
 - print artifacts mixed with logs or reports;
 - include source document contents, stack traces, secrets or absolute paths in public errors.
 
-## Validation Commands for the Future Implementation
+## Validation Commands
 
-Expected gates after implementation:
+Gates exercised by the implementation (Checkpoint L):
 
 ```bash
 npm run typecheck
 npm run lint
-npm test
+npm test                 # incluye binario real, tarball instalado y regresión 001–005
 npm run build
 npm pack --dry-run --json
 git diff --check
 ```
-
-The planning phase only requires documentation consistency and `git diff --check`.

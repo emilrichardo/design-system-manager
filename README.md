@@ -192,7 +192,57 @@ Ambos son deterministas y derivan del mismo motor de diff; `plan` es estrictamen
 ```
 
 Tampoco están disponibles aquí: themes, dark mode, component tokens, presets externos/marketplace,
-Figma, importadores de URL/CSS, imágenes, IA, viewer, editor, asset manager, MCP ni build/export.
+Figma, importadores de URL/CSS, imágenes, IA, viewer, editor, asset manager ni MCP.
+
+## `neuraz-ds build`
+
+Compila el Design System administrado a artefactos derivados y los publica como un **conjunto completo**
+(todo o nada) en un directorio de salida fijo:
+
+```text
+design-system/build/
+├── tokens.css              # custom properties CSS (preserva aliases como var(--…))
+├── tokens.resolved.json    # tokens con aliases y tipos resueltos + metadata
+├── tokens.ts               # `export const tokens` (sin imports en runtime)
+└── manifest.json           # build manifest (fuente, hash, artifacts)
+```
+
+```bash
+npx neuraz-ds build          # publica los tres formatos como un conjunto
+npx neuraz-ds build --json   # un único envelope JSON a stdout (formatVersion 1.0.0)
+```
+
+- **Fuente vs derivados**: la única fuente de verdad es `design-system/tokens/base.tokens.json`. Todo lo
+  que vive en `design-system/build/` es derivado y reproducible; `build` nunca edita la fuente.
+- **Directorio fijo**: no hay `--output`; el destino siempre es `design-system/build/`.
+- **Determinismo**: misma fuente → mismos bytes (orden canónico, sin timestamps ni rutas absolutas).
+- **Idempotencia**: una segunda ejecución sin cambios resuelve `unchanged` (exit 2) y **no** reescribe
+  (se compara manifest, hashes, byte lengths, paths, ownership y presencia en disco, no solo el manifest).
+- **Todo o nada**: si un formato no es representable, el build completo se bloquea (`wrote:false`, cero
+  artefactos publicados). La publicación usa un writer transaccional con backup y recuperación explícita.
+- **Contenido desconocido**: los archivos/directorios desconocidos previos bajo `build/` se preservan
+  (copiados byte a byte); symlinks y nodos especiales bloquean con `conflict`.
+
+## `neuraz-ds export <format>`
+
+Emite **un** formato a stdout, en modo estrictamente de solo lectura (no escribe, no toca `build/`):
+
+```bash
+npx neuraz-ds export css         # bytes exactos de tokens.css
+npx neuraz-ds export json        # bytes exactos de tokens.resolved.json
+npx neuraz-ds export typescript  # bytes exactos de tokens.ts
+```
+
+- Solo `css | json | typescript`; cualquier otro valor es un error de uso.
+- No acepta `--json` (el formato ya determina la salida) ni ningún otro flag.
+- Éxito → bytes exactos a stdout, stderr vacío; error esperado → stdout vacío, stderr con mensaje seguro.
+
+### Opciones intencionalmente ausentes en `build`/`export`
+
+```text
+--output --input --formats --force --dry-run --cwd --clean --watch --minify
+export --json   (export nunca emite envelope; solo bytes del artifact)
+```
 
 ### Comandos disponibles
 
@@ -206,6 +256,8 @@ Figma, importadores de URL/CSS, imágenes, IA, viewer, editor, asset manager, MC
 | `neuraz-ds presets inspect <id> [--json]` | Detalla un preset **sin modificar archivos**. |
 | `neuraz-ds presets plan <id> [--json]` | Previsualiza la aplicación **sin modificar archivos**. |
 | `neuraz-ds presets apply <id> [--json]` | Aplica el preset de forma segura (add-only, atómica). |
+| `neuraz-ds build [--json]` | Compila todos los formatos a `design-system/build/` (conjunto, transaccional). |
+| `neuraz-ds export css\|json\|typescript` | Emite un formato a stdout **sin escribir** (read-only). |
 | `neuraz-ds --help` / `<cmd> --help` | Ayuda. |
 | `neuraz-ds --version` | Versión del gestor. |
 
@@ -228,11 +280,20 @@ solo lectura). `presets list/inspect/plan` también son de solo lectura; `preset
 `2` (sin cambios / idempotente), `4` (conflicto bloqueante), `6` (error de escritura) y `7`
 (verificación posterior tras escribir).
 
+`build` usa `0` (built), `2` (unchanged), `3` (Design System inválido), `4` (valor no soportado o
+conflicto), `5` (no inicializado), `6` (error de lectura/escritura) y `7` (verificación posterior a la
+publicación). `export` es read-only y usa `0` (exported), `3`, `4`, `5` y `6`.
+
 ## Salida JSON v1
 
 `validate --json`, `inspect --json` y `foundations --json` son superficies estables para CI,
 agentes, scripts y otros consumidores headless. `init --json` no existe, `--json` no es global y no
 hay flags de formato como `--compact`, `--pretty` u `--output`.
+
+`build --json` emite su propio envelope (`BuildJsonEnvelopeV1`, también `formatVersion: "1.0.0"`) con
+campos específicos del build (`outcome`, `wrote`, `outputDirectory`, `artifacts`, `manifest`,
+`verification`, `backupRelativePath`, `recoveryRequired`, `error`). `export` **no** emite JSON: su salida
+son los bytes exactos del artifact.
 
 El envelope público siempre incluye cuatro campos base:
 

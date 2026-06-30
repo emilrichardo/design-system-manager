@@ -307,25 +307,25 @@
 
 ### Tasks
 
-- [ ] T140 [US01] Crear `src/cli/commands/build.ts`: registrar `neuraz-ds build` con `--json` local; sin otros flags; un solo caso de uso por invocación.
-- [ ] T141 [US02] Crear `src/cli/commands/export.ts`: registrar `neuraz-ds export css|json|typescript`; sin `--json` ni otros flags; selección de un renderer.
-- [ ] T142 [US19] Conectar en `src/cli/program.ts` y `src/cli/composition.ts` los comandos build/export, reporter humano vs JSON y el `internal-error`→70 en el adapter.
-- [ ] T143 [P] [US19] Crear `tests/cli/build-export-help.test.ts`: `neuraz-ds --help`, `build --help`, `export --help` muestran los comandos válidos y NO `--output/--input/--formats/--force/--dry-run/--cwd/--clean/--watch/--minify` ni `export --json`.
-- [ ] T144 [P] [US18] Crear `tests/cli/build-export-commands.test.ts`: un caso de uso por invocación, selección correcta de reporter, sin escritura en export.
-- [ ] T145 [US14] Crear `tests/cli/build-binary.test.ts` (procesos hijos `dist/cli/index.js`): cwd diferente, path con espacios, path Unicode, stdin cerrado, sin TTY; primera build `built`/0, segunda build `unchanged`/2; streams y exit codes.
-- [ ] T146 [P] [US02] Crear `tests/cli/export-binary.test.ts`: `export css|json|typescript` emiten bytes exactos a stdout, stderr vacío, cero escrituras.
-- [ ] T147 [P] [US13] Crear `tests/cli/build-error-matrix.test.ts`: invalid DS/3, unsupported CSS/4, conflict/4, read-error/6, write-error/6, verification-error/7 y estado de recovery en JSON.
-- [ ] T148 [US14] Crear `tests/integration/build-export/npm-pack.test.ts`: `npm pack --dry-run --json` incluye `dist/`, bin, `presets/`, recursos runtime; excluye `src/`, `tests/`, `specs/`, `.agents/`.
-- [ ] T149 [US14] Crear `tests/integration/build-export/tarball-smoke.test.ts`: `npm pack` real + `npm install <tarball>` real (sin npm link, sin symlink al repo); ejecutar el binario instalado desde otro cwd: `build`, `build --json`, `export` de los 3 formatos, idempotencia; cleanup de tarballs/proyectos; sin residuos.
-- [ ] T150 [P] [US19] Crear `tests/integration/build-export/regression-001-init.test.ts`: init, config, Design System host manifest, bytes iniciales de tokens, idempotencia, segunda ejecución `unchanged`/2, ningún preset automático, ningún build automático.
-- [ ] T151 [P] [US19] Crear `tests/integration/build-export/regression-002-validate-inspect.test.ts`: validate, inspect, traversal, aliases, types, trust, limits, outcomes, streams, exits y compatibilidad de la extensión aditiva del analyzer.
-- [ ] T152 [P] [US19] Crear `tests/integration/build-export/regression-003-json.test.ts`: `JsonEnvelopeV1`, formatVersion, DTO, mapper, serializer, property order, dos espacios, newline, bytes, streams, exits.
-- [ ] T153 [P] [US19] Crear `tests/integration/build-export/regression-004-foundations.test.ts`: foundations, categorías, levels, namespace, inheritance, aliases, issues, JSON, formatVersion, bytes, exits.
-- [ ] T154 [P] [US19] Crear `tests/integration/build-export/regression-005-presets.test.ts`: presets list/inspect/plan/apply, safe merge, conflicts, writer, concurrency, verification, JSON, streams, exits, idempotencia, packaging.
-- [ ] T155 [US16] Actualizar `README.md` con `build`/`export`: comandos exactos, formatos, output dir fijo, fuente vs derivados, determinismo, idempotencia, ausencia de flags fuera de alcance.
-- [ ] T156 [US19] Actualizar `specs/006-build-export/quickstart.md` con el flujo reproducible build/export y los outcomes/exits.
-- [ ] T157 Gate L (suite completa): `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npm pack --dry-run --json`, `git diff --check`.
-- [ ] T158 [US19] Crear `specs/006-build-export/audit.md` con trazabilidad (20/20 US, 68/68 FR, 14/14 SC, 17/17 Constitution), hallazgos (0 CRITICAL/HIGH/MEDIUM) y gates finales registrados; cerrar la feature.
+- [X] T140 [US01] Crear `src/cli/commands/build.ts`: registrar `neuraz-ds build` con `--json` local; sin otros flags; un solo caso de uso por invocación.
+- [X] T141 [US02] Crear `src/cli/commands/export.ts`: registrar `neuraz-ds export css|json|typescript`; sin `--json` ni otros flags; selección de un renderer.
+- [X] T142 [US19] Conectar en `src/cli/program.ts` y `src/cli/composition.ts` los comandos build/export, reporter humano vs JSON y el `internal-error`→70 en el adapter.
+- [X] T143 [P] [US19] Crear `tests/cli/build-export-help.test.ts`: `neuraz-ds --help`, `build --help`, `export --help` muestran los comandos válidos y NO `--output/--input/--formats/--force/--dry-run/--cwd/--clean/--watch/--minify` ni `export --json`.
+- [X] T144 [P] [US18] Crear `tests/cli/build-export-commands.test.ts`: un caso de uso por invocación, selección correcta de reporter, sin escritura en export.
+- [X] T145 [US14] Crear `tests/cli/build-binary.test.ts` (procesos hijos `dist/cli/index.js`): cwd diferente, path con espacios, path Unicode, stdin cerrado, sin TTY; primera build `built`/0, segunda build `unchanged`/2; streams y exit codes.
+- [X] T146 [P] [US02] Crear `tests/cli/export-binary.test.ts`: `export css|json|typescript` emiten bytes exactos a stdout, stderr vacío, cero escrituras.
+- [X] T147 [P] [US13] Crear `tests/cli/build-error-matrix.test.ts`: invalid DS/3, unsupported CSS/4, conflict/4, read-error/6, write-error/6, verification-error/7 y estado de recovery en JSON.
+- [X] T148 [US14] Crear `tests/integration/build-export/npm-pack.test.ts`: `npm pack --dry-run --json` incluye `dist/`, bin, `presets/`, recursos runtime; excluye `src/`, `tests/`, `specs/`, `.agents/`.
+- [X] T149 [US14] Crear `tests/integration/build-export/tarball-smoke.test.ts`: `npm pack` real + `npm install <tarball>` real (sin npm link, sin symlink al repo); ejecutar el binario instalado desde otro cwd: `build`, `build --json`, `export` de los 3 formatos, idempotencia; cleanup de tarballs/proyectos; sin residuos.
+- [X] T150 [P] [US19] Crear `tests/integration/build-export/regression-001-init.test.ts`: init, config, Design System host manifest, bytes iniciales de tokens, idempotencia, segunda ejecución `unchanged`/2, ningún preset automático, ningún build automático.
+- [X] T151 [P] [US19] Crear `tests/integration/build-export/regression-002-validate-inspect.test.ts`: validate, inspect, traversal, aliases, types, trust, limits, outcomes, streams, exits y compatibilidad de la extensión aditiva del analyzer.
+- [X] T152 [P] [US19] Crear `tests/integration/build-export/regression-003-json.test.ts`: `JsonEnvelopeV1`, formatVersion, DTO, mapper, serializer, property order, dos espacios, newline, bytes, streams, exits.
+- [X] T153 [P] [US19] Crear `tests/integration/build-export/regression-004-foundations.test.ts`: foundations, categorías, levels, namespace, inheritance, aliases, issues, JSON, formatVersion, bytes, exits.
+- [X] T154 [P] [US19] Crear `tests/integration/build-export/regression-005-presets.test.ts`: presets list/inspect/plan/apply, safe merge, conflicts, writer, concurrency, verification, JSON, streams, exits, idempotencia, packaging.
+- [X] T155 [US16] Actualizar `README.md` con `build`/`export`: comandos exactos, formatos, output dir fijo, fuente vs derivados, determinismo, idempotencia, ausencia de flags fuera de alcance.
+- [X] T156 [US19] Actualizar `specs/006-build-export/quickstart.md` con el flujo reproducible build/export y los outcomes/exits.
+- [X] T157 Gate L (suite completa): `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npm pack --dry-run --json`, `git diff --check`.
+- [X] T158 [US19] Crear `specs/006-build-export/audit.md` con trazabilidad (20/20 US, 68/68 FR, 14/14 SC, 17/17 Constitution), hallazgos (0 CRITICAL/HIGH/MEDIUM) y gates finales registrados; cerrar la feature.
 
 **Regression**: T150–T154 prueban que `001`–`005` no cambian comportamiento, bytes, JSON ni exits.
 **Suggested commit**: `feat: add build and export cli with packaging and regression`

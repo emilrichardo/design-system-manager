@@ -3,6 +3,7 @@
 // aplica process.exitCode y maneja solo errores de frontera (excepciones inesperadas → 70).
 import {
   createBoundAnalyze,
+  createBuildExportDependencies,
   createFoundationsDependencies,
   createFoundationsJsonDependencies,
   createInspectDependencies,
@@ -13,7 +14,7 @@ import {
   createValidateJsonDependencies,
 } from "./composition.js";
 import { INTERNAL_ERROR_EXIT } from "./exit-codes.js";
-import { processIO } from "./io.js";
+import { processExportOutput, processIO } from "./io.js";
 import { runCli } from "./program.js";
 import { installSignalHandlers } from "./signals.js";
 import { readCliVersion } from "./version.js";
@@ -38,6 +39,7 @@ try {
     foundationsDeps: createFoundationsDependencies(io, analyze),
     foundationsJsonDeps: createFoundationsJsonDependencies(io, analyze),
     presetsDeps: createPresetsDependencies(io, analyze),
+    buildExportDeps: createBuildExportDependencies(io, processExportOutput, process.cwd()),
     version: readCliVersion(),
   });
   process.exitCode = code;

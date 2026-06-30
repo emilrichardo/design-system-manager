@@ -34,6 +34,21 @@ import { analyzePresetTokens } from "../infrastructure/presets/preset-token-anal
 import { createPresetTargetReader, createSingleFileAtomicWriter } from "../infrastructure/fs/single-file-atomic-writer.js";
 import { PresetsTerminalReporter } from "../infrastructure/reporter/presets-terminal-reporter.js";
 import { PresetsJsonReporter } from "../infrastructure/reporter/presets-json-reporter.js";
+import type { BuildDesignSystemDependencies } from "../application/build-export/build-design-system.js";
+import type { ExportDesignSystemArtifactDependencies } from "../application/build-export/export-design-system-artifact.js";
+import { createBuildProjection } from "../application/build-export/create-build-projection.js";
+import { buildBuildManifest } from "../application/build-export/manifest-builder.js";
+import { classifyBuildOwnership } from "../application/build-export/ownership.js";
+import { createBuildSnapshotReader } from "../infrastructure/build-export/snapshot-reader.js";
+import { createBuildOutputInspector } from "../infrastructure/build-export/output-snapshot-reader.js";
+import { createArtifactSetWriter } from "../infrastructure/build-export/artifact-set-writer.js";
+import { createArtifactRenderers, rendererFor } from "../infrastructure/build-export/renderers.js";
+import { serializeBuildManifestV1 } from "../infrastructure/build-export/json-renderer.js";
+import { sha256Hex } from "../infrastructure/build-export/hash.js";
+import { BuildTerminalReporter } from "../infrastructure/reporter/build-terminal-reporter.js";
+import { BuildJsonReporter } from "../infrastructure/reporter/build-json-reporter.js";
+import { ExportReporter, type ExportOutput } from "../infrastructure/reporter/export-error-reporter.js";
+import { resolveHostRoot } from "../infrastructure/host-root/resolve-host-root.js";
 import type { CliIO } from "./io.js";
 
 export function createRealDependencies(io: CliIO): InitializeDependencies {
@@ -114,5 +129,44 @@ export function createPresetsDependencies(io: CliIO, analyze: AnalyzeUseCase): P
     },
     terminal: new PresetsTerminalReporter(io),
     json: new PresetsJsonReporter(io),
+  };
+}
+
+// Feature 006 — build/export. `build` publica el conjunto completo a `design-system/build/` con writer
+// transaccional; `export` es read-only (solo bytes a stdout). El output dir, el inspector y el writer se
+// anclan a la raíz del host resuelta desde `cwd` (no al cwd directo); si no se resuelve, el caso de uso
+// devuelve `not-found` antes de tocar inspector/writer. Un único reporter activo por ejecución.
+export interface BuildExportCliDependencies {
+  readonly build: BuildDesignSystemDependencies;
+  readonly export: ExportDesignSystemArtifactDependencies;
+  readonly buildTerminal: BuildTerminalReporter;
+  readonly buildJson: BuildJsonReporter;
+  readonly exportReporter: ExportReporter;
+}
+
+export function createBuildExportDependencies(io: CliIO, exportOutput: ExportOutput, cwd: string): BuildExportCliDependencies {
+  const resolution = resolveHostRoot(cwd);
+  const rootDir = resolution.ok ? resolution.hostRoot.rootDir : cwd;
+  const snapshotReader = createBuildSnapshotReader();
+  return {
+    build: {
+      snapshotReader,
+      createProjection: createBuildProjection,
+      renderers: createArtifactRenderers(),
+      buildManifest: buildBuildManifest,
+      serializeManifest: serializeBuildManifestV1,
+      hashBytes: sha256Hex,
+      outputInspector: createBuildOutputInspector(rootDir),
+      classifyOwnership: classifyBuildOwnership,
+      writer: createArtifactSetWriter(rootDir),
+    },
+    export: {
+      snapshotReader,
+      createProjection: createBuildProjection,
+      rendererFor,
+    },
+    buildTerminal: new BuildTerminalReporter(io),
+    buildJson: new BuildJsonReporter(io),
+    exportReporter: new ExportReporter(exportOutput),
   };
 }

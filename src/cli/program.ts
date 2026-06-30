@@ -8,24 +8,29 @@
 // caso de uso, mismo `exitCodeForOutcome`. En modo JSON, una excepción inesperada se captura en el
 // handler (que conoce command + jsonMode) y produce un envelope de error interno en stderr con exit
 // 70 (stdout vacío); el modo humano conserva el error interno previo (excepción → entrypoint).
-import { Command, CommanderError } from "commander";
+import { Argument, Command, CommanderError } from "commander";
 import type { InitializeDependencies } from "../application/ports.js";
 import type {
   ValidateDesignSystemDependencies,
   InspectDesignSystemDependencies,
 } from "../application/analysis-ports.js";
 import type { InspectFoundationsDependencies } from "../application/foundations/foundations-ports.js";
-import type { PresetsCliDependencies } from "./composition.js";
+import type { BuildExportCliDependencies, PresetsCliDependencies } from "./composition.js";
 import type { CliIO } from "./io.js";
-import { exitCodeForResult, exitCodeForOutcome, exitCodeForPresetOutcome, INTERNAL_ERROR_EXIT, USAGE_ERROR_EXIT } from "./exit-codes.js";
+import { exitCodeForBuildExportOutcome, exitCodeForResult, exitCodeForOutcome, exitCodeForPresetOutcome, INTERNAL_ERROR_EXIT, USAGE_ERROR_EXIT } from "./exit-codes.js";
 import type { PresetExitOutcome } from "./exit-codes.js";
 import { writeInternalErrorJson, writePresetsInternalErrorJson } from "./json-error.js";
 import { toFoundationsInternalErrorEnvelope } from "../application/foundations/json/map-internal-error.js";
 import { serializeFoundationsJsonV1 } from "../infrastructure/reporter/foundations-json-serializer.js";
+import { BuildTerminalReporter } from "../infrastructure/reporter/build-terminal-reporter.js";
+import { BuildJsonReporter } from "../infrastructure/reporter/build-json-reporter.js";
+import type { BuildFormat } from "../domain/build-export/build-format.js";
 import { runInit } from "./commands/init.js";
 import { runValidate } from "./commands/validate.js";
 import { runInspect } from "./commands/inspect.js";
 import { runFoundations } from "./commands/foundations.js";
+import { runBuild } from "./commands/build.js";
+import { runExport } from "./commands/export.js";
 import { runPresetsApply, runPresetsInspect, runPresetsList, runPresetsPlan } from "./commands/presets.js";
 
 /** Modo de presentación parseado por Commander para validate/inspect. */
@@ -40,6 +45,8 @@ export interface ProgramHandlers {
   onValidate: (opts: CommandModeOptions) => Promise<number>;
   onInspect: (opts: CommandModeOptions) => Promise<number>;
   onFoundations: (opts: CommandModeOptions) => Promise<number>;
+  onBuild: (opts: CommandModeOptions) => Promise<number>;
+  onExport: (format: BuildFormat) => Promise<number>;
   onPresetsList: (opts: CommandModeOptions) => Promise<number>;
   onPresetsInspect: (id: string, opts: CommandModeOptions) => Promise<number>;
   onPresetsPlan: (id: string, opts: CommandModeOptions) => Promise<number>;
@@ -97,6 +104,29 @@ export function createProgram(handlers: ProgramHandlers): {
   foundations.exitOverride();
   foundations.action(async (options: { json?: boolean }) => {
     state.code = await handlers.onFoundations({ json: options.json === true });
+  });
+
+  // T140 (006) — `build` publica todos los formatos como un conjunto a `design-system/build/`. `--json`
+  // es local (default false); sin `--output/--input/--formats/--force/--dry-run/--cwd/--clean/--watch/
+  // --minify`. Un solo caso de uso por invocación.
+  const build = program
+    .command("build")
+    .description("Compila el Design System a `design-system/build/` (todos los formatos como un conjunto).")
+    .option("--json", JSON_FLAG_DESCRIPTION, false);
+  build.exitOverride();
+  build.action(async (options: { json?: boolean }) => {
+    state.code = await handlers.onBuild({ json: options.json === true });
+  });
+
+  // T141 (006) — `export <format>` emite UN formato a stdout (read-only). Sin `--json` ni otros flags;
+  // el formato se restringe a css|json|typescript vía Commander (un valor inválido es error de uso).
+  const exportCmd = program
+    .command("export")
+    .description("Emite un formato del Design System a stdout (sin escribir): css | json | typescript.");
+  exportCmd.addArgument(new Argument("<format>", "Formato a exportar.").choices(["css", "json", "typescript"]));
+  exportCmd.exitOverride();
+  exportCmd.action(async (format: BuildFormat) => {
+    state.code = await handlers.onExport(format);
   });
 
   // T094 (005) — grupo plural `presets` con subcomandos. `--json` es local a cada subcomando (no
@@ -162,6 +192,8 @@ export interface CliRuntime {
   foundationsJsonDeps?: InspectFoundationsDependencies;
   /** Dependencias del grupo `presets` (use cases + reporters humano/JSON). Opcional para pruebas de 001. */
   presetsDeps?: PresetsCliDependencies;
+  /** Dependencias de `build`/`export` (use cases + reporters humano/JSON/bytes). Opcional para pruebas de 001. */
+  buildExportDeps?: BuildExportCliDependencies;
   version: string;
 }
 
@@ -220,6 +252,44 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
     }
   };
 
+  // Build: un solo adapter (reporter humano o JSON) por ejecución; una sola llamada al caso de uso;
+  // outcome semántico → exit via `exitCodeForBuildExportOutcome`. Una excepción inesperada se captura
+  // aquí (adapter) → `internal-error`/70 con el reporter elegido (stdout intacto en JSON).
+  const runBuildMode = async (json: boolean): Promise<number> => {
+    const cli = runtime.buildExportDeps;
+    const reporter = cli !== undefined ? (json ? cli.buildJson : cli.buildTerminal) : json ? new BuildJsonReporter(runtime.io) : new BuildTerminalReporter(runtime.io);
+    if (cli === undefined) {
+      reporter.internalError();
+      return INTERNAL_ERROR_EXIT;
+    }
+    try {
+      const result = await runBuild(runtime.cwd, cli.build);
+      reporter.completed(result);
+      return exitCodeForBuildExportOutcome(result.outcome);
+    } catch {
+      reporter.internalError();
+      return INTERNAL_ERROR_EXIT;
+    }
+  };
+
+  // Export: read-only; éxito → bytes exactos a stdout, error esperado → stderr seguro; exit via la misma
+  // tabla. `internal-error` (adapter) → mensaje seguro a stderr, exit 70.
+  const runExportMode = async (format: BuildFormat): Promise<number> => {
+    const cli = runtime.buildExportDeps;
+    if (cli === undefined) {
+      runtime.io.err("export: internal-error — An unexpected internal error occurred.\n");
+      return INTERNAL_ERROR_EXIT;
+    }
+    try {
+      const result = await runExport(format, runtime.cwd, cli.export);
+      cli.exportReporter.completed(result);
+      return exitCodeForBuildExportOutcome(result.outcome);
+    } catch {
+      cli.exportReporter.internalError();
+      return INTERNAL_ERROR_EXIT;
+    }
+  };
+
   // Presets: un solo adapter (reporter humano o JSON) por ejecución; una sola llamada al caso de uso;
   // outcome semántico → exit via `exitCodeForPresetOutcome`. En JSON, una excepción inesperada produce
   // un envelope de error interno PROPIO de presets en stderr (stdout vacío) con exit 70.
@@ -256,6 +326,8 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
     onValidate: ({ json }) => runValidateMode(json),
     onInspect: ({ json }) => runInspectMode(json),
     onFoundations: ({ json }) => runFoundationsMode(json),
+    onBuild: ({ json }) => runBuildMode(json),
+    onExport: (format) => runExportMode(format),
     onPresetsList: ({ json }) =>
       runPresetsMode(json, "preset-list", (d) => runPresetsList(d.base), (d, r) => (json ? d.json : d.terminal).listCompleted(r)),
     onPresetsInspect: (id, { json }) =>
