@@ -286,14 +286,14 @@
 
 ### Tasks
 
-- [ ] T132 [US08] Crear `src/application/build-export/verification.ts` con la verificación de input: Design System válido, aliases válidos, tipos válidos, foundations válidas, límites; bloquea el render si falla.
-- [ ] T133 [US17] Añadir la verificación de candidate (antes de publicar): CSS, JSON, TypeScript, build manifest, hashes, byte lengths, presencia y paths de artifacts, selector, declarations, aliases CSS, exports TS y ausencia de runtime imports.
-- [ ] T134 [US13] Añadir la verificación post-publication: releer artifacts, recalcular hashes, comprobar tamaños, parsear JSON, validar TypeScript sin ejecución, validar CSS estructuralmente, releer build manifest y comprobar el conjunto completo (sin archivos faltantes).
-- [ ] T135 [US13] Confirmar la semántica de `verification-error`: posterior al commit point, `wrote:true`, backup retenido, sin rollback automático.
-- [ ] T136 [US09] Crear `src/application/build-export/idempotency.ts`: decidir `unchanged` ANTES de crear staging, comparando build manifest, artifact hashes, artifact bytes, byte lengths, paths, ownership y presence (no solo el hash del manifest).
-- [ ] T137 [P] [US09] Crear `tests/integration/build-export/idempotency.test.ts`: segunda ejecución sin cambios → `unchanged`/`wrote:false`; `staging creations:0`, `backup creations:0`, `rename calls:0`, `write calls:0`, `temporary files:0`, `bytes changed:0`, `mtime changed:0`.
-- [ ] T138 [P] [US17] Crear `tests/integration/build-export/verification-levels.test.ts`: input vs candidate vs post-publication por separado; `verification-error` con backup retenido.
-- [ ] T139 Gate K: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T132 [US08] Crear `src/application/build-export/verification.ts` con la verificación de input: Design System válido, aliases válidos, tipos válidos, foundations válidas, límites; bloquea el render si falla.
+- [X] T133 [US17] Añadir la verificación de candidate (antes de publicar): CSS, JSON, TypeScript, build manifest, hashes, byte lengths, presencia y paths de artifacts, selector, declarations, aliases CSS, exports TS y ausencia de runtime imports.
+- [X] T134 [US13] Añadir la verificación post-publication: releer artifacts, recalcular hashes, comprobar tamaños, parsear JSON, validar TypeScript sin ejecución, validar CSS estructuralmente, releer build manifest y comprobar el conjunto completo (sin archivos faltantes).
+- [X] T135 [US13] Confirmar la semántica de `verification-error`: posterior al commit point, `wrote:true`, backup retenido, sin rollback automático.
+- [X] T136 [US09] Crear `src/application/build-export/idempotency.ts`: decidir `unchanged` ANTES de crear staging, comparando build manifest, artifact hashes, artifact bytes, byte lengths, paths, ownership y presence (no solo el hash del manifest).
+- [X] T137 [P] [US09] Crear `tests/integration/build-export/idempotency.test.ts`: segunda ejecución sin cambios → `unchanged`/`wrote:false`; `staging creations:0`, `backup creations:0`, `rename calls:0`, `write calls:0`, `temporary files:0`, `bytes changed:0`, `mtime changed:0`.
+- [X] T138 [P] [US17] Crear `tests/integration/build-export/verification-levels.test.ts`: input vs candidate vs post-publication por separado; `verification-error` con backup retenido.
+- [X] T139 Gate K: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: ninguna; verificación/idempotencia son nuevas.
 **Suggested commit**: `feat: add three-level verification and idempotency`

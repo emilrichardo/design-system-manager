@@ -3,16 +3,12 @@
 // renderer no soportado retorna `unsupported-value` con `wrote:false` SIN invocar manifest/ownership/
 // writer. Capa de aplicación: sin filesystem/Commander/stdout; todo por puertos inyectados.
 import { artifactMetadata, type BuildArtifact, type BuildArtifactMetadata } from "../../domain/build-export/artifact.js";
-import {
-  BUILD_MANIFEST_FILENAME,
-  BUILD_OUTPUT_ROOT,
-  validateBuildManifestV1,
-  type BuildManifestV1,
-} from "../../domain/build-export/build-manifest.js";
+import { BUILD_MANIFEST_FILENAME, BUILD_OUTPUT_ROOT, type BuildManifestV1 } from "../../domain/build-export/build-manifest.js";
 import { ownershipAllowsPublish, type BuildConflict, type BuildOwnership } from "../../domain/build-export/build-outcome.js";
 import type { BuildResult } from "../../domain/build-export/build-result.js";
-import type { AnalyzedSourceSnapshot, ArtifactRenderer, ArtifactSetWriter, BuildOutputInspection, BuildOutputInspector, SourceSnapshotReader } from "./build-ports.js";
+import type { AnalyzedSourceSnapshot, ArtifactRenderer, ArtifactSetWriter, BuildOutputInspector, SourceSnapshotReader } from "./build-ports.js";
 import type { BuildProjectionResult } from "./create-build-projection.js";
+import { decideUnchanged } from "./idempotency.js";
 import type { ManifestBuilderInput, ManifestBuilderResult } from "./manifest-builder.js";
 import type { OwnershipInput } from "./ownership.js";
 
@@ -48,20 +44,6 @@ function result(outcome: BuildResult["outcome"], wrote: boolean, extra: Partial<
 
 function toSafeError(error: { readonly code: string; readonly message: string } | null): BuildResult["error"] {
   return error === null ? null : { code: error.code, message: error.message, path: null, details: null };
-}
-
-/** ¿Los artifacts recién renderizados coinciden con un manifest previo confiable? */
-function isUnchanged(inspection: BuildOutputInspection, sourceHash: string, artifacts: readonly BuildArtifact[]): boolean {
-  if (inspection.previousManifest.state !== "parsed") return false;
-  const validation = validateBuildManifestV1(inspection.previousManifest.value);
-  if (!validation.ok) return false;
-  if (validation.manifest.sourceHash !== sourceHash) return false;
-  const declared = new Map(validation.manifest.artifacts.map((a) => [a.relativePath, a]));
-  if (declared.size !== artifacts.length) return false;
-  return artifacts.every((a) => {
-    const d = declared.get(a.relativePath);
-    return d !== undefined && d.contentHash === a.contentHash && d.byteLength === a.byteLength;
-  });
 }
 
 export async function buildDesignSystem(input: { readonly executionDir: string }, deps: BuildDesignSystemDependencies): Promise<BuildResult> {
@@ -110,7 +92,16 @@ export async function buildDesignSystem(input: { readonly executionDir: string }
     return result("conflict", false, { source: sourceRef, outputDirectory: BUILD_OUTPUT_ROOT, outputAvailable: true, artifacts: metadata, manifest: manifestSummary, conflict: primary });
   }
 
-  if (ownership.state === "trusted" && isUnchanged(inspection, snapshot.sourceHash, artifacts)) {
+  // Idempotencia (T136): se decide `unchanged` ANTES de crear staging, comparando manifest, hashes,
+  // byte lengths, paths, ownership y presencia/bytes en disco (no solo el hash del manifest).
+  const idempotency = decideUnchanged({
+    previousManifest: inspection.previousManifest,
+    artifactNodes: inspection.artifactNodes,
+    ownershipTrusted: ownership.state === "trusted",
+    sourceHash: snapshot.sourceHash,
+    candidateArtifacts: metadata,
+  });
+  if (idempotency.unchanged) {
     return result("unchanged", false, { source: sourceRef, outputDirectory: BUILD_OUTPUT_ROOT, outputAvailable: true, artifacts: metadata, manifest: manifestSummary });
   }
 
