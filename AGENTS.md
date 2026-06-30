@@ -9,3 +9,10 @@ Stack previsto: TypeScript estricto + ESM, Node >=22, commander, @clack/prompts,
 semver, vitest (sin nuevas dependencias previstas en 006). Formato canónico de tokens: DTCG 2025.10.
 ADRs en `docs/adr/` (001: 0001–0005; 002: 0006–0010; 003: 0011–0013; 004: 0014–0017; 005: 0018–0021; 006: 0022–0025).
 <!-- SPECKIT END -->
+
+## Visión de producto
+
+El Core actual (`001`–`006`) es la base de **Neuraz Design System Studio**. Antes de proponer cualquier
+capacidad futura (UI, assets, importadores, IA, MCP), lee [`docs/product/`](docs/product/README.md):
+[visión](docs/product/vision.md), [guardrails arquitectónicos](docs/product/architecture-guardrails.md)
+y [mapa de capacidades](docs/product/capability-map.md). Solo `001`–`006` están `implemented`.

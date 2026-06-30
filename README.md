@@ -7,6 +7,10 @@ El Design System permanece como **archivos en el repositorio anfitrión** (fuent
 gestor no usa una base de datos interna. Funciona **local-first**, sin servicios cloud, y es
 **independiente del framework** del proyecto (WordPress, Astro, Next.js, etc.).
 
+> **Visión de producto:** este Core headless es la base de **Neuraz Design System Studio**. Ver
+> [`docs/product/`](docs/product/README.md) — [visión](docs/product/vision.md),
+> [guardrails](docs/product/architecture-guardrails.md) y [mapa de capacidades](docs/product/capability-map.md).
+
 ## `neuraz-ds init`
 
 Inicializa de forma segura el Design System del proyecto anfitrión: resuelve la raíz, valida la
