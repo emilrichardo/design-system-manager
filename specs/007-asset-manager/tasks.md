@@ -32,21 +32,21 @@ contratos `1.0.0`, sin filesystem ni adaptadores.
 
 ### Tasks
 
-- [ ] T001 [US1] Crear `src/domain/assets/asset-kind.ts` y `asset-mime.ts`: `AssetKind`
+- [X] T001 [US1] Crear `src/domain/assets/asset-kind.ts` y `asset-mime.ts`: `AssetKind`
   (`font|logo|svg|icon|image`), familias MIME cerradas v1 y la compatibilidad kind↔MIME.
-- [ ] T002 [US2] Crear `src/domain/assets/asset-record.ts`: `AssetRecord`, `AssetDimensions`,
+- [X] T002 [US2] Crear `src/domain/assets/asset-record.ts`: `AssetRecord`, `AssetDimensions`,
   `AssetProvenance`, `AssetLicense` (con `status: declared|unspecified`, nunca asumida).
-- [ ] T003 [US11] Crear `src/domain/assets/asset-manifest.ts`: `AssetManifestV1`, validación estricta
+- [X] T003 [US11] Crear `src/domain/assets/asset-manifest.ts`: `AssetManifestV1`, validación estricta
   (claves conocidas, paths seguros, sin duplicados, hashes válidos) y serialización canónica
   (`JSON.stringify(...,2)+"\n"`).
-- [ ] T004 [US12] Crear `src/domain/assets/asset-outcome.ts`: `AssetOutcome`, `AssetIssue`,
+- [X] T004 [US12] Crear `src/domain/assets/asset-outcome.ts`: `AssetOutcome`, `AssetIssue`,
   `AssetRecoveryState`, `SafeAssetError`; invariantes `wrote`/recovery; prohibir `partial`/`success`.
-- [ ] T005 [US1] Crear `src/domain/assets/asset-order.ts`: orden canónico determinista (por kind, luego
+- [X] T005 [US1] Crear `src/domain/assets/asset-order.ts`: orden canónico determinista (por kind, luego
   logicalPath bytewise; sin locale).
-- [ ] T006 [US14] Crear `src/domain/assets/index.ts`: superficie pública (solo tipos y funciones puras).
-- [ ] T007 [P] [US1] Crear `tests/domain/assets/asset-models.test.ts`: enums cerrados, inmutabilidad,
+- [X] T006 [US14] Crear `src/domain/assets/index.ts`: superficie pública (solo tipos y funciones puras).
+- [X] T007 [P] [US1] Crear `tests/domain/assets/asset-models.test.ts`: enums cerrados, inmutabilidad,
   null policy, invariantes de outcome/recovery, prohibición de `partial`/`success`.
-- [ ] T008 Gate A: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T008 Gate A: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: ninguna (modelos nuevos aislados).
 **Suggested commit**: `feat: add asset manager domain models and contracts surface`
