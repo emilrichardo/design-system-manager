@@ -67,21 +67,21 @@ diff seguro, y lectura del snapshot semántico (reusando `006`/`002`). Plan read
 
 ### Tasks
 
-- [ ] T009 [US1] Crear `src/application/token-mutations/candidate-builder.ts`: aplica las operaciones en
+- [X] T009 [US1] Crear `src/application/token-mutations/candidate-builder.ts`: aplica las operaciones en
   orden a un modelo de trabajo en memoria; preserva contenido desconocido y orden de claves; no escribe.
-- [ ] T010 [US10] Crear `src/application/token-mutations/diff-calculator.ts`: deriva `TokenMutationDiffV1`
+- [X] T010 [US10] Crear `src/application/token-mutations/diff-calculator.ts`: deriva `TokenMutationDiffV1`
   (before/after seguros, referencias afectadas) de forma determinista.
-- [ ] T011 [US3] Crear `src/infrastructure/token-mutations/candidate-serializer.ts`: serialización canónica
+- [X] T011 [US3] Crear `src/infrastructure/token-mutations/candidate-serializer.ts`: serialización canónica
   del documento candidato (igual que el write path de tokens existente) + hash del candidato.
-- [ ] T012 [US11] Crear `src/infrastructure/token-mutations/source-snapshot-reader.ts`: una lectura/parse/
+- [X] T012 [US11] Crear `src/infrastructure/token-mutations/source-snapshot-reader.ts`: una lectura/parse/
   análisis (reusa `006`/`createBoundAnalyze`); captura `SourceSnapshotIdentity` (path lógico + hash).
-- [ ] T013 [P] [US1] Crear `tests/application/token-mutations/candidate-builder.test.ts`: create/update/
+- [X] T013 [P] [US1] Crear `tests/application/token-mutations/candidate-builder.test.ts`: create/update/
   duplicate/remove sobre el modelo; preservación de `$extensions` desconocidos y orden.
-- [ ] T014 [P] [US10] Crear `tests/application/token-mutations/diff-calculator.test.ts`: todos los
+- [X] T014 [P] [US10] Crear `tests/application/token-mutations/diff-calculator.test.ts`: todos los
   `DiffKind`, determinismo, ausencia de bytes/rutas absolutas.
-- [ ] T015 [US3] Crear `src/application/token-mutations/plan-skeleton.ts`: ensamblaje preliminar del plan
+- [X] T015 [US3] Crear `src/application/token-mutations/plan-skeleton.ts`: ensamblaje preliminar del plan
   (operations + diff + candidateHash + source) SIN validación completa todavía.
-- [ ] T016 Gate B: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T016 Gate B: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: la fuente queda byte-idéntica tras planificar.
 **Suggested commit**: `feat: add token mutation planner, candidate builder and diff`
