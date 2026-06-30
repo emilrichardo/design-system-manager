@@ -33,6 +33,13 @@ export function runFinalize(opts) {
   const config = opts.config ?? loadConfig(repoRoot);
   const explicitPaths = opts.paths && opts.paths.length > 0 ? opts.paths : undefined;
   const status = buildStatus({ feature: opts.feature, checkpoint: opts.checkpoint, repoRoot, config });
+
+  // Feature completa: rechazar SIN tocar tasks.md, staging, commits ni working tree (antes de cualquier
+  // mutación). Aplica tanto a dry-run como a --commit.
+  if (status.completed) {
+    throw new AgentError(`Feature ${status.feature} is already complete; finalize is not applicable.`);
+  }
+
   const allowedGlobs = resolveAllowedGlobs({ config, feature: opts.feature, checkpoint: status.activeCheckpoint, explicitPaths });
   const rangeIds = status.checkpoint.taskIds;
   const pendingInRange = status.parsed.tasks.filter((t) => rangeIds.includes(t.id) && !t.completed).map((t) => t.id);

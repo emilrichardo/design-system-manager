@@ -4,11 +4,15 @@ export function buildHandoff(result, generatedAt) {
   const s = result.status;
   const failedKeys = result.gateResults.filter((g) => !g.passed).map((g) => g.key);
   const passedKeys = result.gateResults.filter((g) => g.passed).map((g) => g.key);
-  const next = result.passed
-    ? `npm run agent:finalize -- --feature ${s.feature} --checkpoint ${result.checkpoint} --message "<mensaje>" --commit`
-    : `corregir fallos y re-ejecutar: npm run agent:verify -- --feature ${s.feature}`;
+  // Feature completa: no hay siguiente comando de implementación.
+  const next = s.completed
+    ? null
+    : result.passed
+      ? `npm run agent:finalize -- --feature ${s.feature} --checkpoint ${result.checkpoint} --message "<mensaje>" --commit`
+      : `corregir fallos y re-ejecutar: npm run agent:verify -- --feature ${s.feature}`;
   return {
     feature: s.feature,
+    status: s.status,
     checkpoint: result.checkpoint,
     range: result.range,
     head: s.head,
@@ -30,9 +34,11 @@ export function buildHandoff(result, generatedAt) {
 
 export function handoffMarkdown(h) {
   const list = (arr) => (arr.length ? arr.map((x) => `- ${x}`).join("\n") : "- (ninguno)");
+  const title = h.checkpoint ? `${h.feature} / Checkpoint ${h.checkpoint} (${h.range})` : `${h.feature} (completed)`;
   return [
-    `# Handoff — ${h.feature} / Checkpoint ${h.checkpoint} (${h.range})`,
+    `# Handoff — ${title}`,
     "",
+    `Estado: ${h.status}`,
     `Generado: ${h.generatedAt}`,
     `HEAD / último commit válido: ${h.head}`,
     `Tareas: ${h.completedTasks} — Primera pendiente: ${h.firstPendingTask ?? "(ninguna)"}`,

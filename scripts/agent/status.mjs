@@ -28,10 +28,11 @@ await mainWrap(
       return 0;
     }
     printLine(`Feature: ${status.feature}`);
+    printLine(`Status: ${status.status}`);
     printLine(`Completed: ${status.completedTasks}/${status.totalTasks}`);
-    printLine(`First pending: ${status.firstPendingTask ?? "(none)"}`);
-    printLine(`Checkpoint: ${status.activeCheckpoint}`);
-    printLine(`Range: ${status.checkpointRange ?? "(n/a)"}`);
+    printLine(`First pending: ${status.firstPendingTask ?? "none"}`);
+    printLine(`Checkpoint: ${status.activeCheckpoint ?? "none"}`);
+    printLine(`Range: ${status.checkpointRange ?? "none"}`);
     printLine(`HEAD: ${status.head}`);
     printLine(`Working tree: ${status.workingTree}`);
     return 0;

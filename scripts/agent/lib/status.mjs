@@ -21,7 +21,10 @@ export function buildStatus(opts) {
   const config = opts.config ?? loadConfig(repoRoot);
   const feature = resolveFeature(opts.feature, repoRoot);
   const parsed = parseTasksFile(feature.tasksPath);
-  const checkpoint = resolveCheckpoint(parsed, opts.checkpoint);
+  // Una feature está COMPLETA cuando tiene tareas y ninguna está pendiente. En ese caso no hay
+  // checkpoint activo ni rango: no queda trabajo de implementación por hacer.
+  const completed = parsed.totalTasks > 0 && parsed.firstPendingTask === null;
+  const checkpoint = completed ? null : resolveCheckpoint(parsed, opts.checkpoint);
   const git = createGit(repoRoot);
   const gitStatus = git.status();
 
@@ -40,14 +43,16 @@ export function buildStatus(opts) {
 
   return {
     feature: feature.name,
+    status: completed ? "completed" : "in-progress",
+    completed,
     totalTasks: parsed.totalTasks,
     completedTasks: parsed.completedTasks,
     firstPendingTask: parsed.firstPendingTask,
-    activeCheckpoint: checkpoint.label,
-    checkpointRange: checkpoint.range,
-    rangeFirst: checkpoint.firstId,
-    rangeLast: checkpoint.lastId,
-    tasksInRange: checkpoint.taskIds,
+    activeCheckpoint: checkpoint ? checkpoint.label : null,
+    checkpointRange: checkpoint ? checkpoint.range : null,
+    rangeFirst: checkpoint ? checkpoint.firstId : null,
+    rangeLast: checkpoint ? checkpoint.lastId : null,
+    tasksInRange: checkpoint ? checkpoint.taskIds : [],
     head: git.shortHead(),
     workingTree,
     allowedUntracked: config.allowedUntracked,

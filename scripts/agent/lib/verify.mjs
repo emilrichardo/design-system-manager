@@ -24,22 +24,26 @@ export function runVerify(opts) {
   }
   for (const id of parsed.outOfOrder) failures.push(`Tarea fuera de orden numérico: ${id}.`);
 
-  const firstNum = checkpoint.firstId ? Number(checkpoint.firstId.slice(1)) : Infinity;
-  const lastNum = checkpoint.lastId ? Number(checkpoint.lastId.slice(1)) : -Infinity;
+  // Checks de rango solo si hay un checkpoint activo (feature en progreso). Una feature completa no tiene
+  // rango: sus checks de estado se reducen a duplicados/inconsistencias (ya evaluados arriba).
+  if (checkpoint) {
+    const firstNum = checkpoint.firstId ? Number(checkpoint.firstId.slice(1)) : Infinity;
+    const lastNum = checkpoint.lastId ? Number(checkpoint.lastId.slice(1)) : -Infinity;
 
-  // Tareas anteriores al rango deben estar completas.
-  for (const t of parsed.tasks) {
-    if (t.num < firstNum && !t.completed) failures.push(`Tarea anterior al rango sin completar: ${t.id}.`);
-  }
-  // Ninguna tarea posterior al rango puede estar iniciada (completada).
-  for (const t of parsed.tasks) {
-    if (t.num > lastNum && t.completed) failures.push(`Tarea posterior al rango ya iniciada/completada: ${t.id}.`);
-  }
-  // Primera pendiente esperada: dentro del rango, o el rango ya está completo.
-  if (status.firstPendingTask) {
-    const fpNum = Number(status.firstPendingTask.slice(1));
-    if (fpNum < firstNum || fpNum > lastNum) {
-      failures.push(`Primera pendiente ${status.firstPendingTask} fuera del rango ${checkpoint.range}.`);
+    // Tareas anteriores al rango deben estar completas.
+    for (const t of parsed.tasks) {
+      if (t.num < firstNum && !t.completed) failures.push(`Tarea anterior al rango sin completar: ${t.id}.`);
+    }
+    // Ninguna tarea posterior al rango puede estar iniciada (completada).
+    for (const t of parsed.tasks) {
+      if (t.num > lastNum && t.completed) failures.push(`Tarea posterior al rango ya iniciada/completada: ${t.id}.`);
+    }
+    // Primera pendiente esperada: dentro del rango, o el rango ya está completo.
+    if (status.firstPendingTask) {
+      const fpNum = Number(status.firstPendingTask.slice(1));
+      if (fpNum < firstNum || fpNum > lastNum) {
+        failures.push(`Primera pendiente ${status.firstPendingTask} fuera del rango ${checkpoint.range}.`);
+      }
     }
   }
 
@@ -53,7 +57,7 @@ export function runVerify(opts) {
   const allowedGlobs = resolveAllowedGlobs({
     config: opts.config,
     feature: opts.feature,
-    checkpoint: checkpoint.label,
+    checkpoint: checkpoint ? checkpoint.label : undefined,
     explicitPaths: opts.explicitPaths,
   });
   const exempt = [status.paths.tasks, ...status.allowedUntracked];
@@ -74,8 +78,9 @@ export function runVerify(opts) {
 
   return {
     feature: status.feature,
-    checkpoint: checkpoint.label,
-    range: checkpoint.range,
+    completed: status.completed,
+    checkpoint: checkpoint ? checkpoint.label : null,
+    range: checkpoint ? checkpoint.range : null,
     head: status.head,
     workingTree: status.workingTree,
     passed: failures.length === 0,

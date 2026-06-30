@@ -13,6 +13,7 @@ export function printLine(text = "") {
 export function statusPublic(status) {
   return {
     feature: status.feature,
+    status: status.status,
     totalTasks: status.totalTasks,
     completedTasks: status.completedTasks,
     firstPendingTask: status.firstPendingTask,

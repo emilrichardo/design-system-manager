@@ -7,6 +7,7 @@ import { buildStatus } from "./lib/status.mjs";
 import { loadConfig } from "./lib/config.mjs";
 import { resolveInsideRepo } from "./lib/feature.mjs";
 import { buildBrief } from "./lib/brief.mjs";
+import { AgentError } from "./lib/repo.mjs";
 import { mainWrap, printJson, printLine } from "./lib/output.mjs";
 
 const argv = process.argv.slice(2);
@@ -16,6 +17,13 @@ await mainWrap(
   () => {
     const config = loadConfig();
     const status = buildStatus({ feature: pre.feature, checkpoint: pre.checkpoint, config });
+
+    // Feature completa: no hay trabajo de implementación. Se rechaza incluso con --checkpoint (no existe
+    // aún un flag de inspección histórica).
+    if (status.completed) {
+      throw new AgentError(`Feature ${status.feature} is already complete; no implementation brief can be generated.`);
+    }
+
     const brief = buildBrief(status);
 
     if (pre.output) {

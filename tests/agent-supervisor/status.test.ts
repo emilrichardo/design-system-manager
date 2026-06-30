@@ -43,7 +43,7 @@ describe("buildStatus", () => {
   it("statusPublic expone solo el contrato estable", () => {
     const pub = statusPublic(st(repo()));
     expect(Object.keys(pub).sort()).toEqual(
-      ["activeCheckpoint", "allowedUntracked", "checkpointRange", "completedTasks", "feature", "firstPendingTask", "head", "totalTasks", "workingTree"].sort(),
+      ["activeCheckpoint", "allowedUntracked", "checkpointRange", "completedTasks", "feature", "firstPendingTask", "head", "status", "totalTasks", "workingTree"].sort(),
     );
   });
 
