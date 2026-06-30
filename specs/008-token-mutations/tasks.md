@@ -38,21 +38,21 @@ recovery) y la superficie pública, alineados con los contratos `1.0.0`; sin fil
 
 ### Tasks
 
-- [ ] T001 [US1] Crear `src/domain/token-mutations/operation.ts` y `command.ts`:
+- [X] T001 [US1] Crear `src/domain/token-mutations/operation.ts` y `command.ts`:
   `TokenMutationOperationV1` (unión discriminada de 15 operaciones token/grupo) y `TokenMutationCommandV1`.
-- [ ] T002 [US10] Crear `src/domain/token-mutations/diff.ts`: `TokenMutationDiffV1`/`TokenMutationDiffEntry`
+- [X] T002 [US10] Crear `src/domain/token-mutations/diff.ts`: `TokenMutationDiffV1`/`TokenMutationDiffEntry`
   y `TokenMutationDiffKind` (added/updated/renamed/moved/removed/alias-changed/metadata-changed/group-changed).
-- [ ] T003 [US12] Crear `src/domain/token-mutations/result.ts` y `outcome.ts`: `TokenMutationOutcome`
+- [X] T003 [US12] Crear `src/domain/token-mutations/result.ts` y `outcome.ts`: `TokenMutationOutcome`
   (closed), `MutationIssue`/`MutationIssueCode`, `MutationRecoveryState`, `SafeMutationError`,
   `TokenMutationResultV1`; invariantes `wrote`/recovery; prohibir `partial`/`success`/`blocked`.
-- [ ] T004 [US1] Crear `src/domain/token-mutations/paths.ts`: validación de path lógico de token
+- [X] T004 [US1] Crear `src/domain/token-mutations/paths.ts`: validación de path lógico de token
   (sin traversal/segmento vacío/clave `$`), helpers de parent/segment y orden canónico de diff.
-- [ ] T005 [US13] Crear `src/domain/token-mutations/index.ts`: superficie pública (solo tipos y funciones puras).
-- [ ] T006 [P] [US1] Crear `tests/domain/token-mutations/models.test.ts`: uniones cerradas, inmutabilidad,
+- [X] T005 [US13] Crear `src/domain/token-mutations/index.ts`: superficie pública (solo tipos y funciones puras).
+- [X] T006 [P] [US1] Crear `tests/domain/token-mutations/models.test.ts`: uniones cerradas, inmutabilidad,
   null policy, invariantes outcome/recovery, prohibición de `partial`/`success`.
-- [ ] T007 [US13] Crear `src/application/token-mutations/ports.ts`: puertos (`SourceSnapshotPort`,
+- [X] T007 [US13] Crear `src/application/token-mutations/ports.ts`: puertos (`SourceSnapshotPort`,
   `TokenSourceWriterPort`, análisis reutilizado) y tipos internos; sin Node/Commander/infra.
-- [ ] T008 Gate A: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T008 Gate A: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: ninguna (modelos nuevos aislados).
 **Suggested commit**: `feat: add token mutation domain models and contracts surface`
