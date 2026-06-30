@@ -260,19 +260,19 @@
 
 ### Tasks
 
-- [ ] T119 [US13] Crear en `src/domain/build-export/build-outcome.ts`/`build-plan.ts` los modelos `ArtifactSetWriteRequest` (`strategy: "candidate-directory-set-v1"`, `expectedHashes`), `ArtifactSetWriteResult` (`published|unchanged|conflict|unsafe-target|write-error|verification-error`), `PublicationState` y `BuildRecoveryState`.
-- [ ] T120 [US01] Crear `src/infrastructure/build-export/artifact-set-writer.ts`: staging sibling en el mismo parent; copiar byte-a-byte los unknown regular files/dirs permitidos; escribir artifacts nuevos + build manifest nuevo; verificar el candidato antes de publicar; publicar como conjunto (rename prior `build/`→backup, staging→`build/`). Sin publicación live artifact-by-artifact.
-- [ ] T121 [US13] Modelar el commit point: transición a `candidate-published` solo cuando `staging → build` tiene éxito; desde ahí `wrote:true`.
-- [ ] T122 [US13] Estado: fallo antes de mover build → `wrote:false`, `outputAvailable:true`, `backupRelativePath:null`, `recoveryRequired:false`.
-- [ ] T123 [US13] Estado: primer rename (`build → backup`) falla → `wrote:false`, `outputAvailable:true`.
-- [ ] T124 [US13] Estado: segundo rename (`staging → build`) falla y restore (`backup → build`) funciona → `wrote:false`, `outputAvailable:true`, `backupRelativePath:null`, `recoveryRequired:false`.
-- [ ] T125 [US13] Estado: segundo rename falla y restore falla → `write-error`, `wrote:false`, `outputAvailable:false`, backup retenido, `recoveryRequired:true`.
-- [ ] T126 [US13] Estado: verification-error posterior al commit point → `verification-error`, `wrote:true`, `outputAvailable:true`, backup retenido, `recoveryRequired:true`; sin rollback automático.
-- [ ] T127 [P] [US13] Crear `tests/integration/build-export/writer-posix.test.ts`: renames sibling, ventana de dos renames en directorio no vacío, cleanup de staging.
-- [ ] T128 [P] [US13] Crear `tests/integration/build-export/writer-windows-sim.test.ts` (seams): open handle/antivirus rename failure simulado, permisos, retry acotado.
-- [ ] T129 [P] [US13] Crear `tests/integration/build-export/writer-recovery.test.ts`: primer rename, segundo rename, restore exitoso, restore fallido, cleanup, staging residual, backup residual, rutas públicas relativas.
-- [ ] T130 [US13] Crear `tests/integration/build-export/writer-no-rollback.test.ts`: tras el commit point no hay rollback destructivo automático.
-- [ ] T131 Gate J: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T119 [US13] Crear en `src/domain/build-export/build-outcome.ts`/`build-plan.ts` los modelos `ArtifactSetWriteRequest` (`strategy: "candidate-directory-set-v1"`, `expectedHashes`), `ArtifactSetWriteResult` (`published|unchanged|conflict|unsafe-target|write-error|verification-error`), `PublicationState` y `BuildRecoveryState`.
+- [X] T120 [US01] Crear `src/infrastructure/build-export/artifact-set-writer.ts`: staging sibling en el mismo parent; copiar byte-a-byte los unknown regular files/dirs permitidos; escribir artifacts nuevos + build manifest nuevo; verificar el candidato antes de publicar; publicar como conjunto (rename prior `build/`→backup, staging→`build/`). Sin publicación live artifact-by-artifact.
+- [X] T121 [US13] Modelar el commit point: transición a `candidate-published` solo cuando `staging → build` tiene éxito; desde ahí `wrote:true`.
+- [X] T122 [US13] Estado: fallo antes de mover build → `wrote:false`, `outputAvailable:true`, `backupRelativePath:null`, `recoveryRequired:false`.
+- [X] T123 [US13] Estado: primer rename (`build → backup`) falla → `wrote:false`, `outputAvailable:true`.
+- [X] T124 [US13] Estado: segundo rename (`staging → build`) falla y restore (`backup → build`) funciona → `wrote:false`, `outputAvailable:true`, `backupRelativePath:null`, `recoveryRequired:false`.
+- [X] T125 [US13] Estado: segundo rename falla y restore falla → `write-error`, `wrote:false`, `outputAvailable:false`, backup retenido, `recoveryRequired:true`.
+- [X] T126 [US13] Estado: verification-error posterior al commit point → `verification-error`, `wrote:true`, `outputAvailable:true`, backup retenido, `recoveryRequired:true`; sin rollback automático.
+- [X] T127 [P] [US13] Crear `tests/integration/build-export/writer-posix.test.ts`: renames sibling, ventana de dos renames en directorio no vacío, cleanup de staging.
+- [X] T128 [P] [US13] Crear `tests/integration/build-export/writer-windows-sim.test.ts` (seams): open handle/antivirus rename failure simulado, permisos, retry acotado.
+- [X] T129 [P] [US13] Crear `tests/integration/build-export/writer-recovery.test.ts`: primer rename, segundo rename, restore exitoso, restore fallido, cleanup, staging residual, backup residual, rutas públicas relativas.
+- [X] T130 [US13] Crear `tests/integration/build-export/writer-no-rollback.test.ts`: tras el commit point no hay rollback destructivo automático.
+- [X] T131 Gate J: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: ninguna; reúsa conceptos del writer `005` sin acoplar su interfaz de archivo único.
 **Suggested commit**: `feat: add transactional artifact-set writer with recovery states`
