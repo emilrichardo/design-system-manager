@@ -150,25 +150,25 @@ de recuperación; sin rollback automático tras el commit point.
 
 ### Tasks
 
-- [ ] T034 [US4] Crear `src/infrastructure/assets/asset-set-writer.ts`: staging→verify→backup→swap→
+- [X] T034 [US4] Crear `src/infrastructure/assets/asset-set-writer.ts`: staging→verify→backup→swap→
   post-verify; seam de filesystem inyectable; nunca sigue symlinks.
-- [ ] T035 [US4] Crear `src/application/assets/apply-asset-import.ts`: escribe solo candidatos `add` +
+- [X] T035 [US4] Crear `src/application/assets/apply-asset-import.ts`: escribe solo candidatos `add` +
   manifest nuevo como conjunto; SVG saneado; licencia exacta suministrada.
-- [ ] T036 [US6] Crear `src/application/assets/remove-asset.ts`: elimina archivo + entrada del manifest
+- [X] T036 [US6] Crear `src/application/assets/remove-asset.ts`: elimina archivo + entrada del manifest
   como conjunto; rechaza paths no poseídos por el manifest.
-- [ ] T037 [US9] Crear `src/application/assets/idempotency.ts`: decide `unchanged` antes de stagear
+- [X] T037 [US9] Crear `src/application/assets/idempotency.ts`: decide `unchanged` antes de stagear
   (manifest + hashes + bytes + paths + ownership + presencia).
-- [ ] T038 [US13] Añadir recheck de concurrencia por bytes/hash (no mtime) y semántica de
+- [X] T038 [US13] Añadir recheck de concurrencia por bytes/hash (no mtime) y semántica de
   `verification-error` (post-commit, backup retenido, recovery requerido).
-- [ ] T039 [P] [US4] Crear `tests/integration/assets/writer-apply-remove.test.ts`: apply/remove conjunto,
+- [X] T039 [P] [US4] Crear `tests/integration/assets/writer-apply-remove.test.ts`: apply/remove conjunto,
   staging/backup/swap, contenido desconocido preservado, unsafe-target.
-- [ ] T040 [P] [US4] Crear `tests/integration/assets/writer-recovery.test.ts` (seams): fallo antes de
+- [X] T040 [P] [US4] Crear `tests/integration/assets/writer-recovery.test.ts` (seams): fallo antes de
   mover, restore exitoso/fallido, verificación post-commit, sin rollback automático.
-- [ ] T041 [P] [US9] Crear `tests/integration/assets/idempotency.test.ts`: segunda aplicación sin cambios
+- [X] T041 [P] [US9] Crear `tests/integration/assets/idempotency.test.ts`: segunda aplicación sin cambios
   → `unchanged`/`wrote:false`, sin staging/rename/escritura.
-- [ ] T042 [P] [US11] Crear `tests/integration/assets/ownership-concurrency.test.ts`: manifest no
+- [X] T042 [P] [US11] Crear `tests/integration/assets/ownership-concurrency.test.ts`: manifest no
   confiable, colisión con unknown, source modificado → conflicto.
-- [ ] T043 Gate E: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T043 Gate E: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: tokens/host/build intactos; `001`–`006` byte-estables.
 **Suggested commit**: `feat: add transactional asset apply/remove with recovery and idempotency`

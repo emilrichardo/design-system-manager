@@ -4,7 +4,7 @@
 import type { AssetKind } from "../../domain/assets/asset-kind.js";
 import type { AssetMimeType } from "../../domain/assets/asset-mime.js";
 import type { AssetDimensions, AssetLicense, AssetRecord } from "../../domain/assets/asset-record.js";
-import type { AssetIssue, AssetOutcome, SafeAssetError } from "../../domain/assets/asset-outcome.js";
+import type { AssetIssue, AssetOutcome, AssetRecoveryState, SafeAssetError } from "../../domain/assets/asset-outcome.js";
 
 // ── Observación del asset store (provista por infraestructura, sin seguir symlinks) ────────────────
 
@@ -33,6 +33,8 @@ export interface RawAssetNode {
 
 export interface AssetStoreObservation {
   readonly manifest: PreviousAssetManifestInput;
+  /** SHA-256 de los bytes de `assets.json`, o `null` si ausente. Para recheck de concurrencia. */
+  readonly manifestHash?: string | null;
   readonly managedPaths: readonly string[];
   readonly managedPathStates: readonly ManagedPathStatus[];
   readonly unknownNodes: readonly RawAssetNode[];
@@ -154,6 +156,57 @@ export interface ImportPlan {
 export interface AssetPlanResult {
   readonly outcome: Extract<AssetOutcome, "planned" | "invalid-asset-store" | "read-error">;
   readonly plan: ImportPlan | null;
+  readonly conflicts: readonly AssetIssue[];
+  readonly error: SafeAssetError | null;
+}
+
+// ── Writer transaccional de conjunto (provisto por infraestructura) ────────────────────────────────
+
+export interface AssetWriteFile {
+  readonly logicalPath: string;
+  readonly bytes: Uint8Array;
+  readonly contentHash: string;
+  readonly byteLength: number;
+}
+
+export interface AssetSetWriteRequest {
+  readonly storeRoot: string; // path lógico "design-system/assets"
+  readonly operation: "apply" | "remove";
+  readonly strategy: "candidate-directory-set-v1";
+  /** Archivos a escribir/reemplazar (solo candidatos `add`, ya saneados para SVG). */
+  readonly writes: readonly AssetWriteFile[];
+  /** Paths lógicos a eliminar. */
+  readonly deletes: readonly string[];
+  /** Bytes del nuevo `assets.json`. */
+  readonly manifest: { readonly bytes: Uint8Array; readonly contentHash: string; readonly byteLength: number };
+  /** Estado previo para recheck de concurrencia por bytes/hash (no mtime). */
+  readonly prior: { readonly manifestHash: string | null; readonly assetHashes: Readonly<Record<string, string>> };
+}
+
+export interface AssetSetWriteResult {
+  readonly outcome: "applied" | "removed" | "unchanged" | "conflict" | "unsafe-target" | "write-error" | "verification-error";
+  readonly wrote: boolean;
+  readonly storeAvailable: boolean;
+  readonly backupRelativePath: string | null;
+  readonly recoveryRequired: boolean;
+  readonly conflicts: readonly AssetIssue[];
+  readonly error: { readonly code: string; readonly message: string } | null;
+}
+
+/** Puerto del writer transaccional (implementación real en infraestructura). */
+export interface AssetSetWriterPort {
+  write(request: AssetSetWriteRequest): Promise<AssetSetWriteResult>;
+}
+
+/** Resultado público de una operación de escritura (`apply`/`remove`). */
+export interface AssetWriteOperationResult {
+  readonly outcome: Extract<
+    AssetOutcome,
+    "applied" | "removed" | "unchanged" | "conflict" | "invalid-asset-store" | "not-found" | "read-error" | "write-error" | "verification-error"
+  >;
+  readonly wrote: boolean;
+  readonly recovery: AssetRecoveryState | null;
+  readonly manifestSummary: { readonly relativePath: string; readonly contentHash: string; readonly byteLength: number } | null;
   readonly conflicts: readonly AssetIssue[];
   readonly error: SafeAssetError | null;
 }

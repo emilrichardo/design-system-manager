@@ -31,6 +31,8 @@ export type PreviousAssetManifestInput =
 
 export interface AssetStoreObservation {
   readonly manifest: PreviousAssetManifestInput;
+  /** SHA-256 de los bytes de `assets.json`, o `null` si ausente. Para recheck de concurrencia. */
+  readonly manifestHash: string | null;
   /** Paths lógicos declarados por un manifest VÁLIDO (vacío si ausente/ilegible/no válido). */
   readonly managedPaths: readonly string[];
   readonly managedPathStates: readonly ManagedPathStatus[];
@@ -127,6 +129,14 @@ export async function observeAssetStore(rootDir: string): Promise<AssetStoreObse
   const storeDir = join(rootDir, ...ASSET_STORE_ROOT.split("/"));
   const manifest = await readManifest(storeDir);
 
+  let manifestHash: string | null = null;
+  try {
+    const manifestAbs = join(storeDir, ASSET_MANIFEST_FILENAME);
+    if ((await rawKindOf(manifestAbs)) === "regular-file") manifestHash = sha256Hex(await readFile(manifestAbs));
+  } catch {
+    manifestHash = null;
+  }
+
   let managedPaths: string[] = [];
   if (manifest.state === "parsed") {
     const validation = validateAssetManifestV1(manifest.value);
@@ -136,7 +146,7 @@ export async function observeAssetStore(rootDir: string): Promise<AssetStoreObse
   const managedPathStates = await Promise.all(managedPaths.map((rel) => managedPathStatus(storeDir, rel)));
   const unknownNodes = await readUnknownNodes(storeDir, managedSet);
 
-  return { manifest, managedPaths, managedPathStates, unknownNodes };
+  return { manifest, manifestHash, managedPaths, managedPathStates, unknownNodes };
 }
 
 export interface AssetStoreReader {
