@@ -92,23 +92,23 @@ serializer `AssetJsonEnvelopeV1` y reporters humano/JSON reutilizables.
 
 ### Tasks
 
-- [ ] T018 [US14] Crear `src/application/assets/asset-ports.ts`: puertos (store reader, probes, writer) y
+- [X] T018 [US14] Crear `src/application/assets/asset-ports.ts`: puertos (store reader, probes, writer) y
   tipos internos; sin Node/Commander.
-- [ ] T019 [US1] Crear `src/application/assets/list-assets.ts`: listado determinista desde el manifest;
+- [X] T019 [US1] Crear `src/application/assets/list-assets.ts`: listado determinista desde el manifest;
   manifest ausente → conjunto vacío válido; corrupto → `invalid-asset-store`.
-- [ ] T020 [US2] Crear `src/application/assets/inspect-asset.ts`: inspección por logicalPath; ausente →
+- [X] T020 [US2] Crear `src/application/assets/inspect-asset.ts`: inspección por logicalPath; ausente →
   `not-found`; incluye dimensiones/provenance/license/ownership.
-- [ ] T021 [US11] Crear `src/application/assets/ownership.ts`: autoridad = manifest; unknown content
+- [X] T021 [US11] Crear `src/application/assets/ownership.ts`: autoridad = manifest; unknown content
   preservado/bloqueante; manifest no confiable → conflicto.
-- [ ] T022 [US12] Crear `src/application/assets/json/map-assets.ts` + `AssetJsonEnvelopeV1` DTO/mapper
+- [X] T022 [US12] Crear `src/application/assets/json/map-assets.ts` + `AssetJsonEnvelopeV1` DTO/mapper
   (paths lógicos; null policy; independiente de `003`).
-- [ ] T023 [US16] Crear `src/infrastructure/reporter/assets-terminal-reporter.ts` y
+- [X] T023 [US16] Crear `src/infrastructure/reporter/assets-terminal-reporter.ts` y
   `assets-json-reporter.ts` + serializer determinista (2 espacios, LF final, sin BOM).
-- [ ] T024 [P] [US1] Crear `tests/application/assets/list-inspect.test.ts`: listado/orden, vacío,
+- [X] T024 [P] [US1] Crear `tests/application/assets/list-inspect.test.ts`: listado/orden, vacío,
   corrupto, inspección, `not-found`, summary.
-- [ ] T025 [P] [US12] Crear `tests/integration/assets/json-envelope.test.ts`: parseable, formatVersion,
+- [X] T025 [P] [US12] Crear `tests/integration/assets/json-envelope.test.ts`: parseable, formatVersion,
   paths lógicos, sin rutas absolutas; bytes de `003`/`004`/`006` intactos.
-- [ ] T026 Gate C: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T026 Gate C: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: JSON de `003`/`004`/`006` byte-estable; sin segundo análisis de tokens.
 **Suggested commit**: `feat: add headless asset read use cases and json envelope`
