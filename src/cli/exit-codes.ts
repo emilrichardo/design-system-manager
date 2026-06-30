@@ -4,6 +4,7 @@
 import type { InitializationResult } from "../domain/result/initialization-result.js";
 import type { AnalysisOutcome } from "../application/analysis-ports.js";
 import type { PresetsJsonOutcomeV1 } from "../application/presets/json/dto.js";
+import type { BuildOutcome } from "../domain/build-export/build-outcome.js";
 
 export const USAGE_ERROR_EXIT = 3; // errores de uso del parser (entrada inválida)
 export const INTERNAL_ERROR_EXIT = 70; // excepción inesperada no contractual (sysexits EX_SOFTWARE)
@@ -52,6 +53,38 @@ export function exitCodeForResult(result: InitializationResult): number {
         case "post-verify":
           return 7;
       }
+  }
+}
+
+// ── T103 (006) — Mapeo de exit codes de build/export (tabla común; sin cambiar 001–005) ─────────
+// `internal-error` y `exported` solo existen en la frontera CLI/adapter, no en el dominio.
+export type BuildExportExitOutcome = BuildOutcome | "exported" | "internal-error";
+
+export function exitCodeForBuildExportOutcome(outcome: BuildExportExitOutcome): number {
+  switch (outcome) {
+    case "built":
+    case "exported":
+      return 0;
+    case "unchanged":
+      return 2;
+    case "invalid-design-system":
+      return 3;
+    case "unsupported-value":
+    case "conflict":
+      return 4;
+    case "not-found":
+      return 5;
+    case "read-error":
+    case "write-error":
+      return 6;
+    case "verification-error":
+      return 7;
+    case "internal-error":
+      return INTERNAL_ERROR_EXIT;
+    default: {
+      const _exhaustive: never = outcome;
+      return INTERNAL_ERROR_EXIT;
+    }
   }
 }
 

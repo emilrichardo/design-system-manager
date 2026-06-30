@@ -213,17 +213,17 @@
 
 ### Tasks
 
-- [ ] T098 [US17] Crear `src/application/build-export/build-json/map-build.ts` con `BuildJsonEnvelopeV1` desde `BuildResult` (campos del contrato `build-json-v1.contract.md`); null policy; orden de propiedades; sin bytes/rutas absolutas/`Error`/stack/env.
-- [ ] T099 [US17] Crear `src/infrastructure/reporter/build-json-serializer.ts` (`serializeBuildJsonV1` independiente; dos espacios + LF), sin cast desde `JsonEnvelopeV1`/`FoundationsJsonEnvelopeV1`/`PresetsJsonEnvelopeV1`.
-- [ ] T100 [US17] Crear `src/infrastructure/reporter/build-json-reporter.ts`: un único envelope a stdout para outcomes esperados; stderr vacío.
-- [ ] T101 [US16] Crear `src/infrastructure/reporter/build-terminal-reporter.ts` (humano): outcome, source lógico, output directory lógico, formatos, archivos, hashes resumidos, `wrote`, verification.
-- [ ] T102 [US02] Crear `src/infrastructure/reporter/export-error-reporter.ts`: éxito → solo bytes del artifact a stdout; error → stderr seguro; nunca mezcla reporte y artifact.
-- [ ] T103 [US19] Extender `src/cli/exit-codes.ts` con el mapeo build/export: `built`/`exported`→0, `unchanged`→2, `invalid-design-system`→3, `unsupported-value`/`conflict`→4, `not-found`→5, `read-error`/`write-error`→6, `verification-error`→7, `internal-error`→70 (solo capa CLI/adapter).
-- [ ] T104 [P] [US07] Crear `tests/cli/build-export-outcomes.test.ts`: uniones exactas (build 9, export 5, `internal-error` adapter-only); ausencia pública de `success`/`partial`/`blocked`/`validation`/`unexpected`.
-- [ ] T105 [P] [US19] Crear `tests/cli/build-export-exit-codes.test.ts` tabla-a-tabla del mapeo de exit codes.
-- [ ] T106 [P] [US17] Crear `tests/infrastructure/reporter/build-json.test.ts`: contrato + bytes (sin rutas absolutas, `Error`, stack, env, ni bytes completos de artifact).
-- [ ] T107 [US13] Crear `tests/cli/build-export-streams.test.ts`: build humano (stdout reporte/stderr vacío); build --json (un envelope/stderr vacío); export success (artifact exacto/stderr vacío); export error (stdout vacío/stderr seguro); internal (stdout vacío/stderr seguro/exit 70); sin envelope JSON para export.
-- [ ] T108 Gate H: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T098 [US17] Crear `src/application/build-export/build-json/map-build.ts` con `BuildJsonEnvelopeV1` desde `BuildResult` (campos del contrato `build-json-v1.contract.md`); null policy; orden de propiedades; sin bytes/rutas absolutas/`Error`/stack/env.
+- [X] T099 [US17] Crear `src/infrastructure/reporter/build-json-serializer.ts` (`serializeBuildJsonV1` independiente; dos espacios + LF), sin cast desde `JsonEnvelopeV1`/`FoundationsJsonEnvelopeV1`/`PresetsJsonEnvelopeV1`.
+- [X] T100 [US17] Crear `src/infrastructure/reporter/build-json-reporter.ts`: un único envelope a stdout para outcomes esperados; stderr vacío.
+- [X] T101 [US16] Crear `src/infrastructure/reporter/build-terminal-reporter.ts` (humano): outcome, source lógico, output directory lógico, formatos, archivos, hashes resumidos, `wrote`, verification.
+- [X] T102 [US02] Crear `src/infrastructure/reporter/export-error-reporter.ts`: éxito → solo bytes del artifact a stdout; error → stderr seguro; nunca mezcla reporte y artifact.
+- [X] T103 [US19] Extender `src/cli/exit-codes.ts` con el mapeo build/export: `built`/`exported`→0, `unchanged`→2, `invalid-design-system`→3, `unsupported-value`/`conflict`→4, `not-found`→5, `read-error`/`write-error`→6, `verification-error`→7, `internal-error`→70 (solo capa CLI/adapter).
+- [X] T104 [P] [US07] Crear `tests/cli/build-export-outcomes.test.ts`: uniones exactas (build 9, export 5, `internal-error` adapter-only); ausencia pública de `success`/`partial`/`blocked`/`validation`/`unexpected`.
+- [X] T105 [P] [US19] Crear `tests/cli/build-export-exit-codes.test.ts` tabla-a-tabla del mapeo de exit codes.
+- [X] T106 [P] [US17] Crear `tests/infrastructure/reporter/build-json.test.ts`: contrato + bytes (sin rutas absolutas, `Error`, stack, env, ni bytes completos de artifact).
+- [X] T107 [US13] Crear `tests/cli/build-export-streams.test.ts`: build humano (stdout reporte/stderr vacío); build --json (un envelope/stderr vacío); export success (artifact exacto/stderr vacío); export error (stdout vacío/stderr seguro); internal (stdout vacío/stderr seguro/exit 70); sin envelope JSON para export.
+- [X] T108 Gate H: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: T105/T107 confirman que los exit codes históricos no cambian.
 **Suggested commit**: `feat: add build reporters, json envelope and exit mapping`
