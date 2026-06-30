@@ -96,24 +96,24 @@ referencias (rename/move = update-all-affected). Ensamblar `planTokenMutation` (
 
 ### Tasks
 
-- [ ] T017 [US1] Crear `src/application/token-mutations/validate-command.ts`: invalid-path, token-exists,
+- [X] T017 [US1] Crear `src/application/token-mutations/validate-command.ts`: invalid-path, token-exists,
   token-not-found, group-not-found, alias-not-found, invalid-dtcg-value (clasificadas → `invalid-command`).
-- [ ] T018 [US4] Añadir validación de alias reutilizando el grafo de `002`: alias-cycle, alias-to-group,
+- [X] T018 [US4] Añadir validación de alias reutilizando el grafo de `002`: alias-cycle, alias-to-group,
   type-mismatch; nunca resueltos en silencio.
-- [ ] T019 [US5] [US6] Crear detección de colisiones y conflicto padre/descendiente: rename-collision,
+- [X] T019 [US5] [US6] Crear detección de colisiones y conflicto padre/descendiente: rename-collision,
   move-collision, parent-descendant-conflict (→ `conflict`/`invalid-command`).
-- [ ] T020 [US5] Crear `src/application/token-mutations/reference-update.ts`: política v1
+- [X] T020 [US5] Crear `src/application/token-mutations/reference-update.ts`: política v1
   update-all-affected — reescribe toda referencia a paths afectados por rename/move (token y grupo);
   emite entradas `alias-changed`; jamás deja aliases rotos.
-- [ ] T021 [US8] [US9] Crear `src/application/token-mutations/removal-policy.ts`: removal-with-dependents
+- [X] T021 [US8] [US9] Crear `src/application/token-mutations/removal-policy.ts`: removal-with-dependents
   (bloquea, lista dependientes), group-removal-non-empty (bloquea), `remove-empty-group` solo si vacío.
-- [ ] T022 [US1] Crear `src/application/token-mutations/plan-token-mutation.ts`: caso de uso read-only que
+- [X] T022 [US1] Crear `src/application/token-mutations/plan-token-mutation.ts`: caso de uso read-only que
   integra snapshot → analyze → validate → candidate → diff → validate candidate; produce `TokenMutationResultV1`.
-- [ ] T023 [P] [US1] Crear `tests/integration/token-mutations/validation-matrix.test.ts`: cada caso de
+- [X] T023 [P] [US1] Crear `tests/integration/token-mutations/validation-matrix.test.ts`: cada caso de
   validación (block / explicit-operation / never-silent) con su código estable.
-- [ ] T024 [P] [US5] Crear `tests/integration/token-mutations/rename-move-remove.test.ts`: reescritura de
+- [X] T024 [P] [US5] Crear `tests/integration/token-mutations/rename-move-remove.test.ts`: reescritura de
   referencias (token y grupo), colisiones, remove con/sin dependientes, grupo vacío/no vacío.
-- [ ] T025 Gate C: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T025 Gate C: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: sin aliases rotos en ningún candidato; `plan` no escribe.
 **Suggested commit**: `feat: add token mutation validation and reference updates`
