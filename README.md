@@ -248,6 +248,35 @@ npx neuraz-ds export typescript  # bytes exactos de tokens.ts
 export --json   (export nunca emite envelope; solo bytes del artifact)
 ```
 
+## `neuraz-ds asset`
+
+Administra **assets** locales (fonts, logos, SVG, icons, images) bajo `design-system/assets/`,
+**estrictamente separados** de los tokens DTCG. El manifest `design-system/assets/assets.json` es la
+autoridad de pertenencia (ownership).
+
+```bash
+npx neuraz-ds asset list [--json]                 # lista los assets administrados
+npx neuraz-ds asset inspect <logicalPath> [--json] # metadata de un asset (MIME, tamaño, dimensiones, licencia, provenance)
+npx neuraz-ds asset import plan <archivo…> [--json] # PREVIEW: qué crearía/duplicaría/bloquearía; nunca escribe
+npx neuraz-ds asset import apply <archivo…> --license <id>  # aplica de forma transaccional (todo o nada)
+npx neuraz-ds asset remove <logicalPath>           # elimina un asset administrado (transaccional, ownership-bound)
+```
+
+- **Separación tokens/assets**: ninguna operación de assets lee o escribe `design-system/tokens/**`, el
+  host manifest ni `design-system/build/**`; y viceversa.
+- **plan es read-only**: no escribe nada; el store y el manifest quedan byte-idénticos.
+- **Sanitización de SVG**: todo SVG se sanitiza (se eliminan scripts, handlers `on*`, referencias
+  externas, `<foreignObject>`, DOCTYPE/entidades) **antes** de escribirse; lo no saneable se bloquea.
+- **Licencias**: nunca se asumen; `apply` registra exactamente la licencia suministrada (`--license`).
+  Un import sin licencia se marca con un aviso `license-required`.
+- **Deduplicación**: contenido idéntico (mismo SHA-256) se detecta y no se almacena dos veces.
+- **Seguridad**: nunca sigue symlinks; preserva contenido desconocido (no lo borra) o bloquea con
+  `conflict`; escrituras transaccionales con backup y recuperación explícita; idempotente
+  (re-`apply` sin cambios → `unchanged`).
+- **JSON**: `list`/`inspect`/`import plan` aceptan `--json` (`AssetJsonEnvelopeV1`, `formatVersion 1.0.0`);
+  `apply`/`remove` son escrituras (salida humana). Fuera de alcance: Figma, scraping, IA, conversión de
+  fuentes, optimización de imágenes, edición de SVG, CDN y cloud storage.
+
 ### Comandos disponibles
 
 | Comando | Descripción |
@@ -262,6 +291,11 @@ export --json   (export nunca emite envelope; solo bytes del artifact)
 | `neuraz-ds presets apply <id> [--json]` | Aplica el preset de forma segura (add-only, atómica). |
 | `neuraz-ds build [--json]` | Compila todos los formatos a `design-system/build/` (conjunto, transaccional). |
 | `neuraz-ds export css\|json\|typescript` | Emite un formato a stdout **sin escribir** (read-only). |
+| `neuraz-ds asset list [--json]` | Lista los assets administrados **sin modificar archivos**. |
+| `neuraz-ds asset inspect <path> [--json]` | Detalla un asset **sin modificar archivos**. |
+| `neuraz-ds asset import plan <archivo…> [--json]` | Previsualiza la importación **sin escribir**. |
+| `neuraz-ds asset import apply <archivo…> --license <id>` | Importa de forma transaccional (todo o nada). |
+| `neuraz-ds asset remove <path>` | Elimina un asset administrado (transaccional, ownership-bound). |
 | `neuraz-ds --help` / `<cmd> --help` | Ayuda. |
 | `neuraz-ds --version` | Versión del gestor. |
 
@@ -288,6 +322,10 @@ solo lectura). `presets list/inspect/plan` también son de solo lectura; `preset
 conflicto), `5` (no inicializado), `6` (error de lectura/escritura) y `7` (verificación posterior a la
 publicación). `export` es read-only y usa `0` (exported), `3`, `4`, `5` y `6`.
 
+`asset list/inspect/import plan` son de solo lectura (`0`; `3` store inválido, `4` no soportado/conflict,
+`5` no encontrado, `6` lectura). `asset import apply`/`remove` pueden usar `0` (applied/removed), `2`
+(unchanged / idempotente), `4` (conflicto), `6` (error de escritura) y `7` (verificación posterior).
+
 ## Salida JSON v1
 
 `validate --json`, `inspect --json` y `foundations --json` son superficies estables para CI,
@@ -298,6 +336,10 @@ hay flags de formato como `--compact`, `--pretty` u `--output`.
 campos específicos del build (`outcome`, `wrote`, `outputDirectory`, `artifacts`, `manifest`,
 `verification`, `backupRelativePath`, `recoveryRequired`, `error`). `export` **no** emite JSON: su salida
 son los bytes exactos del artifact.
+
+`asset list/inspect/import plan --json` emiten su propio envelope (`AssetJsonEnvelopeV1`, también
+`formatVersion: "1.0.0"`, con `command` `asset-list|asset-inspect|asset-plan`). `asset import apply` y
+`asset remove` son escrituras: salida humana, sin envelope JSON.
 
 El envelope público siempre incluye cuatro campos base:
 

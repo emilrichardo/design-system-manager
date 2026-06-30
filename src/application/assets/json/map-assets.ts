@@ -2,7 +2,7 @@
 // `003` (no lo extiende ni lo modifica). Solo datos seguros y paths lógicos; null policy estricta.
 import type { AssetIssue, AssetOutcome, SafeAssetError } from "../../../domain/assets/asset-outcome.js";
 import type { AssetRecord } from "../../../domain/assets/asset-record.js";
-import type { AssetInspectResult, AssetListResult, AssetsSummary } from "../asset-ports.js";
+import type { AssetInspectResult, AssetListResult, AssetPlanResult, AssetsSummary, ImportCandidate } from "../asset-ports.js";
 
 export const ASSET_JSON_FORMAT_VERSION = "1.0.0";
 
@@ -83,6 +83,34 @@ export function mapInspectResultToJsonEnvelope(result: AssetInspectResult): Asse
       result.outcome === "inspected" && result.inspection !== null
         ? { record: mapRecord(result.inspection.record), pathState: result.inspection.pathState, issues: result.inspection.issues.map(mapIssue) }
         : null,
+    error: mapError(result.error),
+  };
+}
+
+function mapCandidate(c: ImportCandidate): Record<string, unknown> {
+  return {
+    sourceRef: c.sourceRef,
+    kind: c.kind,
+    destinationPath: c.destinationPath,
+    mimeType: c.mimeType,
+    byteLength: c.byteLength,
+    contentHash: c.contentHash,
+    dimensions: c.dimensions,
+    verdict: c.verdict,
+    duplicateOf: c.duplicateOf,
+    license: { status: c.license.status, identifier: c.license.identifier, notice: c.license.notice },
+    validation: c.validation,
+    sanitization: c.sanitization,
+    issues: c.issues.map(mapIssue),
+  };
+}
+
+export function mapPlanResultToJsonEnvelope(result: AssetPlanResult): AssetJsonEnvelopeV1 {
+  return {
+    formatVersion: ASSET_JSON_FORMAT_VERSION,
+    command: "asset-plan",
+    outcome: result.outcome,
+    result: result.outcome === "planned" && result.plan !== null ? { candidates: result.plan.candidates.map(mapCandidate), summary: result.plan.summary } : null,
     error: mapError(result.error),
   };
 }

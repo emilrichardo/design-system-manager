@@ -5,6 +5,7 @@ import type { InitializationResult } from "../domain/result/initialization-resul
 import type { AnalysisOutcome } from "../application/analysis-ports.js";
 import type { PresetsJsonOutcomeV1 } from "../application/presets/json/dto.js";
 import type { BuildOutcome } from "../domain/build-export/build-outcome.js";
+import type { AssetOutcome } from "../domain/assets/asset-outcome.js";
 
 export const USAGE_ERROR_EXIT = 3; // errores de uso del parser (entrada inválida)
 export const INTERNAL_ERROR_EXIT = 70; // excepción inesperada no contractual (sysexits EX_SOFTWARE)
@@ -70,6 +71,41 @@ export function exitCodeForBuildExportOutcome(outcome: BuildExportExitOutcome): 
     case "invalid-design-system":
       return 3;
     case "unsupported-value":
+    case "conflict":
+      return 4;
+    case "not-found":
+      return 5;
+    case "read-error":
+    case "write-error":
+      return 6;
+    case "verification-error":
+      return 7;
+    case "internal-error":
+      return INTERNAL_ERROR_EXIT;
+    default: {
+      const _exhaustive: never = outcome;
+      return INTERNAL_ERROR_EXIT;
+    }
+  }
+}
+
+// ── T045 (007) — Mapeo de exit codes del Asset Manager (tabla común; sin cambiar 001–006) ─────────
+// `internal-error` solo existe en la frontera CLI/adapter, no en el dominio.
+export type AssetExitOutcome = AssetOutcome | "internal-error";
+
+export function exitCodeForAssetOutcome(outcome: AssetExitOutcome): number {
+  switch (outcome) {
+    case "listed":
+    case "inspected":
+    case "planned":
+    case "applied":
+    case "removed":
+      return 0;
+    case "unchanged":
+      return 2;
+    case "invalid-asset-store":
+      return 3;
+    case "unsupported-asset":
     case "conflict":
       return 4;
     case "not-found":

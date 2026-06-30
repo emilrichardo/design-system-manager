@@ -15,9 +15,9 @@ import type {
   InspectDesignSystemDependencies,
 } from "../application/analysis-ports.js";
 import type { InspectFoundationsDependencies } from "../application/foundations/foundations-ports.js";
-import type { BuildExportCliDependencies, PresetsCliDependencies } from "./composition.js";
+import type { AssetCliDependencies, BuildExportCliDependencies, PresetsCliDependencies } from "./composition.js";
 import type { CliIO } from "./io.js";
-import { exitCodeForBuildExportOutcome, exitCodeForResult, exitCodeForOutcome, exitCodeForPresetOutcome, INTERNAL_ERROR_EXIT, USAGE_ERROR_EXIT } from "./exit-codes.js";
+import { exitCodeForAssetOutcome, exitCodeForBuildExportOutcome, exitCodeForResult, exitCodeForOutcome, exitCodeForPresetOutcome, INTERNAL_ERROR_EXIT, USAGE_ERROR_EXIT } from "./exit-codes.js";
 import type { PresetExitOutcome } from "./exit-codes.js";
 import { writeInternalErrorJson, writePresetsInternalErrorJson } from "./json-error.js";
 import { toFoundationsInternalErrorEnvelope } from "../application/foundations/json/map-internal-error.js";
@@ -31,6 +31,7 @@ import { runInspect } from "./commands/inspect.js";
 import { runFoundations } from "./commands/foundations.js";
 import { runBuild } from "./commands/build.js";
 import { runExport } from "./commands/export.js";
+import { readImportSources, runAssetImportApply, runAssetImportPlan, runAssetInspect, runAssetList, runAssetRemove } from "./commands/asset.js";
 import { runPresetsApply, runPresetsInspect, runPresetsList, runPresetsPlan } from "./commands/presets.js";
 
 /** Modo de presentación parseado por Commander para validate/inspect. */
@@ -47,6 +48,11 @@ export interface ProgramHandlers {
   onFoundations: (opts: CommandModeOptions) => Promise<number>;
   onBuild: (opts: CommandModeOptions) => Promise<number>;
   onExport: (format: BuildFormat) => Promise<number>;
+  onAssetList: (opts: CommandModeOptions) => Promise<number>;
+  onAssetInspect: (logicalPath: string, opts: CommandModeOptions) => Promise<number>;
+  onAssetImportPlan: (sources: readonly string[], opts: CommandModeOptions) => Promise<number>;
+  onAssetImportApply: (sources: readonly string[], opts: { readonly license?: string }) => Promise<number>;
+  onAssetRemove: (logicalPath: string) => Promise<number>;
   onPresetsList: (opts: CommandModeOptions) => Promise<number>;
   onPresetsInspect: (id: string, opts: CommandModeOptions) => Promise<number>;
   onPresetsPlan: (id: string, opts: CommandModeOptions) => Promise<number>;
@@ -129,6 +135,44 @@ export function createProgram(handlers: ProgramHandlers): {
     state.code = await handlers.onExport(format);
   });
 
+  // T044 (007) — grupo `asset`: list/inspect/import(plan|apply)/remove. `--json` local en read/plan;
+  // `import apply` acepta `--license`. Assets separados de tokens. Sin flags fuera de alcance.
+  const asset = program.command("asset").description("Administra assets locales (fonts, logos, SVG, icons, images) separados de los tokens.");
+  asset.exitOverride();
+
+  const assetList = asset.command("list").description("Lista los assets administrados.").option("--json", JSON_FLAG_DESCRIPTION, false);
+  assetList.exitOverride();
+  assetList.action(async (options: { json?: boolean }) => {
+    state.code = await handlers.onAssetList({ json: options.json === true });
+  });
+
+  const assetInspect = asset.command("inspect <path>").description("Inspecciona un asset administrado por su path lógico.").option("--json", JSON_FLAG_DESCRIPTION, false);
+  assetInspect.exitOverride();
+  assetInspect.action(async (path: string, options: { json?: boolean }) => {
+    state.code = await handlers.onAssetInspect(path, { json: options.json === true });
+  });
+
+  const assetImport = asset.command("import").description("Importa assets locales: `plan` (preview) o `apply` (escribe).");
+  assetImport.exitOverride();
+
+  const assetPlan = assetImport.command("plan <sources...>").description("Previsualiza la importación (NO escribe).").option("--json", JSON_FLAG_DESCRIPTION, false);
+  assetPlan.exitOverride();
+  assetPlan.action(async (sources: string[], options: { json?: boolean }) => {
+    state.code = await handlers.onAssetImportPlan(sources, { json: options.json === true });
+  });
+
+  const assetApply = assetImport.command("apply <sources...>").description("Aplica la importación (escritura transaccional).").option("--license <id>", "Identificador de licencia explícito del asset.");
+  assetApply.exitOverride();
+  assetApply.action(async (sources: string[], options: { license?: string }) => {
+    state.code = await handlers.onAssetImportApply(sources, options.license === undefined ? {} : { license: options.license });
+  });
+
+  const assetRemove = asset.command("remove <path>").description("Elimina un asset administrado (transaccional, ownership-bound).");
+  assetRemove.exitOverride();
+  assetRemove.action(async (path: string) => {
+    state.code = await handlers.onAssetRemove(path);
+  });
+
   // T094 (005) — grupo plural `presets` con subcomandos. `--json` es local a cada subcomando (no
   // global); sin `--force`, `--category` ni `--dry-run`. `plan` es preview (no escribe); `apply` escribe.
   const presets = program
@@ -194,6 +238,8 @@ export interface CliRuntime {
   presetsDeps?: PresetsCliDependencies;
   /** Dependencias de `build`/`export` (use cases + reporters humano/JSON/bytes). Opcional para pruebas de 001. */
   buildExportDeps?: BuildExportCliDependencies;
+  /** Dependencias del grupo `asset` (use cases + reporters humano/JSON). Opcional para pruebas de 001. */
+  assetDeps?: AssetCliDependencies;
   version: string;
 }
 
@@ -290,6 +336,48 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
     }
   };
 
+  // Asset Manager: un solo adapter (reporter humano o JSON) por ejecución; una sola llamada al caso de
+  // uso; outcome → exit via `exitCodeForAssetOutcome`. `internal-error` (adapter) → 70.
+  // read/plan tienen variante JSON; apply/remove son solo humanos (escrituras).
+  async function runAssetOp(
+    command: "asset-list" | "asset-inspect" | "asset-plan",
+    json: boolean,
+    run: (deps: AssetCliDependencies) => Promise<{ readonly outcome: string }>,
+    renderHuman: (deps: AssetCliDependencies, result: never) => void,
+    renderJson: (deps: AssetCliDependencies, result: never) => void,
+  ): Promise<number> {
+    const deps = runtime.assetDeps;
+    if (deps === undefined) {
+      runtime.io.err("Asset: internal-error — An unexpected internal error occurred.\n");
+      return INTERNAL_ERROR_EXIT;
+    }
+    try {
+      const result = await run(deps);
+      (json ? renderJson : renderHuman)(deps, result as never);
+      return exitCodeForAssetOutcome(result.outcome as Parameters<typeof exitCodeForAssetOutcome>[0]);
+    } catch {
+      if (json) deps.json.internalError(command);
+      else deps.terminal.internalError();
+      return INTERNAL_ERROR_EXIT;
+    }
+  }
+
+  async function runAssetWrite(run: (deps: AssetCliDependencies) => Promise<{ readonly outcome: string }>): Promise<number> {
+    const deps = runtime.assetDeps;
+    if (deps === undefined) {
+      runtime.io.err("Asset: internal-error — An unexpected internal error occurred.\n");
+      return INTERNAL_ERROR_EXIT;
+    }
+    try {
+      const result = await run(deps);
+      deps.terminal.writeCompleted(result as never);
+      return exitCodeForAssetOutcome(result.outcome as Parameters<typeof exitCodeForAssetOutcome>[0]);
+    } catch {
+      deps.terminal.internalError();
+      return INTERNAL_ERROR_EXIT;
+    }
+  }
+
   // Presets: un solo adapter (reporter humano o JSON) por ejecución; una sola llamada al caso de uso;
   // outcome semántico → exit via `exitCodeForPresetOutcome`. En JSON, una excepción inesperada produce
   // un envelope de error interno PROPIO de presets en stderr (stdout vacío) con exit 70.
@@ -328,6 +416,21 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
     onFoundations: ({ json }) => runFoundationsMode(json),
     onBuild: ({ json }) => runBuildMode(json),
     onExport: (format) => runExportMode(format),
+    onAssetList: ({ json }) =>
+      runAssetOp("asset-list", json, (d) => runAssetList(d.base), (d, r) => d.terminal.listCompleted(r), (d, r) => d.json.listCompleted(r)),
+    onAssetInspect: (path, { json }) =>
+      runAssetOp("asset-inspect", json, (d) => runAssetInspect(path, d.base), (d, r) => d.terminal.inspectCompleted(r), (d, r) => d.json.inspectCompleted(r)),
+    onAssetImportPlan: (sources, { json }) =>
+      runAssetOp(
+        "asset-plan",
+        json,
+        async (d) => runAssetImportPlan(await readImportSources(sources, runtime.cwd, d.probes), d.base),
+        (d, r) => d.terminal.planCompleted(r),
+        (d, r) => d.json.planCompleted(r),
+      ),
+    onAssetImportApply: (sources, { license }) =>
+      runAssetWrite(async (d) => runAssetImportApply(await readImportSources(sources, runtime.cwd, d.probes, license === undefined ? undefined : { identifier: license }), d.base)),
+    onAssetRemove: (path) => runAssetWrite((d) => runAssetRemove(path, d.base)),
     onPresetsList: ({ json }) =>
       runPresetsMode(json, "preset-list", (d) => runPresetsList(d.base), (d, r) => (json ? d.json : d.terminal).listCompleted(r)),
     onPresetsInspect: (id, { json }) =>

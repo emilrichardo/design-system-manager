@@ -2,6 +2,7 @@
 // Entrypoint del binario `neuraz-ds`. Pequeño: compone dependencias reales, ejecuta el programa,
 // aplica process.exitCode y maneja solo errores de frontera (excepciones inesperadas → 70).
 import {
+  createAssetDependencies,
   createBoundAnalyze,
   createBuildExportDependencies,
   createFoundationsDependencies,
@@ -40,6 +41,7 @@ try {
     foundationsJsonDeps: createFoundationsJsonDependencies(io, analyze),
     presetsDeps: createPresetsDependencies(io, analyze),
     buildExportDeps: createBuildExportDependencies(io, processExportOutput, process.cwd()),
+    assetDeps: createAssetDependencies(io, process.cwd()),
     version: readCliVersion(),
   });
   process.exitCode = code;

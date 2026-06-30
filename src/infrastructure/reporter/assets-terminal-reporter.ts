@@ -1,6 +1,6 @@
 // T023 (007) — Reporter humano de assets. Texto conciso y determinista; paths lógicos relativos; sin
 // ANSI/spinners, sin `Error`/stack, sin rutas absolutas. `listed`/`inspected` → stdout; errores → stderr.
-import type { AssetInspectResult, AssetListResult } from "../../application/assets/asset-ports.js";
+import type { AssetInspectResult, AssetListResult, AssetPlanResult, AssetWriteOperationResult } from "../../application/assets/asset-ports.js";
 import type { OutputWriter } from "./terminal-reporter.js";
 
 function shortHash(hash: string): string {
@@ -41,6 +41,35 @@ export class AssetsTerminalReporter {
       `Path state: ${result.inspection.pathState}`,
     ];
     this.io.out(`${lines.join("\n")}\n`);
+  }
+
+  planCompleted(result: AssetPlanResult): void {
+    if (result.outcome !== "planned" || result.plan === null) {
+      this.io.err(`Asset plan: ${result.outcome}${result.error ? ` — ${result.error.message}` : ""}\n`);
+      return;
+    }
+    const lines = [`Asset plan: ${result.plan.summary.add} add, ${result.plan.summary.duplicate} duplicate, ${result.plan.summary.blocked} blocked`];
+    for (const c of result.plan.candidates) {
+      const dest = c.destinationPath ?? "(n/a)";
+      lines.push(`  - [${c.verdict}] ${c.sourceRef} → ${dest}${c.duplicateOf ? ` (= ${c.duplicateOf})` : ""}`);
+      for (const i of c.issues) lines.push(`      ${i.severity}: ${i.code}${i.message ? ` — ${i.message}` : ""}`);
+    }
+    this.io.out(`${lines.join("\n")}\n`);
+  }
+
+  writeCompleted(result: AssetWriteOperationResult): void {
+    const stdoutOutcomes = new Set(["applied", "removed", "unchanged"]);
+    const lines = [`Asset: ${result.outcome}`, `Wrote: ${result.wrote}`];
+    if (result.manifestSummary !== null) lines.push(`Manifest: ${result.manifestSummary.relativePath}`);
+    for (const c of result.conflicts) lines.push(`Conflict: ${c.code}${c.path !== null ? ` @ ${c.path}` : ""} — ${c.message}`);
+    if (result.recovery && result.recovery.recoveryRequired) {
+      lines.push("Recovery required.");
+      if (result.recovery.backupRelativePath) lines.push(`Backup retained: ${result.recovery.backupRelativePath}`);
+    }
+    if (result.error !== null) lines.push(`Error: ${result.error.code} — ${result.error.message}`);
+    const text = `${lines.join("\n")}\n`;
+    if (stdoutOutcomes.has(result.outcome)) this.io.out(text);
+    else this.io.err(text);
   }
 
   internalError(): void {

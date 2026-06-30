@@ -1,8 +1,10 @@
-# Quickstart: Asset Manager (planned behavior)
+# Quickstart: Asset Manager
 
-Describes the expected behavior of `007-asset-manager` once implemented. The commands are not
-implemented by this planning phase. The Asset Manager manages files under `design-system/assets/`,
-strictly separate from DTCG tokens.
+The reproducible `asset` flow implemented by `007-asset-manager`. The Asset Manager manages files under
+`design-system/assets/`, strictly separate from DTCG tokens. The commands are available from the
+installed package: `neuraz-ds asset list|inspect|import plan|import apply|remove`. The CLI derives the
+asset kind from the detected MIME family (font→`font`, svg→`svg`, raster→`image`) and the logical
+destination from the kind directory and the source basename.
 
 ## Prerequisites
 
@@ -101,12 +103,16 @@ The Asset Manager must not:
 | read or write failure | read-error / write-error | 6 |
 | post-publication verification failure | verification-error | 7 |
 
-## Validation commands for the future implementation
+## Validation commands
+
+Gates exercised by the implementation (Checkpoint F), including the asset binary, the installed tarball
+smoke and the `001`–`006` regression:
 
 ```bash
 npm run typecheck
 npm run lint
 npm test
 npm run build
+npm pack --dry-run --json
 git diff --check
 ```

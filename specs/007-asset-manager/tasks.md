@@ -183,24 +183,24 @@ granular `001`–`006`, documentación y cierre con auditoría. MCP/Studio queda
 
 ### Tasks
 
-- [ ] T044 [US14] Crear `src/cli/commands/asset.ts` y conectar en `program.ts`/`composition.ts`:
+- [X] T044 [US14] Crear `src/cli/commands/asset.ts` y conectar en `program.ts`/`composition.ts`:
   `asset list|inspect|import plan|import apply|remove`, `--json` en read/plan, reporter humano vs JSON,
   `internal-error`→70 en el adapter. Sin flags fuera de alcance.
-- [ ] T045 [US14] Añadir mapeo de exit codes de assets reutilizando la tabla común (`exitCodeFor…`), sin
+- [X] T045 [US14] Añadir mapeo de exit codes de assets reutilizando la tabla común (`exitCodeFor…`), sin
   cambiar los códigos de `001`–`006`.
-- [ ] T046 [P] [US14] Crear `tests/cli/asset-commands.test.ts` y `asset-help.test.ts`: superficie de
+- [X] T046 [P] [US14] Crear `tests/cli/asset-commands.test.ts` y `asset-help.test.ts`: superficie de
   comandos, selección de reporter, ayuda sin flags fuera de alcance; `plan` no escribe.
-- [ ] T047 [P] [US15] Crear `tests/cli/asset-binary.test.ts` (proceso hijo): cwd distinto, paths con
+- [X] T047 [P] [US15] Crear `tests/cli/asset-binary.test.ts` (proceso hijo): cwd distinto, paths con
   espacios/Unicode, stdin cerrado, sin TTY; apply/`unchanged`, remove; streams y exit codes.
-- [ ] T048 [P] [US8] Crear `tests/integration/assets/regression-tokens-build.test.ts`: ninguna operación
+- [X] T048 [P] [US8] Crear `tests/integration/assets/regression-tokens-build.test.ts`: ninguna operación
   de assets modifica tokens/host/build; `validate/inspect/foundations/build/export` byte-estables.
-- [ ] T049 [US16] Actualizar `README.md` y `docs/product/capability-map.md`: comandos `asset`, layout del
+- [X] T049 [US16] Actualizar `README.md` y `docs/product/capability-map.md`: comandos `asset`, layout del
   store, separación tokens/assets, licencias, sanitización; marcar la capacidad como implementada.
-- [ ] T050 [US14] Actualizar `specs/007-asset-manager/quickstart.md` con el flujo reproducible real y los
+- [X] T050 [US14] Actualizar `specs/007-asset-manager/quickstart.md` con el flujo reproducible real y los
   outcomes/exits definitivos.
-- [ ] T051 Gate F (suite completa): `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`,
+- [X] T051 Gate F (suite completa): `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`,
   `npm pack --dry-run --json`, `git diff --check`.
-- [ ] T052 [US14] Crear `specs/007-asset-manager/audit.md` con trazabilidad (14/14 US, 37/37 FR, 12/12 SC,
+- [X] T052 [US14] Crear `specs/007-asset-manager/audit.md` con trazabilidad (14/14 US, 37/37 FR, 12/12 SC,
   17/17 Constitution), hallazgos (0 CRITICAL/HIGH/MEDIUM) y gates finales; cerrar la feature.
 
 **Regression**: T048 prueba que `001`–`006` no cambian comportamiento, bytes, JSON ni exits.

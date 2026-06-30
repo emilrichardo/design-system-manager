@@ -49,6 +49,17 @@ import { BuildTerminalReporter } from "../infrastructure/reporter/build-terminal
 import { BuildJsonReporter } from "../infrastructure/reporter/build-json-reporter.js";
 import { ExportReporter, type ExportOutput } from "../infrastructure/reporter/export-error-reporter.js";
 import { resolveHostRoot } from "../infrastructure/host-root/resolve-host-root.js";
+import type { AssetProbesPort } from "../application/assets/asset-ports.js";
+import { createAssetStoreReader } from "../infrastructure/assets/asset-store-reader.js";
+import { createAssetSetWriter } from "../infrastructure/assets/asset-set-writer.js";
+import { detectMime } from "../infrastructure/assets/mime-detector.js";
+import { readDimensions } from "../infrastructure/assets/dimension-reader.js";
+import { validateFont } from "../infrastructure/assets/font-validator.js";
+import { sanitizeSvg } from "../infrastructure/assets/svg-sanitizer.js";
+import { sha256Hex as assetSha256Hex } from "../infrastructure/assets/hash.js";
+import { AssetsTerminalReporter } from "../infrastructure/reporter/assets-terminal-reporter.js";
+import { AssetsJsonReporter } from "../infrastructure/reporter/assets-json-reporter.js";
+import type { AssetUseCaseDependencies } from "./commands/asset.js";
 import type { CliIO } from "./io.js";
 
 export function createRealDependencies(io: CliIO): InitializeDependencies {
@@ -168,5 +179,27 @@ export function createBuildExportDependencies(io: CliIO, exportOutput: ExportOut
     buildTerminal: new BuildTerminalReporter(io),
     buildJson: new BuildJsonReporter(io),
     exportReporter: new ExportReporter(exportOutput),
+  };
+}
+
+// Feature 007 — Asset Manager. Store reader, probes y writer transaccional anclados a la raíz del host
+// resuelta desde `cwd`. Reporters humano/JSON; el comando selecciona uno por ejecución. Assets quedan
+// estrictamente separados de los tokens DTCG.
+export interface AssetCliDependencies {
+  readonly base: AssetUseCaseDependencies;
+  readonly probes: AssetProbesPort;
+  readonly terminal: AssetsTerminalReporter;
+  readonly json: AssetsJsonReporter;
+}
+
+export function createAssetDependencies(io: CliIO, cwd: string): AssetCliDependencies {
+  const resolution = resolveHostRoot(cwd);
+  const rootDir = resolution.ok ? resolution.hostRoot.rootDir : cwd;
+  const probes: AssetProbesPort = { detectMime, readDimensions, validateFont, sanitizeSvg, hash: assetSha256Hex };
+  return {
+    base: { store: createAssetStoreReader(rootDir), probes, writer: createAssetSetWriter(rootDir) },
+    probes,
+    terminal: new AssetsTerminalReporter(io),
+    json: new AssetsJsonReporter(io),
   };
 }

@@ -4,9 +4,10 @@ import {
   assetInternalErrorEnvelope,
   mapInspectResultToJsonEnvelope,
   mapListResultToJsonEnvelope,
+  mapPlanResultToJsonEnvelope,
   type AssetJsonCommand,
 } from "../../application/assets/json/map-assets.js";
-import type { AssetInspectResult, AssetListResult } from "../../application/assets/asset-ports.js";
+import type { AssetInspectResult, AssetListResult, AssetPlanResult } from "../../application/assets/asset-ports.js";
 import type { OutputWriter } from "./terminal-reporter.js";
 import { serializeAssetJsonV1 } from "./assets-json-serializer.js";
 
@@ -19,6 +20,10 @@ export class AssetsJsonReporter {
 
   inspectCompleted(result: AssetInspectResult): void {
     this.io.out(serializeAssetJsonV1(mapInspectResultToJsonEnvelope(result)));
+  }
+
+  planCompleted(result: AssetPlanResult): void {
+    this.io.out(serializeAssetJsonV1(mapPlanResultToJsonEnvelope(result)));
   }
 
   internalError(command: AssetJsonCommand): void {
