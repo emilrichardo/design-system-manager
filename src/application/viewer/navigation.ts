@@ -40,6 +40,11 @@ export const VIEWER_SECTION_ORDER: readonly ViewerSectionId[] = [
   "build",
 ] as const;
 
+/** Type guard de runtime (p. ej. para validar un `:id` de ruta HTTP sin castear ciegamente). */
+export function isViewerSectionId(value: string): value is ViewerSectionId {
+  return (VIEWER_SECTION_ORDER as readonly string[]).includes(value);
+}
+
 export interface ViewerSectionSummary {
   readonly id: ViewerSectionId;
   readonly count: number;

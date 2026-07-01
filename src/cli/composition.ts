@@ -67,6 +67,12 @@ import { serializeCandidate } from "../infrastructure/token-mutations/candidate-
 import { createTokenSourceWriter } from "../infrastructure/token-mutations/token-source-writer.js";
 import { TokenMutationTerminalReporter } from "../infrastructure/reporter/token-mutation-terminal-reporter.js";
 import { TokenMutationJsonReporter } from "../infrastructure/reporter/token-mutation-json-reporter.js";
+import type { ViewerSessionDependencies } from "../application/viewer/ports.js";
+import { listPresets } from "../application/presets/list-presets.js";
+import { listAssets } from "../application/assets/list-assets.js";
+import { inspectAsset } from "../application/assets/inspect-asset.js";
+import { observeBuildOutput } from "../infrastructure/build-export/output-snapshot-reader.js";
+import { planTokenMutation } from "../application/token-mutations/plan-token-mutation.js";
 import type { CliIO } from "./io.js";
 
 export function createRealDependencies(io: CliIO): InitializeDependencies {
@@ -229,5 +235,28 @@ export function createTokenMutationDependencies(io: CliIO): TokenCliDependencies
     apply: { snapshot, serialize: serializeCandidate, createWriter: (rootDir: string) => createTokenSourceWriter(rootDir) },
     terminal: new TokenMutationTerminalReporter(io),
     json: new TokenMutationJsonReporter(io),
+  };
+}
+
+// Feature 009 — Design System Viewer. `ViewerSessionDependencies` sobre los casos de uso ya cerrados de
+// `002`–`008`; `readBuildSnapshot` (006) es la ÚNICA fuente de la sesión (embebe 002/004/006); `analyze`
+// se mantiene tipado pero NUNCA se invoca junto a `readBuildSnapshot` en la misma sesión (ver
+// `build-session.ts`). 100% read-only: ningún writer se construye aquí.
+export function createViewerDependencies(cwd: string): ViewerSessionDependencies {
+  const analyze = createBoundAnalyze();
+  const resolution = resolveHostRoot(cwd);
+  const rootDir = resolution.ok ? resolution.hostRoot.rootDir : cwd;
+  const assetStore = createAssetStoreReader(rootDir);
+  const mutationSnapshot = createTokenSourceSnapshotReader();
+
+  return {
+    analyze,
+    readBuildSnapshot: createBuildSnapshotReader(),
+    listPresets: () => listPresets({ catalog: createBundledPresetCatalog() }),
+    listAssets: () => listAssets({ store: assetStore }),
+    inspectAsset: (input) => inspectAsset(input, { store: assetStore }),
+    readBuildManifest: async () => (await observeBuildOutput(rootDir)).previousManifest,
+    readAnalyzedTokenSource: mutationSnapshot,
+    planRenameMoveImpact: (command) => planTokenMutation({ executionDir: cwd }, command, { snapshot: mutationSnapshot, serialize: serializeCandidate }),
   };
 }

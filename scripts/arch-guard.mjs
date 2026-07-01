@@ -44,6 +44,18 @@ const RULES = [
       { re: /\bprocess\.exit\s*\(/, msg: "process.exit() no permitido en infrastructure" },
     ],
   },
+  // T024 (009) — el Viewer es 100% read-only y framework-agnostic: nada de node:http/DOM/Commander/
+  // puertos de escritura dentro de `src/application/viewer/**` (solo `src/infrastructure/viewer/**`
+  // puede conocer el servidor/DOM).
+  {
+    dir: "src/application/viewer",
+    forbidden: [
+      { re: /from\s+["'](node:)?http["']/, msg: "application/viewer no debe importar node:http (solo infrastructure/viewer)" },
+      { re: /\b(document|window)\s*\./, msg: "application/viewer no debe referenciar document/window (DOM)" },
+      { re: /from\s+["']commander["']/, msg: "application/viewer no debe importar commander" },
+      { re: /\b\w*Writer(Port)?\b/, msg: "application/viewer no debe referenciar un puerto de escritura (*Writer/*WriterPort)" },
+    ],
+  },
 ];
 
 async function walk(dir) {

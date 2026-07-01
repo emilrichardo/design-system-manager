@@ -14,6 +14,7 @@ import {
   createTokenMutationDependencies,
   createValidateDependencies,
   createValidateJsonDependencies,
+  createViewerDependencies,
 } from "./composition.js";
 import { INTERNAL_ERROR_EXIT } from "./exit-codes.js";
 import { processExportOutput, processIO } from "./io.js";
@@ -44,6 +45,7 @@ try {
     buildExportDeps: createBuildExportDependencies(io, processExportOutput, process.cwd()),
     assetDeps: createAssetDependencies(io, process.cwd()),
     tokenDeps: createTokenMutationDependencies(io),
+    viewDeps: createViewerDependencies(process.cwd()),
     version: readCliVersion(),
   });
   process.exitCode = code;

@@ -7,6 +7,7 @@ import type { PresetsJsonOutcomeV1 } from "../application/presets/json/dto.js";
 import type { BuildOutcome } from "../domain/build-export/build-outcome.js";
 import type { AssetOutcome } from "../domain/assets/asset-outcome.js";
 import type { TokenMutationOutcome } from "../domain/token-mutations/outcome.js";
+import type { ViewerResolvedStateV1 } from "../application/viewer/session.js";
 
 export const USAGE_ERROR_EXIT = 3; // errores de uso del parser (entrada inválida)
 export const INTERNAL_ERROR_EXIT = 70; // excepción inesperada no contractual (sysexits EX_SOFTWARE)
@@ -120,6 +121,33 @@ export function exitCodeForAssetOutcome(outcome: AssetExitOutcome): number {
       return INTERNAL_ERROR_EXIT;
     default: {
       const _exhaustive: never = outcome;
+      return INTERNAL_ERROR_EXIT;
+    }
+  }
+}
+
+// ── T023 (009) — Mapeo de exit codes del Viewer (tabla común; sin cambiar 001–008) ─────────────────
+// `internal-error` solo existe en la frontera CLI/adapter, no en el dominio. `ready`/`empty` → 0 (T027):
+// ninguno de los dos es un error; `empty` solo significa "nada que mostrar todavía".
+export type ViewerExitState = ViewerResolvedStateV1 | "internal-error";
+
+export function exitCodeForViewerState(state: ViewerExitState): number {
+  switch (state) {
+    case "ready":
+    case "empty":
+      return 0;
+    case "invalid-design-system":
+      return 3;
+    case "partial":
+      return 4;
+    case "not-found":
+      return 5;
+    case "read-error":
+      return 6;
+    case "internal-error":
+      return INTERNAL_ERROR_EXIT;
+    default: {
+      const _exhaustive: never = state;
       return INTERNAL_ERROR_EXIT;
     }
   }

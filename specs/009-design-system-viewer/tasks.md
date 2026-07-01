@@ -119,28 +119,28 @@ que prohíbe imports prohibidos en `src/application/viewer/**`.
 
 ### Tasks
 
-- [ ] T020 [US1][US13] Crear `src/application/viewer/json/map-viewer.ts` + `ViewerJsonEnvelopeV1`
+- [X] T020 [US1][US13] Crear `src/application/viewer/json/map-viewer.ts` + `ViewerJsonEnvelopeV1`
   (`contracts/viewer-json-envelope-v1.contract.md`): `formatVersion` primero, `section`, `state`, `data`.
-- [ ] T021 [US1][US12] Crear `src/infrastructure/viewer/http-server.ts`: servidor `node:http` puro
+- [X] T021 [US1][US12] Crear `src/infrastructure/viewer/http-server.ts`: servidor `node:http` puro
   (`127.0.0.1`, puerto efímero por defecto), rutas `GET /api/session` y `GET /api/section/:id`, sirve el
   bundle estático desde `src/infrastructure/viewer/ui/dist/`; nunca `POST`/`PUT`/`DELETE`.
-- [ ] T022 [US1] Crear el esqueleto de `src/infrastructure/viewer/ui/` (TypeScript vanilla + DOM): shell de
+- [X] T022 [US1] Crear el esqueleto de `src/infrastructure/viewer/ui/` (TypeScript vanilla + DOM): shell de
   navegación con las 14 secciones canónicas, `fetch` solo contra `http://127.0.0.1:<port>/api/**`.
-- [ ] T023 [US13] Crear `src/cli/commands/view.ts` (adapter fino) y conectar `program.ts`/`composition.ts`:
+- [X] T023 [US13] Crear `src/cli/commands/view.ts` (adapter fino) y conectar `program.ts`/`composition.ts`:
   `neuraz-ds view [--port <n>] [--json]`; `--json` imprime `ViewerJsonEnvelopeV1` de la sesión sin abrir
   servidor ni navegador.
-- [ ] T024 [US14][US19-guard] Extender `scripts/arch-guard.mjs` (o crear un chequeo equivalente) para
+- [X] T024 [US14][US19-guard] Extender `scripts/arch-guard.mjs` (o crear un chequeo equivalente) para
   prohibir, dentro de `src/application/viewer/**`: imports de `node:http`, DOM/`window`/`document`,
   Commander, y cualquier puerto de escritura (`*WriterPort`/`*Writer`).
-- [ ] T025 [P] [US13] Crear `tests/architecture/viewer/forbidden-imports.test.ts`: falla si
+- [X] T025 [P] [US13] Crear `tests/architecture/viewer/forbidden-imports.test.ts`: falla si
   `src/application/viewer/**` importa algo prohibido por T024; falla si `src/domain/viewer/**` existe
   (decisión de `plan.md`: no hay paquete de dominio nuevo).
-- [ ] T026 [P] [US1][US12] Crear `tests/integration/viewer/http-server.test.ts`: `GET /api/session`
+- [X] T026 [P] [US1][US12] Crear `tests/integration/viewer/http-server.test.ts`: `GET /api/session`
   responde un `ViewerJsonEnvelopeV1` válido; ningún método distinto de `GET` está soportado; funciona con
   la interfaz de red del proceso deshabilitada salvo loopback (offline, FR-021).
-- [ ] T027 [P] [US13] Crear `tests/cli/view-command.test.ts`: `view --json` no abre servidor ni navegador,
+- [X] T027 [P] [US13] Crear `tests/cli/view-command.test.ts`: `view --json` no abre servidor ni navegador,
   imprime exactamente un envelope, exit 0 para `ready`/`empty`.
-- [ ] T028 Gate C: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T028 Gate C: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: cero escrituras; `001`–`008` sin cambios de comportamiento/JSON/exit codes.
 **Suggested commit**: `feat: add viewer http adapter, static shell and view command`

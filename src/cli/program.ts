@@ -16,6 +16,7 @@ import type {
 } from "../application/analysis-ports.js";
 import type { InspectFoundationsDependencies } from "../application/foundations/foundations-ports.js";
 import type { AssetCliDependencies, BuildExportCliDependencies, PresetsCliDependencies, TokenCliDependencies } from "./composition.js";
+import type { ViewerSessionDependencies } from "../application/viewer/ports.js";
 import type { CliIO } from "./io.js";
 import {
   exitCodeForAssetOutcome,
@@ -24,6 +25,7 @@ import {
   exitCodeForOutcome,
   exitCodeForPresetOutcome,
   exitCodeForTokenMutationOutcome,
+  exitCodeForViewerState,
   INTERNAL_ERROR_EXIT,
   USAGE_ERROR_EXIT,
 } from "./exit-codes.js";
@@ -52,6 +54,8 @@ import {
   singleOperationCommand,
   TokenCommandFileError,
 } from "./commands/token.js";
+import { runViewServer, runViewSession } from "./commands/view.js";
+import { toViewerSessionJsonEnvelope } from "../application/viewer/json/map-viewer.js";
 
 /** Modo de presentación parseado por Commander para validate/inspect. */
 export interface CommandModeOptions {
@@ -83,6 +87,7 @@ export interface ProgramHandlers {
   onTokenRename: (path: string, newName: string) => Promise<number>;
   onTokenMove: (path: string, newParent: string) => Promise<number>;
   onTokenRemove: (path: string) => Promise<number>;
+  onView: (opts: { readonly port?: number; readonly json: boolean }) => Promise<number>;
 }
 
 const JSON_FLAG_DESCRIPTION = "Emite el resultado como JSON estructurado.";
@@ -313,6 +318,19 @@ export function createProgram(handlers: ProgramHandlers): {
     state.code = await handlers.onTokenRemove(path);
   });
 
+  // T023 (009) — `view`: sin `--json`, arranca el servidor local de solo lectura (nunca abre navegador);
+  // con `--json`, imprime la sesión (`ViewerJsonEnvelopeV1`) sin abrir servidor. Sin flags fuera de alcance.
+  const view = program
+    .command("view")
+    .description("Abre el Design System Viewer local (solo lectura).")
+    .option("--port <n>", "Puerto local (por defecto: efímero, asignado por el SO).")
+    .option("--json", "Imprime la sesión como JSON sin abrir servidor.", false);
+  view.exitOverride();
+  view.action(async (options: { port?: string; json?: boolean }) => {
+    const json = options.json === true;
+    state.code = options.port === undefined ? await handlers.onView({ json }) : await handlers.onView({ port: Number(options.port), json });
+  });
+
   return { program, getCode: () => state.code };
 }
 
@@ -339,6 +357,8 @@ export interface CliRuntime {
   assetDeps?: AssetCliDependencies;
   /** Dependencias del grupo `token` (casos de uso headless + reporters humano/JSON). Opcional para pruebas de 001. */
   tokenDeps?: TokenCliDependencies;
+  /** Dependencias de `view` (sesión headless del Viewer sobre `002`–`008`). Opcional para pruebas de 001. */
+  viewDeps?: ViewerSessionDependencies;
   version: string;
 }
 
@@ -558,6 +578,35 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
     }
   }
 
+  // Viewer: `--json` es de solo lectura (una sola sesión, sin servidor); sin `--json`, arranca el
+  // servidor local (nunca abre navegador). Una excepción inesperada → `internal-error`/70.
+  async function runViewMode(opts: { readonly port?: number; readonly json: boolean }): Promise<number> {
+    const deps = runtime.viewDeps;
+    if (deps === undefined) {
+      if (opts.json) runtime.io.err(`${JSON.stringify({ formatVersion: "1.0.0", section: "session", state: "internal-error", data: null }, null, 2)}\n`);
+      else runtime.io.err("view: internal-error — Ocurrió un error interno.\n");
+      return INTERNAL_ERROR_EXIT;
+    }
+    if (opts.json) {
+      try {
+        const session = await runViewSession(runtime.cwd, deps);
+        runtime.io.out(`${JSON.stringify(toViewerSessionJsonEnvelope(session), null, 2)}\n`);
+        return exitCodeForViewerState(session.state);
+      } catch {
+        runtime.io.err(`${JSON.stringify({ formatVersion: "1.0.0", section: "session", state: "internal-error", data: null }, null, 2)}\n`);
+        return INTERNAL_ERROR_EXIT;
+      }
+    }
+    try {
+      const handle = await runViewServer(runtime.cwd, deps, opts.port);
+      runtime.io.out(`Viewer listening at http://127.0.0.1:${handle.port}/\n`);
+      return 0;
+    } catch {
+      runtime.io.err("view: internal-error — Ocurrió un error interno.\n");
+      return INTERNAL_ERROR_EXIT;
+    }
+  }
+
   const { program, getCode } = createProgram({
     version: runtime.version,
     io: runtime.io,
@@ -599,6 +648,7 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
     onTokenRename: (path, newName) => runTokenShorthand({ kind: "rename-token", path, newName }),
     onTokenMove: (path, newParent) => runTokenShorthand({ kind: "move-token", path, newParent }),
     onTokenRemove: (path) => runTokenShorthand({ kind: "remove-token", path }),
+    onView: (opts) => runViewMode(opts),
   });
 
   try {
