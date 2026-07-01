@@ -93,14 +93,14 @@ no UI controls, no productive write path.
 
 ### Tasks
 
-- [ ] T025 [US1][US2][US3][US4] Implement visual diff UI for added, updated, renamed, moved, alias-changed, metadata-changed, group-changed and removed entries.
-- [ ] T026 [US2][US3][US4][US6] Implement conflicts/warnings panels for dependents, collisions, invalid command, unsupported type, plan expired and source unavailable.
-- [ ] T027 [US1] Implement approval controls: approve, cancel and back-to-edit; block approve unless `EditorReviewV1.canApprove`.
-- [ ] T028 [US1][US6] Ensure editing after review invalidates the review and requires a new plan.
-- [ ] T029 [P] [US3] Create `tests/integration/editor/rename-move-diff.test.ts` proving visual diff matches `008` diff references exactly.
-- [ ] T030 [P] [US2][US4] Create `tests/integration/editor/conflicts.test.ts` for removal-with-dependents, group-removal-non-empty and collisions with zero writes.
-- [ ] T031 [P] [US1] Create `tests/integration/editor/approval-boundary.test.ts` proving no apply occurs before explicit approval and cancel/back-to-edit write nothing.
-- [ ] T032 Gate D: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T025 [US1][US2][US3][US4] Implement visual diff UI for added, updated, renamed, moved, alias-changed, metadata-changed, group-changed and removed entries.
+- [X] T026 [US2][US3][US4][US6] Implement conflicts/warnings panels for dependents, collisions, invalid command, unsupported type, plan expired and source unavailable.
+- [X] T027 [US1] Implement approval controls: approve, cancel and back-to-edit; block approve unless `EditorReviewV1.canApprove`.
+- [X] T028 [US1][US6] Ensure editing after review invalidates the review and requires a new plan.
+- [X] T029 [P] [US3] Create `tests/integration/editor/rename-move-diff.test.ts` proving visual diff matches `008` diff references exactly.
+- [X] T030 [P] [US2][US4] Create `tests/integration/editor/conflicts.test.ts` for removal-with-dependents, group-removal-non-empty and collisions with zero writes.
+- [X] T031 [P] [US1] Create `tests/integration/editor/approval-boundary.test.ts` proving no apply occurs before explicit approval and cancel/back-to-edit write nothing.
+- [X] T032 Gate D: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: `planTokenMutation` remains the only source of plan/diff data.
 **Suggested commit**: `feat: add editor plan diff and approval`

@@ -8,6 +8,8 @@ import type { ViewerTypographyV1 } from "../../../application/viewer/typography.
 import type { ViewerFoundationV1 } from "../../../application/viewer/foundation.js";
 import type { ViewerTokenV1 } from "../../../application/viewer/token.js";
 import type { ViewerIssueV1 } from "../../../application/viewer/issue.js";
+import type { EditorReviewV1, EditorIssueV1 } from "../../../application/editor/review.js";
+import type { TokenMutationDiffEntry } from "../../../domain/token-mutations/diff.js";
 
 interface ViewerJsonEnvelopeLike {
   readonly formatVersion: string;
@@ -230,10 +232,110 @@ function editorCommand(operations: readonly Record<string, unknown>[]): Record<s
   return { formatVersion: "1.0.0", operations };
 }
 
-function renderDraftPreview(status: HTMLElement, output: HTMLPreElement, command: Record<string, unknown>): void {
-  status.textContent = "Draft ready. Use the plan route to review the diff before approval.";
+// T025/T026/T027/T028 — Diff visual (read-only, determinista), paneles de conflicts/warnings y controles
+// de aprobación (approve/cancel/back-to-edit). El diff/plan SIEMPRE viene de `planTokenMutation` (008) vía
+// `/api/editor/plan`; esta UI nunca reconstruye ni recalcula nada, solo lo presenta.
+function diffEntryRow(entry: TokenMutationDiffEntry): HTMLLIElement {
+  const li = document.createElement("li");
+  const from = entry.previousPath !== null ? ` (from ${entry.previousPath})` : "";
+  const refs = entry.references.length > 0 ? ` — updates references: ${entry.references.join(", ")}` : "";
+  const before = entry.before !== null ? ` before=${describeValue(entry.before)}` : "";
+  const after = entry.after !== null ? ` after=${describeValue(entry.after)}` : "";
+  li.textContent = `[${entry.kind}] ${entry.path}${from}${before}${after}${refs}`;
+  return li;
+}
+
+function issueRow(issue: EditorIssueV1): HTMLLIElement {
+  const li = document.createElement("li");
+  const deps = issue.dependents.length > 0 ? ` — dependents: ${issue.dependents.join(", ")}` : "";
+  li.textContent = `[${issue.severity}] ${issue.code}${issue.path !== null ? ` (${issue.path})` : ""} — ${issue.message}${deps}`;
+  return li;
+}
+
+/**
+ * Renderiza el panel de revisión completo: resumen del diff (por categoría, igual que
+ * `TokenMutationDiffSummary`), entradas del diff (por operación/por token), conflicts (bloqueantes) y
+ * warnings (no bloqueantes, visibles hasta la aprobación), y los controles approve/cancel/back-to-edit.
+ * `approve` queda deshabilitado salvo `review.canApprove` (nunca aplica automáticamente).
+ */
+function renderReviewPanel(container: HTMLElement, review: EditorReviewV1, callbacks: { readonly onApprove: () => void; readonly onCancel: () => void; readonly onBackToEdit: () => void }): void {
+  clear(container);
+  const heading3 = document.createElement("h3");
+  heading3.id = "editor-review-title";
+  heading3.textContent = `Plan review: ${review.state}`;
+  container.setAttribute("aria-labelledby", heading3.id);
+  container.setAttribute("aria-live", "polite");
+  container.append(heading3);
+
+  const outcome = document.createElement("p");
+  outcome.textContent = `Outcome: ${review.plan.outcome}. Writable: ${review.plan.writable ? "yes" : "no"}. Operations: ${review.plan.operationsCount}.`;
+  container.append(outcome);
+
+  if (review.expiredPlan) {
+    container.append(statusParagraph("This plan is expired: the source may have changed. Generate a new plan before approving."));
+  }
+
+  const diff = review.diff;
+  if (diff === null || diff.isEmpty) {
+    container.append(statusParagraph(diff === null ? "No diff available for this plan." : "This command produces no changes (empty diff)."));
+  } else {
+    const s = diff.summary;
+    container.append(
+      statusParagraph(
+        `Diff summary: added=${s.added} updated=${s.updated} renamed=${s.renamed} moved=${s.moved} removed=${s.removed} aliasChanged=${s.aliasChanged} metadataChanged=${s.metadataChanged} groupChanged=${s.groupChanged}`,
+      ),
+    );
+    const list = document.createElement("ul");
+    list.setAttribute("aria-label", "Diff entries (read-only)");
+    for (const entry of diff.entries) list.append(diffEntryRow(entry));
+    container.append(list);
+  }
+
+  const blocking = review.plan.issues.filter((i) => i.blocksApply);
+  const warnings = review.plan.issues.filter((i) => !i.blocksApply);
+  if (blocking.length > 0) {
+    const blockingHeading = document.createElement("h4");
+    blockingHeading.textContent = "Conflicts (blocking)";
+    const list = document.createElement("ul");
+    list.setAttribute("aria-label", "Blocking conflicts");
+    for (const issue of blocking) list.append(issueRow(issue));
+    container.append(blockingHeading, list);
+  }
+  if (warnings.length > 0) {
+    // Los warnings no bloqueantes permanecen visibles hasta la aprobación (nunca se ocultan).
+    const warningsHeading = document.createElement("h4");
+    warningsHeading.textContent = "Warnings (non-blocking)";
+    const list = document.createElement("ul");
+    list.setAttribute("aria-label", "Non-blocking warnings");
+    for (const issue of warnings) list.append(issueRow(issue));
+    container.append(warningsHeading, list);
+  }
+
+  const actions = document.createElement("div");
+  const approveButton = document.createElement("button");
+  approveButton.type = "button";
+  approveButton.textContent = "Approve";
+  approveButton.disabled = !review.canApprove; // los planes bloqueados/expirados nunca pueden aprobarse
+  approveButton.addEventListener("click", callbacks.onApprove);
+  const cancelButton = document.createElement("button");
+  cancelButton.type = "button";
+  cancelButton.textContent = "Cancel";
+  cancelButton.addEventListener("click", callbacks.onCancel);
+  const backButton = document.createElement("button");
+  backButton.type = "button";
+  backButton.textContent = "Back to edit";
+  backButton.addEventListener("click", callbacks.onBackToEdit);
+  actions.append(approveButton, cancelButton, backButton);
+  container.append(actions);
+}
+
+function renderDraftPreview(status: HTMLElement, output: HTMLPreElement, command: Record<string, unknown>, reviewPanel: HTMLElement): void {
+  status.textContent = "Draft ready. Generate a plan to review the diff before approval.";
   output.textContent = JSON.stringify(command, null, 2);
   output.focus();
+  // T028 — cualquier cambio de draft invalida un review previo: nunca se deja un plan obsoleto visible
+  // junto a un draft distinto del que lo produjo; hay que generar un plan nuevo.
+  clear(reviewPanel);
 }
 
 function editorForm(titleText: string): HTMLFormElement {
@@ -262,10 +364,60 @@ function renderEditorDraftForms(section: HTMLElement): void {
   const formStatus = document.createElement("p");
   formStatus.id = "editor-form-status";
   formStatus.setAttribute("aria-live", "polite");
-  formStatus.textContent = "Editor forms create drafts only; unsupported or composite values remain read-only in this checkpoint.";
+  formStatus.textContent = "Editor forms create drafts only. Generate a plan to review the diff before approval.";
   const output = document.createElement("pre");
   output.tabIndex = -1;
   output.setAttribute("aria-label", "Editor draft JSON");
+
+  const reviewPanel = document.createElement("div");
+  reviewPanel.id = "editor-review-panel";
+
+  let currentCommand: Record<string, unknown> | null = null;
+  const preview = (command: Record<string, unknown>): void => {
+    currentCommand = command;
+    renderDraftPreview(formStatus, output, command, reviewPanel);
+  };
+
+  const planForm = editorForm("Plan review");
+  const planStatus = document.createElement("p");
+  planStatus.id = "editor-plan-status";
+  planStatus.setAttribute("aria-live", "polite");
+  const planButton = document.createElement("button");
+  planButton.type = "button";
+  planButton.textContent = "Generate plan";
+  planButton.addEventListener("click", async () => {
+    if (currentCommand === null) {
+      planStatus.textContent = "Create a draft above before generating a plan.";
+      return;
+    }
+    planStatus.textContent = "Generating plan...";
+    const envelope = await fetchEditorJson("/api/editor/plan", "POST", currentCommand);
+    if (envelope === null || envelope.data === null) {
+      planStatus.textContent = "Could not generate a plan for this draft.";
+      clear(reviewPanel);
+      return;
+    }
+    planStatus.textContent = "";
+    const review = envelope.data as EditorReviewV1;
+    renderReviewPanel(reviewPanel, review, {
+      onApprove: () => {
+        // T027 — nunca aplica automáticamente: la aprobación en este checkpoint solo confirma la
+        // intención; el apply transaccional real se conecta en el próximo checkpoint (concurrencia/recovery).
+        planStatus.textContent = "Plan approved. Apply is available once the next checkpoint is implemented.";
+      },
+      onCancel: () => {
+        currentCommand = null;
+        output.textContent = "";
+        clear(reviewPanel);
+        planStatus.textContent = "Draft cancelled.";
+      },
+      onBackToEdit: () => {
+        clear(reviewPanel);
+        planStatus.textContent = "Back to editing. Adjust the draft and generate a new plan.";
+      },
+    });
+  });
+  planForm.append(planStatus, planButton, reviewPanel);
 
   const valueForm = editorForm("Value editor");
   const valuePath = labeledInput("editor-token-path", "Token path", "text", "color.brand.primary");
@@ -284,11 +436,7 @@ function renderEditorDraftForms(section: HTMLElement): void {
   valueForm.append(valueButton);
   valueForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    renderDraftPreview(
-      formStatus,
-      output,
-      editorCommand([{ kind: "update-value", path: valuePath.value, value: parseTypedValue(valueType.value, valueInput.value, unitInput.value, boolInput.checked) }]),
-    );
+    preview(editorCommand([{ kind: "update-value", path: valuePath.value, value: parseTypedValue(valueType.value, valueInput.value, unitInput.value, boolInput.checked) }]));
   });
 
   const metaForm = editorForm("Type and metadata");
@@ -310,7 +458,7 @@ function renderEditorDraftForms(section: HTMLElement): void {
     button.textContent = label;
     button.addEventListener("click", () => {
       const value = field === "type" ? metaType.value : field === "description" ? description.value || null : category.value || null;
-      renderDraftPreview(formStatus, output, editorCommand([{ kind, path: metaPath.value, [field]: value }]));
+      preview(editorCommand([{ kind, path: metaPath.value, [field]: value }]));
     });
     metaForm.append(button);
   }
@@ -327,7 +475,7 @@ function renderEditorDraftForms(section: HTMLElement): void {
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = label;
-    button.addEventListener("click", () => renderDraftPreview(formStatus, output, editorCommand([operation()])));
+    button.addEventListener("click", () => preview(editorCommand([operation()])));
     aliasForm.append(button);
   }
 
@@ -355,11 +503,11 @@ function renderEditorDraftForms(section: HTMLElement): void {
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = label;
-    button.addEventListener("click", () => renderDraftPreview(formStatus, output, editorCommand([operation()])));
+    button.addEventListener("click", () => preview(editorCommand([operation()])));
     adminForm.append(button);
   }
 
-  section.append(formStatus, valueForm, metaForm, aliasForm, adminForm, output);
+  section.append(formStatus, valueForm, metaForm, aliasForm, adminForm, output, planForm);
 }
 
 function renderEditorEntry(el: HTMLElement): void {

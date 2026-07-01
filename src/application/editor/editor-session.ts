@@ -18,3 +18,13 @@ export function composeEditorSessionFromViewer(viewer: ViewerSessionV1, options:
     plan: options.plan ?? null,
   });
 }
+
+/**
+ * T028 — Invalida cualquier review/apply/recovery previo cuando el draft cambia DESPUÉS de tener un plan
+ * (`EditorReviewV1` es "non-editable"; volver a editar exige un nuevo plan — `editor-review-v1.contract.md`
+ * "Editing after review must return to draft and produce a new plan"). Nunca conserva un plan obsoleto
+ * junto a un draft distinto del que lo produjo.
+ */
+export function withInvalidatedReview(session: EditorSessionV1, draft: EditorCommandDraftV1 | null): EditorSessionV1 {
+  return createEditorSession(session.viewer, { state: "drafting", draft, plan: null, apply: null, recovery: null });
+}
