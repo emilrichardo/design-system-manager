@@ -4,10 +4,12 @@ shell commands, and other important information, read the current plan:
 `specs/011-complete-design-system-foundation-branding-and-presets/plan.md` (feature
 011-complete-design-system-foundation-branding-and-presets — modelo canónico completo del Design
 System, Brand System inicial, capas de token, 13 tipos DTCG profundos, preset `web-complete` + packs,
-extensiones de Viewer/Editor; solo spec/contratos, sin código productivo todavía).
+extensiones de Viewer/Editor; implementada en código sobre el Core existente, con cierre y regresión
+controlados por los checkpoints A–F).
 Features 001-ds-init, 002-ds-validate-inspect, 003-json-output, 004-foundations, 005-presets,
 006-build-export, 007-asset-manager, 008-token-mutations, 009-design-system-viewer y
-010-visual-token-editor estan cerradas (completed) y se reutilizan, no se reimplementan.
+010-visual-token-editor, junto con 011-complete-design-system-foundation-branding-and-presets, estan
+cerradas (completed) y se reutilizan, no se reimplementan.
 Stack previsto: TypeScript estricto + ESM, Node >=22, commander, @clack/prompts, zod, ajv,
 semver, vitest; UI local heredada de 009 con `node:http` y TypeScript/DOM vanilla, sin nueva dependencia
 runtime prevista. Formato canonico de tokens: DTCG 2025.10.
@@ -27,7 +29,9 @@ importadores, IA, MCP), lee [`docs/product/`](docs/product/README.md):
 [roadmap](docs/product/complete-design-system-roadmap.md), [visión](docs/product/vision.md),
 [guardrails arquitectónicos](docs/product/architecture-guardrails.md) y
 [mapa de capacidades](docs/product/capability-map.md). `001`–`010` están `implemented` y `completed`;
-`011` define spec/plan/contratos (sin código productivo); `012`–`021` son roadmap, no especificadas.
+`011` también está `implemented` y `completed` (brand storage, validación DTCG profunda, presets/packs,
+build/export de brand y superficies `brand/components/quality` en Viewer/Editor); `012`–`021` son
+roadmap, no especificadas.
 
 ## Protocolo de intake de marca y assets (obligatorio para agentes)
 

@@ -185,14 +185,14 @@ permite completar brand y editar component tokens con el mismo boundary de aprob
 **Goal**: Compatibilidad hacia atrás verificada exhaustivamente, `AGENTS.md`/docs actualizados,
 `agent:status`/`agent:verify`/`agent:finalize` en verde.
 
-- [ ] T027 Ejecutar y corregir hasta verde: `npm run typecheck`, `npm run lint` (arch-guard), `npm test`,
+- [X] T027 Ejecutar y corregir hasta verde: `npm run typecheck`, `npm run lint` (arch-guard), `npm test`,
   `npm run build` sobre todo lo añadido en A–E.
-- [ ] T028 [P] Test de migración explícito: tomar los fixtures reales de `001`–`010` (o snapshots
+- [X] T028 [P] Test de migración explícito: tomar los fixtures reales de `001`–`010` (o snapshots
   equivalentes) sin `brand/` y sin metadata de capa, correr toda la suite de `011` encima, y verificar
   `0` diferencias de comportamiento observable (`tests/integration/compat/full-migration.test.ts`).
-- [ ] T029 [P] Actualizar `AGENTS.md` con el protocolo de intake de marca (FR-020) y el estado real de
+- [X] T029 [P] Actualizar `AGENTS.md` con el protocolo de intake de marca (FR-020) y el estado real de
   `011` (reemplaza cualquier referencia obsoleta a `010` como no-implementada).
-- [ ] T030 Ejecutar `npm run agent:verify -- --feature 011-complete-design-system-foundation-branding-and-presets`
+- [X] T030 Ejecutar `npm run agent:verify -- --feature 011-complete-design-system-foundation-branding-and-presets`
   y `npm run agent:finalize -- --feature 011-complete-design-system-foundation-branding-and-presets`;
   corregir cualquier hallazgo Critical/High/Medium antes de cerrar.
 
