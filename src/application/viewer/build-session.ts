@@ -19,7 +19,7 @@ import { deriveEmptyState, type ViewerSessionV1 } from "./session.js";
 import { loadClassifiedSnapshot } from "./snapshot-session.js";
 import { deriveBuildStatus, projectOverview } from "./overview.js";
 import { projectNavigation, type ViewerCategoryNavEntry } from "./navigation.js";
-import { projectIssues } from "./issue.js";
+import { projectAllIssues } from "./issue.js";
 import type { ViewerSessionDependencies } from "./ports.js";
 
 /** Cuenta nodos-grupo (objetos sin `$value`) sobre el documento YA parseado de la sesión: una pasada
@@ -67,9 +67,12 @@ export async function buildViewerSession(
 
   const build = deriveBuildStatus(previousManifest, sourceHash);
 
-  const issues = projectIssues({
+  const issues = projectAllIssues({
     validation: [...analysis.errors, ...analysis.warnings],
     foundations: foundationProjection ? [...foundationProjection.validation.errors, ...foundationProjection.validation.warnings] : [],
+    assetConflicts: assetsResult.conflicts,
+    aliasNodes: aliasNodes,
+    buildStale: build.stale,
   });
 
   const overview = projectOverview({

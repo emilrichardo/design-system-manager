@@ -79,3 +79,38 @@ export function aliasStateIssue(path: string, state: Exclude<AliasState, "valid"
 export function buildStaleIssue(): ViewerIssueV1 {
   return { source: "build", code: "stale-build", path: null, severity: "warning", message: "El build publicado no refleja la fuente actual de tokens." };
 }
+
+/** Forma mínima de un `AssetIssue` (007) suficiente para mapear (evita acoplar este módulo al tipo exacto). */
+export interface AssetIssueLike {
+  readonly code: string;
+  readonly path: string | null;
+  readonly severity: "error" | "warning";
+  readonly message: string;
+}
+
+/**
+ * Insumos crudos para el consolidado COMPLETO de issues (T042): `validation`/`foundations` (002/004),
+ * `assetConflicts` (007, ya cargados en la misma sesión), `aliasNodes` (002, para sintetizar issues de
+ * estado no válido) y `buildStale` (006, comparación de hash ya calculada). Un solo lugar para las 5
+ * fuentes, reusado por `build-session.ts` y `build-section-detail.ts` sin duplicar la lógica.
+ */
+export interface ProjectAllIssuesInput {
+  readonly validation: readonly AnalysisIssue[];
+  readonly foundations: readonly AnalysisIssue[];
+  readonly assetConflicts: readonly AssetIssueLike[];
+  readonly aliasNodes: readonly { readonly path: string; readonly aliasState: AliasState }[];
+  readonly buildStale: boolean;
+}
+
+/** Consolida las 5 fuentes de issues (FR-013), en el orden canónico fijo. */
+export function projectAllIssues(input: ProjectAllIssuesInput): readonly ViewerIssueV1[] {
+  return projectIssues({
+    validation: input.validation,
+    foundations: input.foundations,
+    assets: input.assetConflicts.map(mapAssetIssueToViewerIssue),
+    aliases: input.aliasNodes
+      .filter((n): n is { path: string; aliasState: Exclude<AliasState, "valid" | "n/a"> } => n.aliasState !== "valid" && n.aliasState !== "n/a")
+      .map((n) => aliasStateIssue(n.path, n.aliasState)),
+    build: input.buildStale ? [buildStaleIssue()] : [],
+  });
+}

@@ -194,33 +194,33 @@ los requisitos de accesibilidad de `spec.md` implementados y probados.
 
 ### Tasks
 
-- [ ] T039 [US8] Implementar `projectAsset` en `asset.ts`: mapeo 1:1 desde `007` `AssetRecord`/
+- [X] T039 [US8] Implementar `projectAsset` en `asset.ts`: mapeo 1:1 desde `007` `AssetRecord`/
   `AssetInspection`/`AssetListResult`; sin bytes crudos.
-- [ ] T040 [US7] Implementar `projectAlias` en `alias.ts`: `chain`/`dependents`/`state` desde `002`/`006`/
+- [X] T040 [US7] Implementar `projectAlias` en `alias.ts`: `chain`/`dependents`/`state` desde `002`/`006`/
   `008` `AnalyzedTokenSource.dependentsOf`.
-- [ ] T041 [US7] Implementar `projectRenameMoveImpactPreview`: comando sintético `rename-token`/
+- [X] T041 [US7] Implementar `projectRenameMoveImpactPreview`: comando sintético `rename-token`/
   `move-token` descartable → plan/diff read-only de `008`; nunca `applyTokenMutation`; nunca persistido.
-- [ ] T042 [US9] Completar `projectIssues`: añade `007` `AssetIssue`, `002` alias states no válidos, y el
+- [X] T042 [US9] Completar `projectIssues`: añade `007` `AssetIssue`, `002` alias states no válidos, y el
   flag `stale-build` (comparación de hash de fuente vs. manifest de `006`).
-- [ ] T043 [US10] Extender búsqueda/filtro (`search-filter.ts`) a assets (kind/MIME/licencia) y a
+- [X] T043 [US10] Extender búsqueda/filtro (`search-filter.ts`) a assets (kind/MIME/licencia) y a
   foundations (categoría/nivel) sobre la misma sesión cargada; sin llamadas adicionales.
-- [ ] T044 [US1][US11] Conectar en la UI los estados `loading|ready|empty|invalid-design-system|not-found|
+- [X] T044 [US1][US11] Conectar en la UI los estados `loading|ready|empty|invalid-design-system|not-found|
   read-error|partial` para cada sección (nunca pantalla en blanco en `partial`).
-- [ ] T045 [US1][accessibility] Implementar navegación por teclado + foco visible (≥3:1) + landmarks
+- [X] T045 [US1][accessibility] Implementar navegación por teclado + foco visible (≥3:1) + landmarks
   semánticos + `prefers-reduced-motion` + alternativas textuales a swatches/iconos/estados en
   `src/infrastructure/viewer/ui/`, per la sección Accessibility de `spec.md`.
-- [ ] T046 [P] [US8] Crear `tests/application/viewer/assets.test.ts`: paridad campo a campo con `007`,
+- [X] T046 [P] [US8] Crear `tests/application/viewer/assets.test.ts`: paridad campo a campo con `007`,
   `sanitization` solo para SVG, `license.status === "unspecified"` ⇒ identifier/notice nulos.
-- [ ] T047 [P] [US7] Crear `tests/application/viewer/aliases.test.ts`: dependientes correctos, preview de
+- [X] T047 [P] [US7] Crear `tests/application/viewer/aliases.test.ts`: dependientes correctos, preview de
   impacto nunca escribe ni persiste, `blockingReason` reusa los códigos de `008` sin inventar nuevos.
-- [ ] T048 [P] [US9] Crear `tests/application/viewer/issues.test.ts`: total consolidado = suma de fuentes +
+- [X] T048 [P] [US9] Crear `tests/application/viewer/issues.test.ts`: total consolidado = suma de fuentes +
   `stale-build`; `stale-build` siempre `warning`.
-- [ ] T049 [P] [US1][accessibility] Crear `tests/integration/viewer/accessibility.test.ts` (DOM headless o
+- [X] T049 [P] [US1][accessibility] Crear `tests/integration/viewer/accessibility.test.ts` (DOM headless o
   auditoría estática de landmarks/aria/foco/reduced-motion): cada requisito testable de la sección
   Accessibility tiene una aserción propia.
-- [ ] T050 [P] [US12] Crear `tests/integration/viewer/offline.test.ts`: sesión completa (abrir + cada
+- [X] T050 [P] [US12] Crear `tests/integration/viewer/offline.test.ts`: sesión completa (abrir + cada
   vista + búsqueda + preview de alias) exitosa con la interfaz de red deshabilitada salvo loopback.
-- [ ] T051 Gate E: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T051 Gate E: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: ninguna mutación de `design-system/**`; `001`–`008` byte-estables; sin llamada a
 `applyTokenMutation` en ningún test.

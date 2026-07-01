@@ -167,11 +167,25 @@ function renderGeneric(el: HTMLElement, id: string, state: string, data: unknown
   el.append(pre);
 }
 
+// T044 — mensaje explícito por estado (nunca solo el nombre crudo del estado; nunca pantalla en blanco
+// en `partial`, donde `data` SIGUE presente — ver invariantes de `contracts/viewer-session-outcomes-v1`).
+const STATE_MESSAGES: Readonly<Record<string, string>> = {
+  empty: "This Design System has no tokens, assets or presets yet.",
+  "invalid-design-system": "The Design System is not valid. Showing whatever could be recovered.",
+  "not-found": "No Design System was found at this location.",
+  "read-error": "The Design System could not be read.",
+  partial: "This Design System is only partially set up. Showing available data.",
+};
+
 function renderSection(el: HTMLElement, envelope: ViewerJsonEnvelopeLike): void {
   clear(el);
   if (envelope.data === null) {
-    el.append(heading(`${envelope.section} (${envelope.state})`), statusParagraph("Nothing to show for this state."));
+    el.append(heading(`${envelope.section} (${envelope.state})`), statusParagraph(STATE_MESSAGES[envelope.state] ?? `State: ${envelope.state}`));
     return;
+  }
+  if (envelope.state in STATE_MESSAGES) {
+    // partial (u otro estado degradado) con datos disponibles: aviso + contenido, nunca solo uno de los dos.
+    el.append(statusParagraph(STATE_MESSAGES[envelope.state] as string));
   }
   if (envelope.section === "colors") {
     renderColors(el, envelope.data as readonly ViewerColorV1[]);
@@ -197,7 +211,13 @@ async function loadSession(): Promise<void> {
     return;
   }
   clear(el);
-  el.append(heading("Overview"), statusParagraph(`Session state: ${envelope.state}`));
+  el.append(heading("Overview"));
+  el.append(statusParagraph(STATE_MESSAGES[envelope.state] ?? `Session state: ${envelope.state}`));
+  if (envelope.data !== null && typeof envelope.data === "object") {
+    const pre = document.createElement("pre");
+    pre.textContent = JSON.stringify(envelope.data, null, 2);
+    el.append(pre);
+  }
 }
 
 async function loadSection(id: string): Promise<void> {

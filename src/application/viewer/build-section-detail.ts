@@ -5,6 +5,7 @@
 // de aliases, y nunca vuelve a resolver valores (siempre desde el `resolvedTokenView` de la MISMA carga).
 import { MANAGED_FILES } from "../../domain/plan/managed-files.js";
 import type { FoundationCategoryId } from "../../domain/foundations/foundation-category.js";
+import { analyzedTokenSource } from "../token-mutations/analyze-source.js";
 import type { ViewerSectionId } from "./navigation.js";
 import type { ViewerResolvedStateV1 } from "./session.js";
 import { loadClassifiedSnapshot } from "./snapshot-session.js";
@@ -14,7 +15,8 @@ import { projectToken } from "./token.js";
 import { projectColorSwatch, type ViewerColorV1 } from "./color.js";
 import { projectTypography, type ViewerTypographyV1 } from "./typography.js";
 import { projectAssetsFromList, type ViewerAssetV1 } from "./asset.js";
-import { projectIssues, type ViewerIssueV1 } from "./issue.js";
+import { projectAlias, type ViewerAliasV1 } from "./alias.js";
+import { projectAllIssues, type ViewerIssueV1 } from "./issue.js";
 import type { ViewerSessionDependencies } from "./ports.js";
 
 const CATEGORY_BY_SECTION: Readonly<Record<string, FoundationCategoryId>> = {
@@ -34,6 +36,7 @@ export type ViewerSectionDetailData =
   | ViewerFoundationV1
   | readonly ViewerFoundationV1[]
   | readonly ViewerAssetV1[]
+  | readonly ViewerAliasV1[]
   | ViewerPresetSummaryV1
   | ViewerBuildStatusV1
   | readonly ViewerIssueV1[];
@@ -74,15 +77,17 @@ export async function buildViewerSectionDetail(
   switch (id) {
     case "overview":
     case "presets":
-    case "build":
-    case "aliases": {
+    case "build": {
       const [presetsResult, assetsResult, previousManifest] = await Promise.all([deps.listPresets(), deps.listAssets(), deps.readBuildManifest()]);
       const aliasNodes = analysis.nodes.filter((n) => n.kind === "alias");
       const validAliases = aliasNodes.filter((n) => n.aliasState === "valid").length;
       const build = deriveBuildStatus(previousManifest, sourceHash);
-      const issues = projectIssues({
+      const issues = projectAllIssues({
         validation: [...analysis.errors, ...analysis.warnings],
         foundations: foundationProjection ? [...foundationProjection.validation.errors, ...foundationProjection.validation.warnings] : [],
+        assetConflicts: assetsResult.conflicts,
+        aliasNodes,
+        buildStale: build.stale,
       });
       const overview = projectOverview({
         state,
@@ -99,9 +104,27 @@ export async function buildViewerSectionDetail(
       });
       if (id === "overview") return { state, data: overview };
       if (id === "presets") return { state, data: overview.presets };
-      if (id === "build") return { state, data: overview.build };
-      // "aliases": el detalle completo (chain/dependents/impact preview) llega en Checkpoint E (T040/T041).
-      return { state, data: null };
+      return { state, data: overview.build };
+    }
+
+    case "aliases": {
+      const tokensDoc = analysis.documents[MANAGED_FILES.tokens]?.parsed;
+      const source = analyzedTokenSource(tokensDoc, { logicalPath: MANAGED_FILES.tokens, contentHash: sourceHash });
+      const aliases = analysis.nodes
+        .map((n) => {
+          const dependents = source.dependentsOf(n.path);
+          if (n.kind !== "alias" && dependents.length === 0) return null; // aislado: no participa del grafo
+          return projectAlias({
+            path: n.path,
+            kind: n.kind,
+            immediateTarget: n.aliasTarget,
+            chain: resolvedByPath.get(n.path)?.aliasChain ?? [],
+            dependents,
+            state: n.aliasState,
+          });
+        })
+        .filter((a): a is ViewerAliasV1 => a !== null);
+      return { state, data: aliases };
     }
 
     case "colors": {
@@ -145,9 +168,14 @@ export async function buildViewerSectionDetail(
     }
 
     case "issues": {
-      const issues = projectIssues({
+      const [assetsResult, previousManifest] = await Promise.all([deps.listAssets(), deps.readBuildManifest()]);
+      const build = deriveBuildStatus(previousManifest, sourceHash);
+      const issues = projectAllIssues({
         validation: [...analysis.errors, ...analysis.warnings],
         foundations: foundationProjection ? [...foundationProjection.validation.errors, ...foundationProjection.validation.warnings] : [],
+        assetConflicts: assetsResult.conflicts,
+        aliasNodes: analysis.nodes.filter((n) => n.kind === "alias"),
+        buildStale: build.stale,
       });
       return { state, data: issues };
     }

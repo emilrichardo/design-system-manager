@@ -27,6 +27,18 @@ function writeJson(res: ServerResponse, statusCode: number, envelope: ViewerJson
   res.end(body);
 }
 
+// T045 — CSS de accesibilidad inline (sin CDN/hoja externa, offline-first): foco visible con contraste
+// ≥3:1 (`outline` de 3px, color con alto contraste sobre fondo claro/oscuro), skip-link solo visible al
+// enfocarse, `prefers-reduced-motion` (ninguna animación se añade nunca, pero se declara la intención
+// explícitamente), y ningún estilo que dependa SOLO del color (el estado ya se anuncia como texto).
+const SHELL_STYLE = `
+  :focus-visible { outline: 3px solid #1a56db; outline-offset: 2px; }
+  .skip-link { position: absolute; left: -9999px; top: 0; }
+  .skip-link:focus { left: 0; background: #fff; color: #000; padding: 0.5em; z-index: 1; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  .swatch { display: inline-block; width: 1em; height: 1em; border: 1px solid #333; vertical-align: middle; }
+`;
+
 function shellHtml(): string {
   const items = VIEWER_SECTION_ORDER.map((id) => `<li><a href="#${id}" data-section="${id}">${id}</a></li>`).join("");
   return `<!doctype html>
@@ -35,9 +47,11 @@ function shellHtml(): string {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Design System Viewer</title>
+<style>${SHELL_STYLE}</style>
 </head>
 <body>
 <a class="skip-link" href="#content">Skip to content</a>
+<header><h1>Design System Viewer</h1></header>
 <nav aria-label="Design System sections"><ul>${items}</ul></nav>
 <main id="content" tabindex="-1" aria-live="polite"><p>Loading…</p></main>
 <script type="module" src="/ui/main.js"></script>
