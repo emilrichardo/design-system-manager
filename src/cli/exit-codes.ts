@@ -6,6 +6,7 @@ import type { AnalysisOutcome } from "../application/analysis-ports.js";
 import type { PresetsJsonOutcomeV1 } from "../application/presets/json/dto.js";
 import type { BuildOutcome } from "../domain/build-export/build-outcome.js";
 import type { AssetOutcome } from "../domain/assets/asset-outcome.js";
+import type { TokenMutationOutcome } from "../domain/token-mutations/outcome.js";
 
 export const USAGE_ERROR_EXIT = 3; // errores de uso del parser (entrada inválida)
 export const INTERNAL_ERROR_EXIT = 70; // excepción inesperada no contractual (sysexits EX_SOFTWARE)
@@ -106,6 +107,38 @@ export function exitCodeForAssetOutcome(outcome: AssetExitOutcome): number {
     case "invalid-asset-store":
       return 3;
     case "unsupported-asset":
+    case "conflict":
+      return 4;
+    case "not-found":
+      return 5;
+    case "read-error":
+    case "write-error":
+      return 6;
+    case "verification-error":
+      return 7;
+    case "internal-error":
+      return INTERNAL_ERROR_EXIT;
+    default: {
+      const _exhaustive: never = outcome;
+      return INTERNAL_ERROR_EXIT;
+    }
+  }
+}
+
+// ── T038 (008) — Mapeo de exit codes de mutaciones de tokens (tabla común; sin cambiar 001–007) ────
+// `internal-error` solo existe en la frontera CLI/adapter, no en el dominio.
+export type TokenMutationExitOutcome = TokenMutationOutcome | "internal-error";
+
+export function exitCodeForTokenMutationOutcome(outcome: TokenMutationExitOutcome): number {
+  switch (outcome) {
+    case "planned":
+    case "applied":
+      return 0;
+    case "unchanged":
+      return 2;
+    case "invalid-command":
+    case "invalid-design-system":
+      return 3;
     case "conflict":
       return 4;
     case "not-found":

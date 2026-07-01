@@ -8,6 +8,9 @@ import { serializeJsonV1 } from "../infrastructure/reporter/json-serializer.js";
 import { toPresetsInternalErrorEnvelope } from "../application/presets/json/map-internal-error.js";
 import type { PresetsJsonCommandV1 } from "../application/presets/json/dto.js";
 import { serializePresetsJsonV1 } from "../infrastructure/reporter/presets-json-serializer.js";
+import { toTokenMutationInternalErrorEnvelope } from "../application/token-mutations/json/map-internal-error.js";
+import type { TokenMutationJsonCommandV1 } from "../application/token-mutations/json/dto.js";
+import { serializeTokenMutationJsonV1 } from "../infrastructure/reporter/token-mutation-json-serializer.js";
 import type { CliIO } from "./io.js";
 
 /** Escribe el envelope de error interno JSON en stderr (una sola escritura). */
@@ -19,4 +22,9 @@ export function writeInternalErrorJson(io: CliIO, command: JsonCommand): void {
 // a sus uniones). Escribe una sola vez en stderr; stdout queda vacío; el exit 70 lo decide el llamador.
 export function writePresetsInternalErrorJson(io: CliIO, command: PresetsJsonCommandV1): void {
   io.err(serializePresetsJsonV1(toPresetsInternalErrorEnvelope(command)));
+}
+
+// T037 (008) — Error interno JSON PROPIO de mutaciones de tokens (envelope/serializer separados).
+export function writeTokenMutationInternalErrorJson(io: CliIO, command: TokenMutationJsonCommandV1): void {
+  io.err(serializeTokenMutationJsonV1(toTokenMutationInternalErrorEnvelope(command)));
 }

@@ -159,24 +159,24 @@ detección de cambio concurrente, verificación posterior y estados de recuperac
 
 ### Tasks
 
-- [ ] T035 [US12] Crear `src/application/token-mutations/json/map-mutation.ts` + `TokenMutationJsonEnvelopeV1`
+- [X] T035 [US12] Crear `src/application/token-mutations/json/map-mutation.ts` + `TokenMutationJsonEnvelopeV1`
   (command `token-plan|token-apply`; paths lógicos; null policy; independiente de `003`).
-- [ ] T036 [US12] Crear `src/infrastructure/reporter/token-mutation-json-serializer.ts` y los reporters
+- [X] T036 [US12] Crear `src/infrastructure/reporter/token-mutation-json-serializer.ts` y los reporters
   `token-mutation-terminal-reporter.ts` / `token-mutation-json-reporter.ts` (deterministas, 2 espacios, LF).
-- [ ] T037 [US13] Crear `src/cli/commands/token.ts` y conectar `program.ts`/`composition.ts`:
+- [X] T037 [US13] Crear `src/cli/commands/token.ts` y conectar `program.ts`/`composition.ts`:
   `token plan|apply` con `--file <command.json>` y shorthands (`create/update/rename/move/remove`); sin
   flags fuera de alcance; sin `--force`.
-- [ ] T038 [US12] Añadir mapeo de exit codes (`exitCodeForTokenMutationOutcome`) reutilizando la tabla
+- [X] T038 [US12] Añadir mapeo de exit codes (`exitCodeForTokenMutationOutcome`) reutilizando la tabla
   común; `internal-error`→70 solo en el adapter.
-- [ ] T039 [P] [US13] Crear `tests/cli/token-commands.test.ts` y `token-help.test.ts`: superficie de
+- [X] T039 [P] [US13] Crear `tests/cli/token-commands.test.ts` y `token-help.test.ts`: superficie de
   comandos, selección de reporter, ayuda sin flags fuera de alcance; `plan` no escribe.
-- [ ] T040 [P] [US2] Crear `tests/cli/token-binary.test.ts` (proceso hijo): plan/apply, JSON, paths con
+- [X] T040 [P] [US2] Crear `tests/cli/token-binary.test.ts` (proceso hijo): plan/apply, JSON, paths con
   espacios/Unicode, cwd distinto, stdin cerrado; streams y exit codes.
-- [ ] T041 [P] [US12] Crear `tests/integration/token-mutations/json-envelope.test.ts`: parseable,
+- [X] T041 [P] [US12] Crear `tests/integration/token-mutations/json-envelope.test.ts`: parseable,
   formatVersion, paths lógicos, determinismo; bytes de `003`/`004`/`006`/`007` intactos.
-- [ ] T042 [P] [US13] Crear `tests/application/token-mutations/headless-reuse.test.ts`: casos de uso sin
+- [X] T042 [P] [US13] Crear `tests/application/token-mutations/headless-reuse.test.ts`: casos de uso sin
   Commander/process/TTY; resultados estructurados reutilizables por MCP/Studio.
-- [ ] T043 Gate E: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T043 Gate E: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: contratos JSON de `003`/`004`/`006`/`007` byte-estables.
 **Suggested commit**: `feat: add token mutation cli, json envelope and reporters`

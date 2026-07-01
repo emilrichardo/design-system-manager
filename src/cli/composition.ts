@@ -60,6 +60,13 @@ import { sha256Hex as assetSha256Hex } from "../infrastructure/assets/hash.js";
 import { AssetsTerminalReporter } from "../infrastructure/reporter/assets-terminal-reporter.js";
 import { AssetsJsonReporter } from "../infrastructure/reporter/assets-json-reporter.js";
 import type { AssetUseCaseDependencies } from "./commands/asset.js";
+import type { PlanTokenMutationDependencies } from "../application/token-mutations/plan-token-mutation.js";
+import type { ApplyTokenMutationDependencies } from "../application/token-mutations/apply-token-mutation.js";
+import { createTokenSourceSnapshotReader } from "../infrastructure/token-mutations/source-snapshot-reader.js";
+import { serializeCandidate } from "../infrastructure/token-mutations/candidate-serializer.js";
+import { createTokenSourceWriter } from "../infrastructure/token-mutations/token-source-writer.js";
+import { TokenMutationTerminalReporter } from "../infrastructure/reporter/token-mutation-terminal-reporter.js";
+import { TokenMutationJsonReporter } from "../infrastructure/reporter/token-mutation-json-reporter.js";
 import type { CliIO } from "./io.js";
 
 export function createRealDependencies(io: CliIO): InitializeDependencies {
@@ -201,5 +208,26 @@ export function createAssetDependencies(io: CliIO, cwd: string): AssetCliDepende
     probes,
     terminal: new AssetsTerminalReporter(io),
     json: new AssetsJsonReporter(io),
+  };
+}
+
+// Feature 008 — Token Mutation Commands. Snapshot reader/serializer compartidos por `plan`/`apply`; el
+// writer transaccional se liga al `rootDir` de la MISMA lectura del snapshot dentro de `applyTokenMutation`
+// (no se resuelve por separado aquí), evitando una segunda resolución de host root. Reporters humano/JSON;
+// el comando selecciona uno por ejecución. Nunca toca `design-system/build/**` ni `design-system/assets/**`.
+export interface TokenCliDependencies {
+  readonly plan: PlanTokenMutationDependencies;
+  readonly apply: ApplyTokenMutationDependencies;
+  readonly terminal: TokenMutationTerminalReporter;
+  readonly json: TokenMutationJsonReporter;
+}
+
+export function createTokenMutationDependencies(io: CliIO): TokenCliDependencies {
+  const snapshot = createTokenSourceSnapshotReader();
+  return {
+    plan: { snapshot, serialize: serializeCandidate },
+    apply: { snapshot, serialize: serializeCandidate, createWriter: (rootDir: string) => createTokenSourceWriter(rootDir) },
+    terminal: new TokenMutationTerminalReporter(io),
+    json: new TokenMutationJsonReporter(io),
   };
 }

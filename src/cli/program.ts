@@ -15,16 +15,27 @@ import type {
   InspectDesignSystemDependencies,
 } from "../application/analysis-ports.js";
 import type { InspectFoundationsDependencies } from "../application/foundations/foundations-ports.js";
-import type { AssetCliDependencies, BuildExportCliDependencies, PresetsCliDependencies } from "./composition.js";
+import type { AssetCliDependencies, BuildExportCliDependencies, PresetsCliDependencies, TokenCliDependencies } from "./composition.js";
 import type { CliIO } from "./io.js";
-import { exitCodeForAssetOutcome, exitCodeForBuildExportOutcome, exitCodeForResult, exitCodeForOutcome, exitCodeForPresetOutcome, INTERNAL_ERROR_EXIT, USAGE_ERROR_EXIT } from "./exit-codes.js";
+import {
+  exitCodeForAssetOutcome,
+  exitCodeForBuildExportOutcome,
+  exitCodeForResult,
+  exitCodeForOutcome,
+  exitCodeForPresetOutcome,
+  exitCodeForTokenMutationOutcome,
+  INTERNAL_ERROR_EXIT,
+  USAGE_ERROR_EXIT,
+} from "./exit-codes.js";
 import type { PresetExitOutcome } from "./exit-codes.js";
-import { writeInternalErrorJson, writePresetsInternalErrorJson } from "./json-error.js";
+import { writeInternalErrorJson, writePresetsInternalErrorJson, writeTokenMutationInternalErrorJson } from "./json-error.js";
 import { toFoundationsInternalErrorEnvelope } from "../application/foundations/json/map-internal-error.js";
 import { serializeFoundationsJsonV1 } from "../infrastructure/reporter/foundations-json-serializer.js";
 import { BuildTerminalReporter } from "../infrastructure/reporter/build-terminal-reporter.js";
 import { BuildJsonReporter } from "../infrastructure/reporter/build-json-reporter.js";
 import type { BuildFormat } from "../domain/build-export/build-format.js";
+import type { TokenMutationCommandV1 } from "../domain/token-mutations/command.js";
+import type { TokenMutationResultV1 } from "../domain/token-mutations/result.js";
 import { runInit } from "./commands/init.js";
 import { runValidate } from "./commands/validate.js";
 import { runInspect } from "./commands/inspect.js";
@@ -33,6 +44,14 @@ import { runBuild } from "./commands/build.js";
 import { runExport } from "./commands/export.js";
 import { readImportSources, runAssetImportApply, runAssetImportPlan, runAssetInspect, runAssetList, runAssetRemove } from "./commands/asset.js";
 import { runPresetsApply, runPresetsInspect, runPresetsList, runPresetsPlan } from "./commands/presets.js";
+import {
+  parseValueFlag,
+  readTokenMutationCommandFile,
+  runTokenApply,
+  runTokenPlan,
+  singleOperationCommand,
+  TokenCommandFileError,
+} from "./commands/token.js";
 
 /** Modo de presentación parseado por Commander para validate/inspect. */
 export interface CommandModeOptions {
@@ -57,6 +76,13 @@ export interface ProgramHandlers {
   onPresetsInspect: (id: string, opts: CommandModeOptions) => Promise<number>;
   onPresetsPlan: (id: string, opts: CommandModeOptions) => Promise<number>;
   onPresetsApply: (id: string, opts: CommandModeOptions) => Promise<number>;
+  onTokenPlan: (file: string, opts: CommandModeOptions) => Promise<number>;
+  onTokenApply: (file: string, opts: CommandModeOptions) => Promise<number>;
+  onTokenCreate: (path: string, opts: { readonly type: string; readonly value: string }) => Promise<number>;
+  onTokenUpdate: (path: string, value: string) => Promise<number>;
+  onTokenRename: (path: string, newName: string) => Promise<number>;
+  onTokenMove: (path: string, newParent: string) => Promise<number>;
+  onTokenRemove: (path: string) => Promise<number>;
 }
 
 const JSON_FLAG_DESCRIPTION = "Emite el resultado como JSON estructurado.";
@@ -216,6 +242,77 @@ export function createProgram(handlers: ProgramHandlers): {
     state.code = await handlers.onPresetsApply(id, { json: options.json === true });
   });
 
+  // T037 (008) — grupo `token`: `plan`/`apply` (archivo declarativo `--file`, `--json` local) +
+  // shorthands `create/update/rename/move/remove` (una sola operación, escritura directa; sin `--json`,
+  // sin `--force`). Mutan exclusivamente `design-system/tokens/base.tokens.json`.
+  const token = program
+    .command("token")
+    .description("Aplica mutaciones estructuradas y seguras sobre design-system/tokens/base.tokens.json.");
+  token.exitOverride();
+
+  const tokenPlan = token
+    .command("plan")
+    .description("Previsualiza una mutación desde un archivo de comando declarativo (NO escribe).")
+    .requiredOption("--file <path>", "Archivo TokenMutationCommandV1 (JSON).")
+    .option("--json", JSON_FLAG_DESCRIPTION, false);
+  tokenPlan.exitOverride();
+  tokenPlan.action(async (options: { file: string; json?: boolean }) => {
+    state.code = await handlers.onTokenPlan(options.file, { json: options.json === true });
+  });
+
+  const tokenApply = token
+    .command("apply")
+    .description("Aplica una mutación desde un archivo de comando declarativo (escritura transaccional).")
+    .requiredOption("--file <path>", "Archivo TokenMutationCommandV1 (JSON).")
+    .option("--json", JSON_FLAG_DESCRIPTION, false);
+  tokenApply.exitOverride();
+  tokenApply.action(async (options: { file: string; json?: boolean }) => {
+    state.code = await handlers.onTokenApply(options.file, { json: options.json === true });
+  });
+
+  const tokenCreate = token
+    .command("create <path>")
+    .description("Crea un token (shorthand de una operación; escribe directamente).")
+    .requiredOption("--type <type>", "Tipo DTCG declarado del token.")
+    .requiredOption("--value <value>", "Valor DTCG (JSON o literal).");
+  tokenCreate.exitOverride();
+  tokenCreate.action(async (path: string, options: { type: string; value: string }) => {
+    state.code = await handlers.onTokenCreate(path, options);
+  });
+
+  const tokenUpdate = token
+    .command("update <path>")
+    .description("Actualiza el valor de un token (shorthand; escribe directamente).")
+    .requiredOption("--value <value>", "Nuevo valor DTCG (JSON o literal).");
+  tokenUpdate.exitOverride();
+  tokenUpdate.action(async (path: string, options: { value: string }) => {
+    state.code = await handlers.onTokenUpdate(path, options.value);
+  });
+
+  const tokenRename = token
+    .command("rename <path> <newName>")
+    .description("Renombra un token (shorthand); reescribe toda referencia afectada.");
+  tokenRename.exitOverride();
+  tokenRename.action(async (path: string, newName: string) => {
+    state.code = await handlers.onTokenRename(path, newName);
+  });
+
+  const tokenMove = token
+    .command("move <path> <newParent>")
+    .description("Mueve un token a otro grupo (shorthand); reescribe toda referencia afectada.");
+  tokenMove.exitOverride();
+  tokenMove.action(async (path: string, newParent: string) => {
+    state.code = await handlers.onTokenMove(path, newParent);
+  });
+
+  const tokenRemove = token
+    .command("remove <path>")
+    .description("Elimina un token (shorthand); bloquea si tiene dependientes.");
+  tokenRemove.exitOverride();
+  tokenRemove.action(async (path: string) => {
+    state.code = await handlers.onTokenRemove(path);
+  });
+
   return { program, getCode: () => state.code };
 }
 
@@ -240,6 +337,8 @@ export interface CliRuntime {
   buildExportDeps?: BuildExportCliDependencies;
   /** Dependencias del grupo `asset` (use cases + reporters humano/JSON). Opcional para pruebas de 001. */
   assetDeps?: AssetCliDependencies;
+  /** Dependencias del grupo `token` (casos de uso headless + reporters humano/JSON). Opcional para pruebas de 001. */
+  tokenDeps?: TokenCliDependencies;
   version: string;
 }
 
@@ -407,6 +506,58 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
     }
   }
 
+  // Token mutations: un solo adapter (reporter humano o JSON) por ejecución; una sola llamada al caso de
+  // uso headless (`plan`/`apply` ya reciben el `TokenMutationCommandV1` armado); outcome → exit via
+  // `exitCodeForTokenMutationOutcome`. `internal-error` (adapter) → 70 con reporter propio; un error de
+  // FORMA del `--file` (no-JSON, forma inesperada) es un error de uso (exit 3), nunca `internal-error`.
+  async function runTokenReadMode(
+    file: string,
+    json: boolean,
+    command: "token-plan" | "token-apply",
+    run: (deps: TokenCliDependencies, cmd: TokenMutationCommandV1) => Promise<TokenMutationResultV1>,
+    render: (deps: TokenCliDependencies, result: TokenMutationResultV1) => void,
+  ): Promise<number> {
+    const deps = runtime.tokenDeps;
+    if (deps === undefined) {
+      if (json) writeTokenMutationInternalErrorJson(runtime.io, command);
+      else runtime.io.err("token: internal-error — Ocurrió un error interno.\n");
+      return INTERNAL_ERROR_EXIT;
+    }
+    let mutationCommand: TokenMutationCommandV1;
+    try {
+      mutationCommand = await readTokenMutationCommandFile(file, runtime.cwd);
+    } catch (e) {
+      const message = e instanceof TokenCommandFileError ? e.message : "No se pudo leer el archivo de comando.";
+      runtime.io.err(`token ${command === "token-plan" ? "plan" : "apply"}: ${message}\n`);
+      return USAGE_ERROR_EXIT;
+    }
+    try {
+      const result = await run(deps, mutationCommand);
+      render(deps, result);
+      return exitCodeForTokenMutationOutcome(result.outcome);
+    } catch {
+      if (json) deps.json.internalError(command);
+      else deps.terminal.internalError();
+      return INTERNAL_ERROR_EXIT;
+    }
+  }
+
+  async function runTokenShorthand(op: Parameters<typeof singleOperationCommand>[0]): Promise<number> {
+    const deps = runtime.tokenDeps;
+    if (deps === undefined) {
+      runtime.io.err("token: internal-error — Ocurrió un error interno.\n");
+      return INTERNAL_ERROR_EXIT;
+    }
+    try {
+      const result = await runTokenApply(runtime.cwd, singleOperationCommand(op), deps.apply);
+      deps.terminal.applyCompleted(result);
+      return exitCodeForTokenMutationOutcome(result.outcome);
+    } catch {
+      deps.terminal.internalError();
+      return INTERNAL_ERROR_EXIT;
+    }
+  }
+
   const { program, getCode } = createProgram({
     version: runtime.version,
     io: runtime.io,
@@ -439,6 +590,15 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
       runPresetsMode(json, "preset-plan", (d) => runPresetsPlan(id, runtime.cwd, d.base), (d, r) => (json ? d.json : d.terminal).planCompleted(r)),
     onPresetsApply: (id, { json }) =>
       runPresetsMode(json, "preset-apply", (d) => runPresetsApply(id, runtime.cwd, d.base), (d, r) => (json ? d.json : d.terminal).applyCompleted(r)),
+    onTokenPlan: (file, { json }) =>
+      runTokenReadMode(file, json, "token-plan", (d, cmd) => runTokenPlan(runtime.cwd, cmd, d.plan), (d, r) => (json ? d.json : d.terminal).planCompleted(r)),
+    onTokenApply: (file, { json }) =>
+      runTokenReadMode(file, json, "token-apply", (d, cmd) => runTokenApply(runtime.cwd, cmd, d.apply), (d, r) => (json ? d.json : d.terminal).applyCompleted(r)),
+    onTokenCreate: (path, { type, value }) => runTokenShorthand({ kind: "create-token", path, type, value: parseValueFlag(value) }),
+    onTokenUpdate: (path, value) => runTokenShorthand({ kind: "update-value", path, value: parseValueFlag(value) }),
+    onTokenRename: (path, newName) => runTokenShorthand({ kind: "rename-token", path, newName }),
+    onTokenMove: (path, newParent) => runTokenShorthand({ kind: "move-token", path, newParent }),
+    onTokenRemove: (path) => runTokenShorthand({ kind: "remove-token", path }),
   });
 
   try {

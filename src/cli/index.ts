@@ -11,6 +11,7 @@ import {
   createInspectJsonDependencies,
   createPresetsDependencies,
   createRealDependencies,
+  createTokenMutationDependencies,
   createValidateDependencies,
   createValidateJsonDependencies,
 } from "./composition.js";
@@ -42,6 +43,7 @@ try {
     presetsDeps: createPresetsDependencies(io, analyze),
     buildExportDeps: createBuildExportDependencies(io, processExportOutput, process.cwd()),
     assetDeps: createAssetDependencies(io, process.cwd()),
+    tokenDeps: createTokenMutationDependencies(io),
     version: readCliVersion(),
   });
   process.exitCode = code;
