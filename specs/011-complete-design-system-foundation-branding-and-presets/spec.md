@@ -16,6 +16,38 @@ proveedores de IA.
 
 ---
 
+## Standards & Authorities *(mandatory for 011)*
+
+### Standards matrix
+
+| Concern | Authority |
+|---|---|
+| Tokens y aliases | DTCG Format Module 2025.10 + DTCG Resolver Module 2025.10 |
+| Especificación machine-readable de UI | UI Specification Schema Community Group |
+| Anatomía, partes, estados y comportamiento | Open UI |
+| Semántica e interacción accesible | WAI-ARIA APG |
+| Accesibilidad general | WCAG |
+| Validación de contratos | JSON Schema |
+
+### Authority model
+
+| Domain | Authority |
+|---|---|
+| DTCG | Autoridad normativa para tokens. |
+| Neuraz Complete Design System Model | Autoridad interna para Brand, Components, Patterns, Templates, Content y Governance. |
+| UI Specification Schema | Objetivo de interoperabilidad mediante adapters. |
+| Open UI | Referencia de vocabulario y anatomía. |
+| WAI-ARIA APG | Referencia de interacción accesible. |
+
+### Anti-lock-in
+
+`011` mantiene un modelo **standards-first** y **adapter-friendly**: DTCG gobierna tokens, las capas y
+metadatas propias viven bajo `$extensions`, y cualquier interoperabilidad con UI Specification Schema,
+Open UI u otras superficies externas ocurre mediante adapters explícitos, nunca reemplazando la fuente
+canónica del Design System del usuario.
+
+---
+
 ## Concepts & Definitions *(mandatory context)*
 
 `011` no reemplaza ni reescribe `001`–`010`; los reutiliza como el Core de tokens/assets/viewer/editor ya
