@@ -33,14 +33,14 @@ no UI controls, no productive write path.
 
 ### Tasks
 
-- [ ] T001 [US1][US6] Create `src/application/editor/session.ts` with `EditorSessionV1`, editor modes and mappings to existing `ViewerSessionV1`.
-- [ ] T002 [US1][US2][US3][US4][US5] Create `src/application/editor/command-draft.ts` mapping every visual operation to `TokenMutationOperationV1` and `TokenMutationCommandV1`.
-- [ ] T003 [US1][US6] Create `src/application/editor/review.ts` with `EditorReviewV1`, `canApprove`, expired-plan blocking and non-editable diff metadata.
-- [ ] T004 [US6] Create `src/application/editor/apply-result.ts` mapping `TokenMutationResultV1` outcomes/recovery to editor apply states.
-- [ ] T005 [US1][US7] Create `src/application/editor/state-machine.ts` for draft -> planning -> review -> approval/apply -> reload transitions.
-- [ ] T006 [P] [US1][US7] Create `tests/application/editor/contract-shapes.test.ts` for null policy, safe public fields and no absolute paths/raw bytes/stack/secrets.
-- [ ] T007 [P] [US7] Extend `scripts/arch-guard.mjs` and add `tests/architecture/editor/forbidden-imports.test.ts` to block fs/http/DOM/Commander/writer imports in `src/application/editor/**`.
-- [ ] T008 Gate A: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T001 [US1][US6] Create `src/application/editor/session.ts` with `EditorSessionV1`, editor modes and mappings to existing `ViewerSessionV1`.
+- [X] T002 [US1][US2][US3][US4][US5] Create `src/application/editor/command-draft.ts` mapping every visual operation to `TokenMutationOperationV1` and `TokenMutationCommandV1`.
+- [X] T003 [US1][US6] Create `src/application/editor/review.ts` with `EditorReviewV1`, `canApprove`, expired-plan blocking and non-editable diff metadata.
+- [X] T004 [US6] Create `src/application/editor/apply-result.ts` mapping `TokenMutationResultV1` outcomes/recovery to editor apply states.
+- [X] T005 [US1][US7] Create `src/application/editor/state-machine.ts` for draft -> planning -> review -> approval/apply -> reload transitions.
+- [X] T006 [P] [US1][US7] Create `tests/application/editor/contract-shapes.test.ts` for null policy, safe public fields and no absolute paths/raw bytes/stack/secrets.
+- [X] T007 [P] [US7] Extend `scripts/arch-guard.mjs` and add `tests/architecture/editor/forbidden-imports.test.ts` to block fs/http/DOM/Commander/writer imports in `src/application/editor/**`.
+- [X] T008 Gate A: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: no behavior changes to `008` or `009`.
 **Suggested commit**: `feat: add editor contracts and state`

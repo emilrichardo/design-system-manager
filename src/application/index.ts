@@ -15,3 +15,5 @@ export * from "./json/index.js";
 export * from "./foundations/index.js";
 // Feature 005 — puertos headless de presets.
 export * from "./presets/index.js";
+// Feature 010 — contratos headless del Visual Token Editor.
+export * from "./editor/index.js";

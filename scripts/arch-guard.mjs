@@ -56,6 +56,17 @@ const RULES = [
       { re: /\b\w*Writer(Port)?\b/, msg: "application/viewer no debe referenciar un puerto de escritura (*Writer/*WriterPort)" },
     ],
   },
+  // T008 (010) — el Editor vive como adapter de aplicación sobre 008: sin filesystem, DOM, servidor HTTP,
+  // Commander ni puertos de persistencia dentro de `src/application/editor/**`.
+  {
+    dir: "src/application/editor",
+    forbidden: [
+      { re: /from\s+["'](node:)?http["']/, msg: "application/editor no debe importar node:http (solo infrastructure/viewer)" },
+      { re: /\b(document|window)\s*\./, msg: "application/editor no debe referenciar document/window (DOM)" },
+      { re: /from\s+["']commander["']/, msg: "application/editor no debe importar commander" },
+      { re: /\b\w*Writer(Port)?\b/, msg: "application/editor no debe referenciar un puerto de escritura (*Writer/*WriterPort)" },
+    ],
+  },
 ];
 
 async function walk(dir) {
