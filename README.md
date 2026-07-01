@@ -277,6 +277,48 @@ npx neuraz-ds asset remove <logicalPath>           # elimina un asset administra
   `apply`/`remove` son escrituras (salida humana). Fuera de alcance: Figma, scraping, IA, conversión de
   fuentes, optimización de imágenes, edición de SVG, CDN y cloud storage.
 
+## `neuraz-ds token`
+
+Aplica **mutaciones estructuradas y seguras** sobre `design-system/tokens/base.tokens.json` —el único
+archivo que estos comandos pueden escribir—, mediante un comando declarativo (`TokenMutationCommandV1`,
+un array ordenado de operaciones: create/update/rename/move/remove de tokens y grupos, set/remove-alias)
+o shorthands de una sola operación.
+
+```bash
+npx neuraz-ds token plan --file ./mutation.json          # PREVIEW: nunca escribe (diff + candidato)
+npx neuraz-ds token plan --file ./mutation.json --json    # un único TokenMutationJsonEnvelopeV1 a stdout
+npx neuraz-ds token apply --file ./mutation.json          # aplica de forma transaccional (todo o nada)
+
+# Shorthands (una sola operación; escriben directamente; sin --json, sin --force):
+npx neuraz-ds token create color.brand.500 --type color --value '{"colorSpace":"srgb","components":[0.2,0.5,0.9],"alpha":1,"hex":"#3b82f6"}'
+npx neuraz-ds token update color.brand.500 --value '"#111111"'
+npx neuraz-ds token rename color.brand.500 primary
+npx neuraz-ds token move   color.brand.500 color.base
+npx neuraz-ds token remove color.brand.500
+```
+
+- **Flujo obligatorio**: comando → snapshot → analyze → validar comando → construir candidato → diff →
+  validar candidato → boundary de aprobación → apply transaccional → verificación posterior. `plan`
+  ejecuta todo hasta la validación del candidato, de solo lectura; `apply` re-deriva el plan, revisa
+  concurrencia y solo entonces escribe.
+- **Rename/move (política v1 — update-all-affected)**: renombrar o mover un token/grupo reescribe **toda**
+  referencia (`alias`) afectada; nunca queda un alias roto. Una colisión de destino bloquea sin escribir.
+- **Remove seguro por defecto**: `remove` con dependientes se bloquea (`removal-with-dependents`, lista
+  los dependientes); no existe `--force`. Un grupo se elimina solo si está vacío.
+- **Transaccional, single-file**: temp → verificación → identity check (concurrencia) → backup → replace
+  (commit point) → verificación posterior; un cambio concurrente entre plan y apply produce `conflict`; un
+  fallo deja la fuente previa o la nueva, nunca un documento parcial; re-aplicar un no-op → `unchanged`.
+- **Separación de superficies**: las mutaciones de tokens nunca leen ni escriben `design-system/build/**`,
+  `design-system/assets/**`, el host manifest ni el asset manifest.
+- **Preservación**: `$extensions` de vendors ajenos y propiedades no gestionadas se conservan; solo se
+  modifican los campos indicados por la operación.
+- **JSON**: `plan`/`apply` aceptan `--json` (`TokenMutationJsonEnvelopeV1`, `formatVersion 1.0.0`,
+  independiente de los envelopes de `validate`/`inspect`/`foundations`/`build`/`export`/`asset`).
+- **Headless**: `planTokenMutation`/`applyTokenMutation` son casos de uso puros (sin Commander/process/
+  TTY), reutilizables directamente por MCP/Studio.
+- Fuera de alcance: Figma, scraping, IA, editor visual, MCP y Studio (quedan como reuso futuro de la
+  misma API headless).
+
 ### Comandos disponibles
 
 | Comando | Descripción |
@@ -296,6 +338,13 @@ npx neuraz-ds asset remove <logicalPath>           # elimina un asset administra
 | `neuraz-ds asset import plan <archivo…> [--json]` | Previsualiza la importación **sin escribir**. |
 | `neuraz-ds asset import apply <archivo…> --license <id>` | Importa de forma transaccional (todo o nada). |
 | `neuraz-ds asset remove <path>` | Elimina un asset administrado (transaccional, ownership-bound). |
+| `neuraz-ds token plan --file <cmd.json> [--json]` | Previsualiza una mutación de tokens **sin escribir**. |
+| `neuraz-ds token apply --file <cmd.json> [--json]` | Aplica una mutación de tokens (transaccional). |
+| `neuraz-ds token create <path> --type <t> --value <v>` | Crea un token (shorthand; escribe). |
+| `neuraz-ds token update <path> --value <v>` | Actualiza el valor de un token (shorthand; escribe). |
+| `neuraz-ds token rename <path> <newName>` | Renombra un token y reescribe sus referencias (shorthand). |
+| `neuraz-ds token move <path> <newParent>` | Mueve un token y reescribe sus referencias (shorthand). |
+| `neuraz-ds token remove <path>` | Elimina un token; bloquea si tiene dependientes (shorthand). |
 | `neuraz-ds --help` / `<cmd> --help` | Ayuda. |
 | `neuraz-ds --version` | Versión del gestor. |
 
@@ -316,7 +365,10 @@ npx neuraz-ds asset remove <logicalPath>           # elimina un asset administra
 `validate`, `inspect` y `foundations` **no** usan `1`, `2` ni `7` en su flujo normal (operaciones de
 solo lectura). `presets list/inspect/plan` también son de solo lectura; `presets apply` sí puede usar
 `2` (sin cambios / idempotente), `4` (conflicto bloqueante), `6` (error de escritura) y `7`
-(verificación posterior tras escribir).
+(verificación posterior tras escribir). `token plan` es de solo lectura; `token apply` y los shorthands
+usan la misma tabla: `2` (`unchanged`, idempotente), `3` (`invalid-command`/`invalid-design-system`), `4`
+(`conflict`: colisión, dependientes, grupo no vacío o cambio concurrente), `6` (`read-error`/`write-error`)
+y `7` (`verification-error`, con backup retenido y recuperación explícita).
 
 `build` usa `0` (built), `2` (unchanged), `3` (Design System inválido), `4` (valor no soportado o
 conflicto), `5` (no inicializado), `6` (error de lectura/escritura) y `7` (verificación posterior a la

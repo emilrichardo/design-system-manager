@@ -1,8 +1,8 @@
-# Quickstart: Token Mutation Commands and Safe Diff (planned behavior)
+# Quickstart: Token Mutation Commands and Safe Diff (implemented)
 
-Describes the expected behavior of `008-token-mutations` once implemented. The commands are not
-implemented by this planning phase. Mutations operate **only** on
-`design-system/tokens/base.tokens.json`, through structured commands, never by direct file edits.
+`008-token-mutations` is implemented and closed. This describes the real, reproducible behavior of
+`neuraz-ds token …`. Mutations operate **only** on `design-system/tokens/base.tokens.json`, through
+structured commands, never by direct file edits.
 
 ## Prerequisites
 
@@ -32,13 +32,17 @@ neuraz-ds token plan --file ./mutation.json --json   # one TokenMutationJsonEnve
 neuraz-ds token apply --file ./mutation.json         # → applied / exit 0
 neuraz-ds token apply --file ./mutation.json         # → unchanged / exit 2 (idempotent)
 
-# Conceptual single-operation shorthands (thin adapter over the same command):
-neuraz-ds token create color.brand.500 --type color --value '{…}' --license-free
-neuraz-ds token update color.brand.500 --value '{…}'
+# Single-operation shorthands (thin CLI adapter over the same headless use case; write directly, no
+# --json, no --force). Only create/update/rename/move/remove; set-alias/remove-alias/groups need --file.
+neuraz-ds token create color.brand.500 --type color --value '{"colorSpace":"srgb","components":[0.2,0.5,0.9],"alpha":1,"hex":"#3b82f6"}'
+neuraz-ds token update color.brand.500 --value '"#111111"'
 neuraz-ds token rename color.brand.500 brand-500
 neuraz-ds token move   color.brand.500 color.base
 neuraz-ds token remove color.brand.500
 ```
+
+`--value` accepts a JSON-encoded value (object/number/boolean/quoted string) or, if it fails to parse as
+JSON, the raw string literal (e.g. `--value '#3b82f6'` works without quoting).
 
 A declarative `mutation.json` is a `TokenMutationCommandV1` — the same shape MCP/Studio build:
 
@@ -102,7 +106,16 @@ Token mutations must not:
 | read or write failure | read-error / write-error | 6 |
 | post-write verification failure | verification-error | 7 |
 
-## Validation commands for the future implementation
+## Headless reuse (MCP/Studio)
+
+`planTokenMutation`/`applyTokenMutation` (`src/application/token-mutations/`) are pure, headless use
+cases: no Commander, `process`, TTY, React, browser or AI dependency. The CLI (`src/cli/commands/token.ts`
++ `program.ts`) is a thin adapter that only reads `--file`/shorthand flags into a `TokenMutationCommandV1`
+and renders the structured `TokenMutationResultV1` — it never reconstructs the planner, diff, validation,
+alias rewriting or writer. A future MCP server or the Visual Token Editor can call the same use cases
+directly and get the same structured, JSON-safe result.
+
+## Validation commands
 
 ```bash
 npm run typecheck

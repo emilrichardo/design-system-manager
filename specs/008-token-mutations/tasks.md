@@ -191,24 +191,24 @@ y cierre con auditoría. MCP/Studio/Visual Token Editor/preset authoring quedan 
 
 ### Tasks
 
-- [ ] T044 [US13] Crear `tests/integration/token-mutations/npm-pack.test.ts`: `npm pack --dry-run --json`
+- [X] T044 [US13] Crear `tests/integration/token-mutations/npm-pack.test.ts`: `npm pack --dry-run --json`
   incluye `dist/cli/commands/token.js` y `dist/**/token-mutations/**`; excluye `src/`, `tests/`, `specs/`, `.agents/`.
-- [ ] T045 [US13] Crear `tests/integration/token-mutations/tarball-smoke.test.ts`: `npm pack` real +
+- [X] T045 [US13] Crear `tests/integration/token-mutations/tarball-smoke.test.ts`: `npm pack` real +
   `npm install <tgz>` (sin npm link); `token plan`/`token apply` desde cwd ajeno; sin referencias al repo.
-- [ ] T046 [P] [US14] Crear `tests/integration/token-mutations/regression-001-007.test.ts`: ninguna
+- [X] T046 [P] [US14] Crear `tests/integration/token-mutations/regression-001-007.test.ts`: ninguna
   mutación modifica build/assets/host/asset-manifest; init/validate/inspect/foundations/presets/build/
   export/asset byte-estables.
-- [ ] T047 [P] [US14] Crear `tests/integration/token-mutations/preserve-unknown-content.test.ts`:
+- [X] T047 [P] [US14] Crear `tests/integration/token-mutations/preserve-unknown-content.test.ts`:
   `$extensions` desconocidos y propiedades no gestionadas intactos tras mutaciones.
-- [ ] T048 [US13] Actualizar `README.md` y `docs/product/capability-map.md`: comandos `token`, política
+- [X] T048 [US13] Actualizar `README.md` y `docs/product/capability-map.md`: comandos `token`, política
   rename/move, política remove, separación tokens/build/assets; marcar la capacidad como implementada.
-- [ ] T049 [US12] Actualizar `specs/008-token-mutations/quickstart.md` con el flujo reproducible real y los
+- [X] T049 [US12] Actualizar `specs/008-token-mutations/quickstart.md` con el flujo reproducible real y los
   outcomes/exits definitivos.
-- [ ] T050 Gate F (suite completa): `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`,
+- [X] T050 Gate F (suite completa): `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`,
   `npm pack --dry-run --json`, `git diff --check`.
-- [ ] T051 [US14] Crear `specs/008-token-mutations/audit.md` con trazabilidad (14/14 US, 26/26 FR, 12/12 SC,
+- [X] T051 [US14] Crear `specs/008-token-mutations/audit.md` con trazabilidad (14/14 US, 26/26 FR, 12/12 SC,
   17/17 Constitution), hallazgos (0 CRITICAL/HIGH/MEDIUM) y gates finales; cerrar la feature.
-- [ ] T052 [US13] Documentar (en `plan.md`/audit) el posible refactor de una abstracción de escritura
+- [X] T052 [US13] Documentar (en `plan.md`/audit) el posible refactor de una abstracción de escritura
   single-file compartida con `005`, sin implementarlo ni alterar el comportamiento/contratos de `005`.
 
 **Regression**: T046/T047 prueban que `001`–`007` no cambian comportamiento, bytes, JSON ni exits.

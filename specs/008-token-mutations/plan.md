@@ -109,17 +109,28 @@ code. The planner/diff/reference-update logic is pure (domain/application); only
 the single-file writer touch the filesystem, behind ports (guardrail 5). CLI/MCP/Studio are adapters over
 the same use cases (guardrail 3). This plan is documentation-only; no productive code is created here.
 
-## Reuse and possible refactor (documented, not implemented)
+## Reuse and possible refactor (T052 — post-implementation note)
 
-- **Source read**: reuse the `006` single-semantic-source snapshot reader (one read/decode/parse/analyze)
-  or `createBoundAnalyze` (`002`) — no second engine.
-- **Write**: reuse the `005` `SingleFileAtomicWriter` (`createSingleFileAtomicWriter`) which already
-  provides snapshot-identity concurrency detection, backup, restore and verification for
-  `base.tokens.json` — the same path `005-presets apply` uses. Token mutations generalize preset apply.
-- **Possible refactor**: extract a shared "safe single-file candidate write" abstraction used by both
-  `005-presets apply` and `008` to avoid duplicate write orchestration. This is documented as a candidate
-  refactor; it MUST NOT change the observable behavior or contracts of `005`. Not implemented in this
-  planning phase.
+- **Source read**: implemented by reusing the `006` single-semantic-source snapshot reader
+  (`createBuildSnapshotReader`, wrapped by `createTokenSourceSnapshotReader`) — one read/decode/parse/
+  analyze, no second engine.
+- **Write — what was actually built**: `Checkpoint D` implemented `createTokenSourceWriter`
+  (`src/infrastructure/token-mutations/token-source-writer.ts`) as its **own** transactional single-file
+  writer, built on the injectable `WriterFileSystem` seam from `006`
+  (`src/infrastructure/build-export/artifact-set-writer.ts`), rather than calling `005`'s
+  `createSingleFileAtomicWriter` directly. Reason: `005`'s writer talks to `node:fs/promises` directly
+  with no injectable seam, so it cannot be fault-injected in tests (T032 requires simulating failures
+  before/after backup, at rename, and at post-write verification/restore — exactly the scenarios `006`'s
+  `WriterFileSystem` seam was built for). `005`'s contract and behavior were **not** touched.
+- **Possible refactor (still not implemented)**: extract a shared "safe single-file candidate write"
+  abstraction — temp write → verify → identity check → backup → atomic replace → post-write verify →
+  restore-on-failure — parameterized over `WriterFileSystem`, that both `005-presets apply` and `008`
+  could adopt. This would let `005` gain the same fault-injection testability `008` has, and remove the
+  duplication between `single-file-atomic-writer.ts` (005, `node:fs` direct) and `token-source-writer.ts`
+  (008, `WriterFileSystem` seam). It is deliberately **not implemented**: it would require changing `005`'s
+  internals (even if the observable contract/behavior stayed byte-identical), and `005` is a closed,
+  immutable feature. A future feature could perform this refactor with `005`'s full regression suite as
+  the safety net.
 
 ## Key Architectural Decisions
 
