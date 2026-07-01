@@ -4,6 +4,7 @@
 // en Checkpoint B).
 import type { AnalyzeUseCase } from "../analysis-ports.js";
 import type { SourceSnapshotReader as BuildSourceSnapshotReader } from "../build-export/build-ports.js";
+import type { PreviousBuildManifestInput } from "../build-export/ownership.js";
 import type { AssetListResult, AssetInspectResult } from "../assets/asset-ports.js";
 import type { PresetListResult } from "../presets/preset-ports.js";
 import type { SourceSnapshotPort as MutationSourceSnapshotPort } from "../token-mutations/ports.js";
@@ -18,6 +19,13 @@ export type ViewerInspectAsset = (input: { readonly logicalPath: string }) => Pr
 
 /** Bound `listPresets` (005). */
 export type ViewerListPresets = () => Promise<PresetListResult>;
+
+/**
+ * Lee el build manifest previo (`design-system/build/manifest.json`), sin re-analizar la fuente de
+ * tokens; devuelve la forma cruda ya existente en 006 (`ownership.ts`) — la validación/derivación de
+ * `ViewerBuildStatusV1` (formats/stale) es una función pura separada en Checkpoint B, no este puerto.
+ */
+export type ViewerReadBuildManifest = () => Promise<PreviousBuildManifestInput>;
 
 /**
  * Bound, read-only `planTokenMutation` (008): construye un plan/diff sintético y descartable a partir
@@ -39,11 +47,16 @@ export type ViewerPlanRenameMoveImpact = (
  *   `dependentsOf`), reutilizada para Aliases; `planRenameMoveImpact` reusa el planner read-only de 008.
  */
 export interface ViewerSessionDependencies {
+  /** No se invoca en `buildViewerSession`: `readBuildSnapshot` ya ejecuta el mismo análisis 002
+   * internamente. Se mantiene tipado por si un adapter futuro necesita el `AnalyzeUseCase` puro (p. ej.
+   * un fallback de test); invocarlo junto a `readBuildSnapshot` en la misma sesión sería una segunda
+   * lectura/parseo/análisis y está prohibido (Execution Rules, "una sola carga por sesión"). */
   readonly analyze: AnalyzeUseCase;
   readonly readBuildSnapshot: BuildSourceSnapshotReader;
   readonly listPresets: ViewerListPresets;
   readonly listAssets: ViewerListAssets;
   readonly inspectAsset: ViewerInspectAsset;
+  readonly readBuildManifest: ViewerReadBuildManifest;
   readonly readAnalyzedTokenSource: MutationSourceSnapshotPort;
   readonly planRenameMoveImpact: ViewerPlanRenameMoveImpact;
 }

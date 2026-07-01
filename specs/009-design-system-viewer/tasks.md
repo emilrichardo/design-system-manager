@@ -81,29 +81,29 @@ conteo de llamadas y de cero escrituras.
 
 ### Tasks
 
-- [ ] T010 [US1][US2] Crear `src/application/viewer/build-session.ts`: `buildViewerSession` — invoca
+- [X] T010 [US1][US2] Crear `src/application/viewer/build-session.ts`: `buildViewerSession` — invoca
   `analyze` (`002`), la proyección de foundations embebida en el snapshot de `006`, `listPresets` (`005`) y
   la lectura de build/manifest (`006`), cada una como máximo una vez; aplica `mapAnalysisOutcomeToViewerState`
   + el juicio derivado `empty`.
-- [ ] T011 [US2] Implementar `projectOverview` en `overview.ts`: agrega validación/tokens/grupos/aliases/
+- [X] T011 [US2] Implementar `projectOverview` en `overview.ts`: agrega validación/tokens/grupos/aliases/
   foundations/presets/build desde el único `ViewerSessionV1` cargado (sin recomputar conteos).
-- [ ] T012 [US2][US10] Implementar `projectNavigation` en `navigation.ts`: las 14 secciones en orden
+- [X] T012 [US2][US10] Implementar `projectNavigation` en `navigation.ts`: las 14 secciones en orden
   canónico, con `count`/`state` derivados de `projectOverview`/`projectFoundationCategory`.
-- [ ] T013 [US6] Implementar `projectToken` en `token.ts`: combina `002` `TokenNodeSummary` + `004`
+- [X] T013 [US6] Implementar `projectToken` en `token.ts`: combina `002` `TokenNodeSummary` + `004`
   `FoundationTokenInspection` + `006` `ResolvedTokenRecord` para un path.
-- [ ] T014 [US5][US6] Implementar `projectFoundationCategory` en `foundation.ts`: reusa `004`
+- [X] T014 [US5][US6] Implementar `projectFoundationCategory` en `foundation.ts`: reusa `004`
   `FoundationCategoryInspection` + `projectToken` por token, preservando el orden de documento.
-- [ ] T015 [US9] Implementar `projectIssues` (parcial, sin `assets`/`aliases`/`stale-build` todavía) en
+- [X] T015 [US9] Implementar `projectIssues` (parcial, sin `assets`/`aliases`/`stale-build` todavía) en
   `issue.ts`: consolida `002` errors/warnings + `004` foundation issues.
-- [ ] T016 [P] [US1][US14] Crear `tests/application/viewer/build-session.test.ts` (fs temporal reusando los
+- [X] T016 [P] [US1][US14] Crear `tests/application/viewer/build-session.test.ts` (fs temporal reusando los
   fixtures de `002`/`004`/`006`): conteo de invocaciones = 1 por caso de uso reusado; el host root queda
   byte-idéntico antes/después.
-- [ ] T017 [P] [US11] Crear `tests/application/viewer/session-states.test.ts`: cada outcome de `002`
+- [X] T017 [P] [US11] Crear `tests/application/viewer/session-states.test.ts`: cada outcome de `002`
   (`valid`/`complete-invalid`/`partial`/`not-found`/`read-error`) produce el `ViewerStateV1` correcto,
   incluido el caso `empty` derivado.
-- [ ] T018 [P] [US2][US5] Crear `tests/application/viewer/overview-navigation.test.ts`: los números del
+- [X] T018 [P] [US2][US5] Crear `tests/application/viewer/overview-navigation.test.ts`: los números del
   overview y de cada sección de navegación igualan los conteos fuente para la misma sesión (SC-003).
-- [ ] T019 Gate B: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T019 Gate B: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: cero escrituras bajo la raíz del host en cualquier test de esta checkpoint.
 **Suggested commit**: `feat: add viewer single-session load and overview projections`
