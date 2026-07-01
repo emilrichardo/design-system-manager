@@ -13,10 +13,10 @@
 // `not-found`: no hay contenido DTCG que proyectar. Cuando el documento de tokens SÍ existe, la
 // clasificación (`partial`/`complete-invalid`/`valid`) se deriva fielmente del `analysis` embebido en el
 // snapshot — ver `tests/application/viewer/session-states.test.ts`.
-import { classifyAnalysisOutcome } from "../classify-analysis-outcome.js";
 import { MANAGED_FILES } from "../../domain/plan/managed-files.js";
 import type { FoundationCategoryId } from "../../domain/foundations/foundation-category.js";
-import { deriveEmptyState, mapAnalysisOutcomeToViewerState, type ViewerResolvedStateV1, type ViewerSessionV1 } from "./session.js";
+import { deriveEmptyState, type ViewerSessionV1 } from "./session.js";
+import { loadClassifiedSnapshot } from "./snapshot-session.js";
 import { deriveBuildStatus, projectOverview } from "./overview.js";
 import { projectNavigation, type ViewerCategoryNavEntry } from "./navigation.js";
 import { projectIssues } from "./issue.js";
@@ -36,25 +36,18 @@ function countGroups(node: unknown): number {
   return total;
 }
 
-function emptySession(state: ViewerResolvedStateV1, initialized: boolean): ViewerSessionV1 {
-  return { state, host: { initialized }, overview: null, navigation: null };
-}
-
 export async function buildViewerSession(
   input: { readonly executionDir: string },
   deps: ViewerSessionDependencies,
 ): Promise<ViewerSessionV1> {
-  const snapshot = await deps.readBuildSnapshot.read(input);
-  if (snapshot.outcome === "not-found") return emptySession("not-found", false);
-  if (snapshot.outcome !== "ready") return emptySession("read-error", true);
+  const loaded = await loadClassifiedSnapshot(input, deps);
+  if (!loaded.ok) return { state: loaded.state, host: { initialized: loaded.state !== "not-found" }, overview: null, navigation: null };
 
   // `ViewerSessionV1` solo expone overview/navigation (agregados); el detalle por sección (tokens de una
-  // categoría, vía `projectFoundationCategory`/`resolvedTokenView`) se proyecta a demanda en Checkpoint C
-  // reutilizando este MISMO snapshot cacheado por el adapter — nunca una segunda lectura.
-  const { analysis, foundationProjection, sourceHash } = snapshot.snapshot;
-  const outcome = classifyAnalysisOutcome(analysis); // pura sobre el MISMO analysis, sin segunda lectura
-  const baseState = mapAnalysisOutcomeToViewerState(outcome);
-  if (baseState === "not-found" || baseState === "read-error") return emptySession(baseState, baseState !== "not-found");
+  // categoría, vía `projectFoundationCategory`/`resolvedTokenView`) se proyecta a demanda vía
+  // `build-section-detail.ts`, con su propia (única) carga por request — nunca reutilizando esta.
+  const { analysis, foundationProjection, sourceHash } = loaded.snapshot;
+  const baseState = loaded.snapshot.state;
 
   const [presetsResult, assetsResult, previousManifest] = await Promise.all([
     deps.listPresets(),

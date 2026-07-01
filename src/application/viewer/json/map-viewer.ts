@@ -1,8 +1,9 @@
 // T020 (009) — Mappers explícitos hacia `ViewerJsonEnvelopeV1` (sin cast estructural). `formatVersion`
 // es la primera clave (orden de inserción del objeto). Nunca expone bytes crudos, paths absolutos,
 // `Error`/stack ni secretos — hereda las exclusiones de cada `ViewerXxxV1` anidado.
-import type { ViewerSessionV1 } from "../session.js";
-import type { ViewerSectionSummary } from "../navigation.js";
+import type { ViewerResolvedStateV1, ViewerSessionV1 } from "../session.js";
+import type { ViewerSectionId, ViewerSectionSummary } from "../navigation.js";
+import type { ViewerSectionDetailData } from "../build-section-detail.js";
 import { VIEWER_JSON_FORMAT_VERSION } from "./format-version.js";
 import type { ViewerJsonEnvelopeV1 } from "./dto.js";
 
@@ -19,9 +20,8 @@ export function toViewerSessionJsonEnvelope(session: ViewerSessionV1): ViewerJso
 }
 
 /**
- * Envelope de una sección (`GET /api/section/:id`). En este checkpoint (C) solo se sirve el resumen ya
- * calculado en `navigation` (id/count/state); el detalle completo por categoría (tokens, swatches,
- * assets…) llega en los Checkpoints D/E sin cambiar esta forma de envelope, solo enriqueciendo `data`.
+ * Envelope de resumen de sección (usado solo como fallback si el detalle no está disponible; ver
+ * `toViewerSectionDetailJsonEnvelope` para el detalle real por sección, Checkpoint D/E).
  */
 export function toViewerSectionSummaryJsonEnvelope(summary: ViewerSectionSummary): ViewerJsonEnvelopeV1<ViewerSectionSummary> {
   return {
@@ -29,6 +29,19 @@ export function toViewerSectionSummaryJsonEnvelope(summary: ViewerSectionSummary
     section: summary.id,
     state: summary.state,
     data: NOTHING_TO_PROJECT.has(summary.state) ? null : summary,
+  };
+}
+
+/** Envelope de detalle real de una sección (`GET /api/section/:id`, Checkpoint D/E). */
+export function toViewerSectionDetailJsonEnvelope(
+  id: ViewerSectionId,
+  result: { readonly state: ViewerResolvedStateV1; readonly data: ViewerSectionDetailData | null },
+): ViewerJsonEnvelopeV1<ViewerSectionDetailData> {
+  return {
+    formatVersion: VIEWER_JSON_FORMAT_VERSION,
+    section: id,
+    state: result.state,
+    data: NOTHING_TO_PROJECT.has(result.state) ? null : result.data,
   };
 }
 

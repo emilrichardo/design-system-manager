@@ -9,11 +9,12 @@ import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildViewerSession } from "../../application/viewer/build-session.js";
+import { buildViewerSectionDetail } from "../../application/viewer/build-section-detail.js";
 import type { ViewerSessionDependencies } from "../../application/viewer/ports.js";
 import { VIEWER_SECTION_ORDER, isViewerSectionId } from "../../application/viewer/navigation.js";
 import {
   toViewerInternalErrorJsonEnvelope,
-  toViewerSectionSummaryJsonEnvelope,
+  toViewerSectionDetailJsonEnvelope,
   toViewerSessionJsonEnvelope,
 } from "../../application/viewer/json/map-viewer.js";
 import type { ViewerJsonEnvelopeV1 } from "../../application/viewer/json/dto.js";
@@ -131,9 +132,8 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, options:
       res.writeHead(404).end();
       return;
     }
-    const session = await buildViewerSession({ executionDir: options.executionDir }, options.deps);
-    const summary = session.navigation?.sections.find((s) => s.id === id) ?? { id, count: 0, state: session.state };
-    writeJson(res, 200, toViewerSectionSummaryJsonEnvelope(summary));
+    const detail = await buildViewerSectionDetail({ executionDir: options.executionDir }, options.deps, id);
+    writeJson(res, 200, toViewerSectionDetailJsonEnvelope(id, detail));
     return;
   }
 

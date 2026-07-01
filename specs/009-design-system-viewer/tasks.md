@@ -156,29 +156,29 @@ tipografía (con enlace a assets de fuente de `007`); vistas de Spacing/Radius/B
 
 ### Tasks
 
-- [ ] T029 [US3] Crear `src/application/viewer/contrast.ts`: `computeContrast` — luminancia relativa +
+- [X] T029 [US3] Crear `src/application/viewer/contrast.ts`: `computeContrast` — luminancia relativa +
   ratio WCAG 2.1 §1.4.3 sobre sRGB; sin nueva dependencia (aritmética cerrada); `not-computable` cuando el
   valor no es reducible a sRGB.
-- [ ] T030 [US3] Implementar `projectColorSwatch` en `color.ts`: `sRgb` derivado una vez del
+- [X] T030 [US3] Implementar `projectColorSwatch` en `color.ts`: `sRgb` derivado una vez del
   `resolvedValue`; `contrast` solo cuando se solicita un par texto/fondo, usando `computeContrast`.
-- [ ] T031 [US4] Implementar `projectTypography` en `typography.ts`: subcampos resueltos (family/weight/
+- [X] T031 [US4] Implementar `projectTypography` en `typography.ts`: subcampos resueltos (family/weight/
   style/size/lineHeight/letterSpacing) leídos tal cual; `linkedFontAsset` por coincidencia de familia contra
   `007` `listAssets` (una sola consulta reusada de la sesión); `licenseState` derivado.
-- [ ] T032 [US5] Conectar las vistas Spacing/Radius/Borders/Shadows/Motion en la UI (`src/infrastructure/
+- [X] T032 [US5] Conectar las vistas Spacing/Radius/Borders/Shadows/Motion en la UI (`src/infrastructure/
   viewer/ui/`) sobre `GET /api/section/:id` reusando `ViewerFoundationV1` sin una quinta forma de contrato.
-- [ ] T033 [US3][US4] Conectar las vistas Colors/Typography en la UI: swatches, selector de par texto/fondo,
+- [X] T033 [US3][US4] Conectar las vistas Colors/Typography en la UI: swatches, selector de par texto/fondo,
   previsualización tipográfica, estado de licencia visible.
-- [ ] T034 [P] [US3] Crear `tests/application/viewer/contrast.test.ts`: casos `pass`/`fail`/
+- [X] T034 [P] [US3] Crear `tests/application/viewer/contrast.test.ts`: casos `pass`/`fail`/
   `not-computable` para normal/large text y no-texto, valores límite (4.5:1/3:1) exactos.
-- [ ] T035 [P] [US4] Crear `tests/application/viewer/typography.test.ts`: coincidencia de familia con/sin
+- [X] T035 [P] [US4] Crear `tests/application/viewer/typography.test.ts`: coincidencia de familia con/sin
   asset, `licenseState` correcto en los tres casos, subcampos ausentes ⇒ `null` (nunca default).
-- [ ] T036 [P] [US5] Crear `tests/application/viewer/foundation-views.test.ts`: cada categoría restante
+- [X] T036 [P] [US5] Crear `tests/application/viewer/foundation-views.test.ts`: cada categoría restante
   (spacing/radius/border/shadow/motion) lista exactamente los tokens que `004` le asigna, mismos conteos que
   el Overview.
-- [ ] T037 [P] [US10] Crear `tests/application/viewer/search-filter.test.ts` (alcance inicial: tokens):
+- [X] T037 [P] [US10] Crear `tests/application/viewer/search-filter.test.ts` (alcance inicial: tokens):
   búsqueda por path/categoría/nivel/tipo opera sobre la sesión ya cargada; cero invocaciones adicionales de
   casos de uso reusados durante la búsqueda.
-- [ ] T038 Gate D: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T038 Gate D: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: la política de contraste no altera ningún valor de token; `001`–`008` byte-estables.
 **Suggested commit**: `feat: add viewer contrast policy, colors and typography views`

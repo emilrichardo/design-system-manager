@@ -3,6 +3,7 @@
 // Checkpoint E). `mapAnalysisIssueToViewerIssue` es un pass-through 1:1 de un `AnalysisIssue` ya existente
 // (002/004, misma forma estructural) — nunca un motor de validación nuevo.
 import type { AnalysisIssue } from "../../domain/analysis/analysis-issue.js";
+import type { AliasState } from "../../domain/analysis/token-node-summary.js";
 
 /**
  * Fuente cerrada de un issue consolidado (FR-013): qué caso de uso reusado lo produjo. `build` es el
@@ -29,13 +30,18 @@ export function mapAnalysisIssueToViewerIssue(source: ViewerIssueSource, issue: 
   return { source, code: issue.code, path: issue.path ?? null, severity: issue.severity, message: issue.message };
 }
 
-/** Insumos por fuente, ya recolectados en la sesión; `assets`/`aliases`/`build` se añaden en Checkpoint E. */
+/**
+ * Insumos por fuente, ya recolectados en la sesión. `validation`/`foundations` son `AnalysisIssue[]`
+ * crudos (mapeados aquí mismo); `assets`/`aliases`/`build` (Checkpoint E) llegan YA mapeados a
+ * `ViewerIssueV1` por el llamador (cada fuente tiene su propio tipo de issue nativo — `AssetIssue`,
+ * estado de alias sintetizado, `stale-build` — ver `mapAssetIssueToViewerIssue`/`buildStaleIssue`).
+ */
 export interface ProjectIssuesInput {
   readonly validation: readonly AnalysisIssue[];
   readonly foundations: readonly AnalysisIssue[];
-  readonly assets?: readonly AnalysisIssue[];
-  readonly aliases?: readonly AnalysisIssue[];
-  readonly build?: readonly AnalysisIssue[];
+  readonly assets?: readonly ViewerIssueV1[];
+  readonly aliases?: readonly ViewerIssueV1[];
+  readonly build?: readonly ViewerIssueV1[];
 }
 
 /**
@@ -47,8 +53,29 @@ export function projectIssues(input: ProjectIssuesInput): readonly ViewerIssueV1
   return [
     ...input.validation.map((i) => mapAnalysisIssueToViewerIssue("validation", i)),
     ...input.foundations.map((i) => mapAnalysisIssueToViewerIssue("foundations", i)),
-    ...(input.assets ?? []).map((i) => mapAnalysisIssueToViewerIssue("assets", i)),
-    ...(input.aliases ?? []).map((i) => mapAnalysisIssueToViewerIssue("aliases", i)),
-    ...(input.build ?? []).map((i) => mapAnalysisIssueToViewerIssue("build", i)),
+    ...(input.assets ?? []),
+    ...(input.aliases ?? []),
+    ...(input.build ?? []),
   ];
+}
+
+/** Pass-through 1:1 de un `AssetIssue` (007) — mismos campos, distinto tipo nativo que `AnalysisIssue`. */
+export function mapAssetIssueToViewerIssue(issue: { readonly code: string; readonly path: string | null; readonly severity: "error" | "warning"; readonly message: string }): ViewerIssueV1 {
+  return { source: "assets", code: issue.code, path: issue.path, severity: issue.severity, message: issue.message };
+}
+
+/** Issue sintético para un estado de alias no válido (`002` `AliasState`, sin issue nativo propio). */
+export function aliasStateIssue(path: string, state: Exclude<AliasState, "valid" | "n/a">): ViewerIssueV1 {
+  const messages: Record<string, string> = {
+    missing: "El alias referencia un token inexistente.",
+    "to-group": "El alias referencia un grupo, no un token.",
+    cyclic: "El alias forma parte de un ciclo de referencias.",
+    malformed: "El alias tiene una forma inválida.",
+  };
+  return { source: "aliases", code: state, path, severity: "error", message: messages[state] ?? `Alias inválido: ${state}.` };
+}
+
+/** Issue sintético `stale-build`: siempre `warning` (nunca bloqueante — el Viewer no puede reconstruir). */
+export function buildStaleIssue(): ViewerIssueV1 {
+  return { source: "build", code: "stale-build", path: null, severity: "warning", message: "El build publicado no refleja la fuente actual de tokens." };
 }
