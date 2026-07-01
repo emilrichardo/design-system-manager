@@ -1,7 +1,8 @@
-# Quickstart: Visual Token Editor (planned)
+# Quickstart: Visual Token Editor (implemented)
 
-`010-visual-token-editor` is specified but not implemented yet. These scenarios define the future
-validation flow.
+`010-visual-token-editor` is implemented. `neuraz-ds view` exposes the Editor alongside the read-only
+Viewer, reusing `planTokenMutation`/`applyTokenMutation` from `008` without reimplementing validation,
+diff or writing. These scenarios are covered by `tests/integration/editor/**`.
 
 ## Prerequisites
 
@@ -14,16 +15,15 @@ validation flow.
 
 ```text
 neuraz-ds view
--> open local Viewer URL
--> select a token
--> enter edit mode
--> change value/type/alias/metadata/group
--> preview plan
--> inspect non-editable diff
+-> open local Viewer URL (http://127.0.0.1:<port>/)
+-> click "Enter edit mode" on Overview
+-> change value/type/alias/metadata/group in a draft form
+-> POST /api/editor/plan (preview, read-only)
+-> inspect non-editable diff and conflicts/warnings panel
 -> approve or cancel/back-to-edit
--> apply through 008
+-> POST /api/editor/apply (transactional, through 008)
 -> show apply/recovery result
--> reload Viewer session
+-> reload an independent Viewer session (GET /api/section/:id or /api/session)
 ```
 
 ## Scenario 1 — update a token value
@@ -109,7 +109,7 @@ Expected:
 
 ## Validation Commands
 
-Future implementation checkpoints must run:
+Every checkpoint (and the final close) runs:
 
 ```bash
 npm run typecheck
@@ -120,9 +120,9 @@ npm pack --dry-run --json
 git diff --check
 ```
 
-Supervisor commands for this planned feature:
+Supervisor commands for this closed feature:
 
 ```bash
 npm run agent:status -- --feature 010-visual-token-editor
-npm run agent:brief -- --feature 010-visual-token-editor
+npm run agent:brief -- --feature 010-visual-token-editor   # rejects further work once closed
 ```

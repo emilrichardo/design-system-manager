@@ -54,7 +54,7 @@ import {
   singleOperationCommand,
   TokenCommandFileError,
 } from "./commands/token.js";
-import { runViewServer, runViewSession } from "./commands/view.js";
+import { runViewServer, runViewSession, type EditorServerDependencies } from "./commands/view.js";
 import { toViewerSessionJsonEnvelope } from "../application/viewer/json/map-viewer.js";
 
 /** Modo de presentación parseado por Commander para validate/inspect. */
@@ -359,6 +359,8 @@ export interface CliRuntime {
   tokenDeps?: TokenCliDependencies;
   /** Dependencias de `view` (sesión headless del Viewer sobre `002`–`008`). Opcional para pruebas de 001. */
   viewDeps?: ViewerSessionDependencies;
+  /** Dependencias del modo Editor de `view` (010). Opcional: sin ellas, `view` sigue siendo solo-lectura. */
+  editorServerDeps?: EditorServerDependencies;
   version: string;
 }
 
@@ -598,7 +600,7 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
       }
     }
     try {
-      const handle = await runViewServer(runtime.cwd, deps, opts.port);
+      const handle = await runViewServer(runtime.cwd, deps, opts.port, runtime.editorServerDeps);
       runtime.io.out(`Viewer listening at http://127.0.0.1:${handle.port}/\n`);
       return 0;
     } catch {

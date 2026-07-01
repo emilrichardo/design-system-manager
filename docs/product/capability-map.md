@@ -1,7 +1,7 @@
 # Mapa de capacidades — Neuraz Design System Studio
 
 > Estado real de cada capacidad del producto. Solo se marca `implemented` lo realmente cubierto por las
-> features cerradas `001`–`009`. Todo lo demás es `planned`, `exploratory` u `out-of-scope`.
+> features cerradas `001`–`010`. Todo lo demás es `planned`, `exploratory` u `out-of-scope`.
 > Visión en [vision.md](vision.md); reglas en [architecture-guardrails.md](architecture-guardrails.md).
 
 ## Estados
@@ -40,8 +40,8 @@
 | Capability | Module | Status | Current feature | Future feature |
 |---|---|---|---|---|
 | Visualizador del Design System (`neuraz-ds view`, solo lectura) | Studio (UI) | implemented | 009-design-system-viewer | — |
-| Editor visual de tokens (escribe vía `planTokenMutation`/`applyTokenMutation`) | Studio (UI) | planned | 010-visual-token-editor | — |
-| Diff y aprobación de candidatos (reutiliza `TokenMutationDiffV1`) | Candidates pipeline | planned | 010-visual-token-editor | Candidate review |
+| Editor visual de tokens (escribe vía `planTokenMutation`/`applyTokenMutation`) | Studio (UI) | implemented | 010-visual-token-editor | — |
+| Diff y aprobación de candidatos (reutiliza `TokenMutationDiffV1`) | Candidates pipeline | implemented | 010-visual-token-editor | — |
 
 ## Assets
 
@@ -76,14 +76,17 @@
   [guardrails](architecture-guardrails.md) — en particular: importadores e inferencia producen
   **candidatos** (reglas 7–9), assets se mantienen separados de DTCG (regla 6) y la UI es cliente, no
   autoridad (regla 4).
-- Ninguna fila marcada `implemented` corresponde a capacidades futuras: solo refleja `001`–`009`.
+- Ninguna fila marcada `implemented` corresponde a capacidades futuras: solo refleja `001`–`010`.
 - `008-token-mutations` reutiliza el planner/diff/writer headless para MCP/Studio (regla 4): la CLI es un
   adapter delgado, no la autoridad; el Visual Token Editor y el MCP server futuros consumirán la misma
   API sin reescribir validación, aliases ni escritura.
 - `009-design-system-viewer` es estrictamente de solo lectura (regla 4, la UI es cliente no autoridad):
   proyecta `002`/`004`/`005`/`006`/`007` y el plan read-only de `008` sin reimplementar ninguno; su
-  adapter `node:http`+bundle estático (`ADR-0026`) no añade dependencia runtime nueva y sirve de base para
-  el futuro Visual Token Editor (reutiliza shell, navegación y proyecciones en vez de duplicarlas).
-- `010-visual-token-editor` esta especificada, no implementada: reutilizara el shell del Viewer y los
-  casos de uso `planTokenMutation`/`applyTokenMutation` de `008`, con diff visual, aprobacion explicita,
-  apply transaccional, recovery y recarga del Viewer (`ADR-0027`).
+  adapter `node:http`+bundle estático (`ADR-0026`) no añade dependencia runtime nueva y sirvió de base para
+  el Visual Token Editor (reutiliza shell, navegación y proyecciones en vez de duplicarlas).
+- `010-visual-token-editor` está implementada: reutiliza el shell del Viewer y los casos de uso
+  `planTokenMutation`/`applyTokenMutation` de `008` sin reescribirlos, con diff visual read-only,
+  aprobación explícita (sin apply automático), apply transaccional, estados distintos de concurrencia y
+  recovery, y recarga de una sesión del Viewer nueva e independiente tras aplicar (`ADR-0027`). Sigue sin
+  edición de assets, autoría de presets, Figma, scraping, IA, MCP, nube, autenticación, multi-theme o
+  editor de componentes.

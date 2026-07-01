@@ -350,6 +350,32 @@ function editorForm(titleText: string): HTMLFormElement {
   return form;
 }
 
+// T041/T042 — validación local mínima (sin dependencia runtime hacia `application/editor`: la UI
+// importa esa capa SOLO por tipo, ver cabecera del archivo) para asociar errores por control con
+// `aria-describedby`/`aria-invalid`, alineada con las mismas reglas de `parseEditorValueInput` (008/010).
+function validateTypedValue(valueType: string, value: string, unit: string): { readonly ok: boolean; readonly message: string } {
+  if (valueType === "color") return value.trim().length > 0 ? { ok: true, message: "" } : { ok: false, message: "Color value is required." };
+  if (valueType === "number" || valueType === "fontWeight") {
+    return Number.isFinite(Number(value)) && value.trim() !== "" ? { ok: true, message: "" } : { ok: false, message: "Enter a finite number." };
+  }
+  if (valueType === "dimension") {
+    if (!Number.isFinite(Number(value)) || value.trim() === "") return { ok: false, message: "Enter a finite dimension value." };
+    return ["px", "rem", "em", "%"].includes(unit) ? { ok: true, message: "" } : { ok: false, message: "Choose a supported dimension unit (px, rem, em, %)." };
+  }
+  if (valueType === "duration") {
+    if (!Number.isFinite(Number(value)) || value.trim() === "") return { ok: false, message: "Enter a finite duration value." };
+    return ["ms", "s"].includes(unit) ? { ok: true, message: "" } : { ok: false, message: "Choose a supported duration unit (ms, s)." };
+  }
+  if (valueType === "cubicBezier") {
+    const parts = value.split(",").map((part) => Number(part.trim()));
+    return parts.length === 4 && parts.every(Number.isFinite) ? { ok: true, message: "" } : { ok: false, message: "Enter exactly 4 comma-separated numbers (x1,y1,x2,y2)." };
+  }
+  if (valueType === "fontFamily" || valueType === "string") {
+    return value.trim().length > 0 ? { ok: true, message: "" } : { ok: false, message: "A value is required." };
+  }
+  return { ok: true, message: "" };
+}
+
 function parseTypedValue(valueType: string, value: string, unit: string, booleanValue: boolean): unknown {
   if (valueType === "number" || valueType === "fontWeight") {
     const number = Number(value);
@@ -463,6 +489,13 @@ function renderEditorDraftForms(section: HTMLElement): void {
   appendFormField(valueForm, valuePath);
   appendFormField(valueForm, valueType);
   appendFormField(valueForm, valueInput);
+  // T041/T042 — error asociado por control: `aria-describedby` apunta al `<p role="alert">` y
+  // `aria-invalid` se activa/desactiva solo cuando la validación falla, nunca solo por color/icono.
+  const valueError = document.createElement("p");
+  valueError.id = "editor-value-input-error";
+  valueError.setAttribute("role", "alert");
+  valueInput.setAttribute("aria-describedby", valueError.id);
+  valueForm.append(valueError);
   appendFormField(valueForm, unitInput);
   appendFormField(valueForm, boolInput);
   const valueButton = document.createElement("button");
@@ -471,6 +504,15 @@ function renderEditorDraftForms(section: HTMLElement): void {
   valueForm.append(valueButton);
   valueForm.addEventListener("submit", (event) => {
     event.preventDefault();
+    const validation = validateTypedValue(valueType.value, valueInput.value, unitInput.value);
+    if (!validation.ok) {
+      valueInput.setAttribute("aria-invalid", "true");
+      valueError.textContent = validation.message;
+      valueInput.focus();
+      return;
+    }
+    valueInput.removeAttribute("aria-invalid");
+    valueError.textContent = "";
     preview(editorCommand([{ kind: "update-value", path: valuePath.value, value: parseTypedValue(valueType.value, valueInput.value, unitInput.value, boolInput.checked) }]));
   });
 

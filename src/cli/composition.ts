@@ -260,3 +260,19 @@ export function createViewerDependencies(cwd: string): ViewerSessionDependencies
     planRenameMoveImpact: (command) => planTokenMutation({ executionDir: cwd }, command, { snapshot: mutationSnapshot, serialize: serializeCandidate }),
   };
 }
+
+// Feature 010 — Visual Token Editor. Reusa exactamente el mismo snapshot/serializer/writer de `008`
+// (nunca reimplementa plan/diff/apply); el modo Editor de `neuraz-ds view` los conecta al adapter HTTP,
+// sin alterar el modo de solo lectura existente (`createViewerDependencies` sigue siendo independiente).
+export interface EditorCliDependencies {
+  readonly plan: PlanTokenMutationDependencies;
+  readonly apply: ApplyTokenMutationDependencies;
+}
+
+export function createEditorDependencies(): EditorCliDependencies {
+  const snapshot = createTokenSourceSnapshotReader();
+  return {
+    plan: { snapshot, serialize: serializeCandidate },
+    apply: { snapshot, serialize: serializeCandidate, createWriter: (rootDir: string) => createTokenSourceWriter(rootDir) },
+  };
+}

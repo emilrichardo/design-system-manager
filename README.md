@@ -315,9 +315,9 @@ npx neuraz-ds token remove color.brand.500
 - **JSON**: `plan`/`apply` aceptan `--json` (`TokenMutationJsonEnvelopeV1`, `formatVersion 1.0.0`,
   independiente de los envelopes de `validate`/`inspect`/`foundations`/`build`/`export`/`asset`).
 - **Headless**: `planTokenMutation`/`applyTokenMutation` son casos de uso puros (sin Commander/process/
-  TTY), reutilizables directamente por MCP/Studio.
-- Fuera de alcance: Figma, scraping, IA, editor visual, MCP y Studio (quedan como reuso futuro de la
-  misma API headless).
+  TTY), reutilizados directamente por el Visual Token Editor (`010`, ver `neuraz-ds view`) y disponibles
+  para un futuro MCP server sin reescribir validación, aliases ni escritura.
+- Fuera de alcance: Figma, scraping, IA, MCP y Studio más allá del Editor ya implementado.
 
 ## `neuraz-ds view`
 
@@ -355,8 +355,37 @@ npx neuraz-ds view --json          # imprime la sesión (ViewerJsonEnvelopeV1) y
   color (los swatches siempre van acompañados de texto).
 - **Offline**: funciona sin red — el servidor solo escucha en `127.0.0.1`; sin CDN, sin fuentes/scripts
   externos.
-- Fuera de alcance: edición de tokens/assets/presets (eso es `008`/el futuro Visual Token Editor), MCP
-  server dedicado, Figma, scraping, IA.
+- Fuera de alcance: edición de assets, autoría de presets, MCP server dedicado, Figma, scraping, IA.
+
+### Modo Editor (`010-visual-token-editor`)
+
+El mismo servidor de `view` expone, además de la navegación de solo lectura, un **Visual Token Editor**
+que permite editar tokens desde el navegador reutilizando exactamente `planTokenMutation`/
+`applyTokenMutation` de `008` — nunca reimplementa validación, diff ni escritura.
+
+```bash
+npx neuraz-ds view   # el botón "Enter edit mode" del Overview activa el Editor sobre la misma sesión
+```
+
+- **Flujo**: draft (formularios de valor/metadata/alias/token/grupo) → `POST /api/editor/plan` (mismo
+  `TokenMutationCommandV1`/`TokenMutationPlanV1`/`TokenMutationDiffV1` de `008`) → diff visual read-only →
+  aprobación explícita → `POST /api/editor/apply` (transaccional, vía `applyTokenMutation`) → recarga de
+  una sesión del Viewer **nueva e independiente**. **Nunca aplica automáticamente.**
+- **Rutas** (loopback, `POST` solo bajo `/api/editor/`): `GET /api/editor/session`,
+  `POST /api/editor/refresh`, `POST /api/editor/plan`, `POST /api/editor/apply`. Sin `editorApplyDeps`
+  (p. ej. en tests que no lo configuran), `/api/editor/apply` responde `internal-error` — el modo
+  read-only de `view` nunca se rompe.
+- **Estados de apply**: `applied`, `unchanged`, `conflict`, `source-changed-concurrently`,
+  `source-unavailable`, `write-error`, `verification-error`, `recovery-required` — cada uno con mensaje
+  explícito y, cuando aplica, backup/recovery visibles como texto (nunca solo codificado por color).
+- **Cero escrituras** antes de la aprobación explícita, en un plan bloqueado (`canApprove:false`) o en
+  cualquier ruta de solo lectura (`session`/`refresh`/`plan`); `applyTokenMutation` (008) es quien decide
+  si escribe, nunca la UI ni el adapter HTTP.
+- **Accesibilidad**: teclado completo, foco visible, labels asociados, errores de control con
+  `aria-describedby`/`aria-invalid`, anuncios vía regiones vivas para preview/aprobación/conflicto/
+  apply/recovery, sin drag-and-drop obligatorio, `prefers-reduced-motion`, nunca solo color.
+- Fuera de alcance: edición de assets, autoría de presets, Figma, scraping, análisis de imágenes, IA, MCP,
+  nube, autenticación, multi-theme, editor de componentes.
 
 ### Comandos disponibles
 
@@ -384,7 +413,7 @@ npx neuraz-ds view --json          # imprime la sesión (ViewerJsonEnvelopeV1) y
 | `neuraz-ds token rename <path> <newName>` | Renombra un token y reescribe sus referencias (shorthand). |
 | `neuraz-ds token move <path> <newParent>` | Mueve un token y reescribe sus referencias (shorthand). |
 | `neuraz-ds token remove <path>` | Elimina un token; bloquea si tiene dependientes (shorthand). |
-| `neuraz-ds view [--port <n>] [--json]` | Abre el Design System Viewer local **sin modificar archivos**. |
+| `neuraz-ds view [--port <n>] [--json]` | Abre el Viewer local; el modo Editor solo escribe tras aprobación explícita. |
 | `neuraz-ds --help` / `<cmd> --help` | Ayuda. |
 | `neuraz-ds --version` | Versión del gestor. |
 

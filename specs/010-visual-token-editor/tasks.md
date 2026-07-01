@@ -133,15 +133,15 @@ no UI controls, no productive write path.
 
 ### Tasks
 
-- [ ] T041 [US7] Complete keyboard navigation, focus management, live announcements, reduced motion, contrast and non-color-only state communication in editor UI.
-- [ ] T042 [P] [US7] Create `tests/integration/editor/accessibility.test.ts` covering every item in `contracts/editor-accessibility-v1.contract.md`.
-- [ ] T043 [US1][US7] Update `README.md` and `docs/product/capability-map.md` with Visual Token Editor behavior, boundaries and implemented/planned status at closure.
-- [ ] T044 [US1] Update `specs/010-visual-token-editor/quickstart.md` from planned to implemented with real commands, routes and outcomes.
-- [ ] T045 [P] [US1] Create `tests/integration/editor/npm-pack.test.ts` verifying editor application/infrastructure dist files are included and specs/src/tests/.agents are excluded.
-- [ ] T046 [P] [US1] Create `tests/integration/editor/tarball-smoke.test.ts` with real `npm pack` + install, offline loopback editor preview/apply smoke from foreign cwd.
-- [ ] T047 [P] [US1][US6] Create `tests/integration/editor/regression-001-009.test.ts` proving closed features keep behavior/JSON/exits and `design-system/build/**`/assets/manifests are untouched by editor token flows.
-- [ ] T048 Gate F: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npm pack --dry-run --json`, `git diff --check`.
-- [ ] T049 [US1][US7] Create `specs/010-visual-token-editor/audit.md` with traceability, gates, findings and final closure.
+- [X] T041 [US7] Complete keyboard navigation, focus management, live announcements, reduced motion, contrast and non-color-only state communication in editor UI.
+- [X] T042 [P] [US7] Create `tests/integration/editor/accessibility.test.ts` covering every item in `contracts/editor-accessibility-v1.contract.md`.
+- [X] T043 [US1][US7] Update `README.md` and `docs/product/capability-map.md` with Visual Token Editor behavior, boundaries and implemented/planned status at closure.
+- [X] T044 [US1] Update `specs/010-visual-token-editor/quickstart.md` from planned to implemented with real commands, routes and outcomes.
+- [X] T045 [P] [US1] Create `tests/integration/editor/npm-pack.test.ts` verifying editor application/infrastructure dist files are included and specs/src/tests/.agents are excluded.
+- [X] T046 [P] [US1] Create `tests/integration/editor/tarball-smoke.test.ts` with real `npm pack` + install, offline loopback editor preview/apply smoke from foreign cwd.
+- [X] T047 [P] [US1][US6] Create `tests/integration/editor/regression-001-009.test.ts` proving closed features keep behavior/JSON/exits and `design-system/build/**`/assets/manifests are untouched by editor token flows.
+- [X] T048 Gate F: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npm pack --dry-run --json`, `git diff --check`.
+- [X] T049 [US1][US7] Create `specs/010-visual-token-editor/audit.md` with traceability, gates, findings and final closure.
 
 **Regression**: full `001`-`009` regression plus editor tarball/offline checks.
 **Suggested commit**: `feat: add visual token editor accessibility packaging and close`

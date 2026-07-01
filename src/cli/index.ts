@@ -10,6 +10,7 @@ import {
   createInspectDependencies,
   createInspectJsonDependencies,
   createPresetsDependencies,
+  createEditorDependencies,
   createRealDependencies,
   createTokenMutationDependencies,
   createValidateDependencies,
@@ -30,6 +31,7 @@ const removeSignals = installSignalHandlers(process, () => {
 try {
   const io = processIO;
   const analyze = createBoundAnalyze();
+  const editorDeps = createEditorDependencies();
   const code = await runCli({
     argv: process.argv,
     cwd: process.cwd(),
@@ -46,6 +48,10 @@ try {
     assetDeps: createAssetDependencies(io, process.cwd()),
     tokenDeps: createTokenMutationDependencies(io),
     viewDeps: createViewerDependencies(process.cwd()),
+    editorServerDeps: {
+      plan: editorDeps.plan,
+      apply: { apply: editorDeps.apply, viewer: createViewerDependencies(process.cwd()) },
+    },
     version: readCliVersion(),
   });
   process.exitCode = code;
