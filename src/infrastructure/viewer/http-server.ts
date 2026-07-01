@@ -7,8 +7,10 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { TOKEN_MUTATION_FORMAT_VERSION, type TokenMutationCommandV1 } from "../../domain/token-mutations/command.js";
 import { isTokenMutationOperationKind, type TokenMutationOperationV1 } from "../../domain/token-mutations/operation.js";
+import { applyEditorCommand, type ApplyEditorCommandDependencies } from "../../application/editor/apply-editor-command.js";
 import { composeEditorSessionFromViewer } from "../../application/editor/editor-session.js";
 import {
+  toEditorApplyJsonEnvelope,
   toEditorInternalErrorJsonEnvelope,
   toEditorInvalidRequestJsonEnvelope,
   toEditorRefreshJsonEnvelope,
@@ -114,6 +116,7 @@ async function serveStatic(req: IncomingMessage, res: ServerResponse, pathname: 
 export interface ViewerHttpServerOptions {
   readonly deps: ViewerSessionDependencies;
   readonly editorPlanDeps?: PlanTokenMutationDependencies;
+  readonly editorApplyDeps?: ApplyEditorCommandDependencies;
   readonly executionDir: string;
   /** Puerto efímero por defecto (`0`); el SO asigna uno libre. */
   readonly port?: number;
@@ -198,6 +201,28 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, options:
       }
       const result = await planEditorCommand({ executionDir: options.executionDir }, body, options.editorPlanDeps);
       writeJson(res, 200, toEditorReviewJsonEnvelope(result.review));
+      return;
+    }
+    if (pathname === "/api/editor/apply") {
+      if (options.editorApplyDeps === undefined) {
+        writeJson(res, 500, toEditorInternalErrorJsonEnvelope());
+        return;
+      }
+      let body: unknown;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        writeJson(res, 400, toEditorInvalidRequestJsonEnvelope("Request body must be valid JSON."));
+        return;
+      }
+      if (!isTokenMutationCommand(body)) {
+        writeJson(res, 400, toEditorInvalidRequestJsonEnvelope("Request body must be a TokenMutationCommandV1."));
+        return;
+      }
+      // T034 — no re-implementa el gate de aprobación aquí: `applyTokenMutation` (008) ya rechaza
+      // comandos no-writable/bloqueados internamente y nunca escribe en esos casos.
+      const result = await applyEditorCommand({ executionDir: options.executionDir }, body, options.editorApplyDeps);
+      writeJson(res, 200, toEditorApplyJsonEnvelope(result));
       return;
     }
     res.writeHead(404).end();

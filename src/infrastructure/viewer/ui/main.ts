@@ -258,7 +258,11 @@ function issueRow(issue: EditorIssueV1): HTMLLIElement {
  * warnings (no bloqueantes, visibles hasta la aprobación), y los controles approve/cancel/back-to-edit.
  * `approve` queda deshabilitado salvo `review.canApprove` (nunca aplica automáticamente).
  */
-function renderReviewPanel(container: HTMLElement, review: EditorReviewV1, callbacks: { readonly onApprove: () => void; readonly onCancel: () => void; readonly onBackToEdit: () => void }): void {
+function renderReviewPanel(
+  container: HTMLElement,
+  review: EditorReviewV1,
+  callbacks: { readonly onApprove: () => void | Promise<void>; readonly onCancel: () => void; readonly onBackToEdit: () => void },
+): void {
   clear(container);
   const heading3 = document.createElement("h3");
   heading3.id = "editor-review-title";
@@ -400,10 +404,41 @@ function renderEditorDraftForms(section: HTMLElement): void {
     planStatus.textContent = "";
     const review = envelope.data as EditorReviewV1;
     renderReviewPanel(reviewPanel, review, {
-      onApprove: () => {
-        // T027 — nunca aplica automáticamente: la aprobación en este checkpoint solo confirma la
-        // intención; el apply transaccional real se conecta en el próximo checkpoint (concurrencia/recovery).
-        planStatus.textContent = "Plan approved. Apply is available once the next checkpoint is implemented.";
+      onApprove: async () => {
+        if (currentCommand === null) return;
+        planStatus.textContent = "Applying...";
+        const applyEnvelope = await fetchEditorJson("/api/editor/apply", "POST", currentCommand);
+        if (applyEnvelope === null || applyEnvelope.data === null) {
+          planStatus.textContent = "Could not apply this plan. The draft and any earlier commit are unaffected.";
+          return;
+        }
+        const data = applyEnvelope.data as {
+          readonly apply: {
+            readonly state: string;
+            readonly recovery: { readonly sourceAvailable: boolean; readonly backupRelativePath: string | null; readonly recoveryRequired: boolean } | null;
+          };
+          readonly refresh: { readonly state: string };
+        };
+        let message = EDITOR_APPLY_STATE_MESSAGES[data.apply.state] ?? `Apply result: ${data.apply.state}.`;
+        // T036 — backup/recovery visibles como texto explícito, nunca solo mediante un estado codificado por color.
+        if (data.apply.recovery !== null) {
+          const r = data.apply.recovery;
+          message += r.backupRelativePath !== null ? ` A backup is available at "${r.backupRelativePath}".` : "";
+          message += r.recoveryRequired ? " Recovery is required before further edits." : "";
+          message += !r.sourceAvailable ? " The token source is currently unavailable." : "";
+        }
+        planStatus.textContent = message;
+        if (data.apply.state === "applied" || data.apply.state === "unchanged") {
+          clear(reviewPanel);
+          currentCommand = null;
+          output.textContent = "";
+          if (data.refresh.state === "reloaded") {
+            await refreshCurrentView();
+          } else if (data.refresh.state === "failed") {
+            // T035 — el resultado de apply exitoso permanece visible aunque el refresh falle.
+            planStatus.textContent = `${message} The Viewer could not refresh automatically; reload the page to see the latest values.`;
+          }
+        }
       },
       onCancel: () => {
         currentCommand = null;
@@ -548,6 +583,20 @@ const STATE_MESSAGES: Readonly<Record<string, string>> = {
   partial: "This Design System is only partially set up. Showing available data.",
 };
 
+// T036 — un mensaje explícito y distinto por cada estado de apply (nunca solo el nombre crudo del
+// estado; nunca depende solo de color). `recovery-required`/backup se comunican junto a este mensaje
+// leyendo `apply.recovery` directamente (ver `renderReviewPanel`'s onApprove handler).
+const EDITOR_APPLY_STATE_MESSAGES: Readonly<Record<string, string>> = {
+  applied: "The plan was applied. The Viewer now reflects the updated tokens.",
+  unchanged: "The candidate is identical to the current source. Nothing was written.",
+  conflict: "The plan could not be applied: it is no longer valid against the current source.",
+  "source-changed-concurrently": "The token source changed since this plan was generated. Generate a new plan to continue.",
+  "source-unavailable": "The token source is no longer available. Nothing was written.",
+  "write-error": "The write could not be completed. Nothing was applied; the previous source is unaffected or recoverable.",
+  "verification-error": "The write could not be verified after publishing. Check recovery information before retrying.",
+  "recovery-required": "A previous write requires recovery before continuing. Nothing new was applied.",
+};
+
 function renderSection(el: HTMLElement, envelope: ViewerJsonEnvelopeLike): void {
   clear(el);
   if (envelope.data === null) {
@@ -592,6 +641,10 @@ async function loadSession(): Promise<void> {
   renderEditorEntry(el);
 }
 
+// T035 — recuerda la sección visible (o `null` para overview) para poder recargarla EN EL MISMO LUGAR
+// tras un apply exitoso, en vez de forzar siempre de vuelta al overview (preserva navegación cuando es posible).
+let currentSectionId: string | null = null;
+
 async function loadSection(id: string): Promise<void> {
   const el = contentRegion();
   if (el === null) return;
@@ -602,8 +655,18 @@ async function loadSection(id: string): Promise<void> {
     el.focus();
     return;
   }
+  currentSectionId = id;
   renderSection(el, envelope);
   el.focus(); // el contenido cambió: mueve el foco al landmark principal (navegación por teclado, FR accessibility)
+}
+
+/** T035 — recarga la vista actual (Viewer) con una sesión NUEVA e independiente, tras un apply exitoso. */
+async function refreshCurrentView(): Promise<void> {
+  if (currentSectionId === null) {
+    await loadSession();
+    return;
+  }
+  await loadSection(currentSectionId);
 }
 
 function wireNavigation(): void {
@@ -613,6 +676,7 @@ function wireNavigation(): void {
       const id = link.dataset["section"];
       if (id === undefined) return;
       event.preventDefault();
+      currentSectionId = id;
       void loadSection(id);
     });
   }

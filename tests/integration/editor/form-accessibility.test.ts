@@ -28,7 +28,7 @@ describe("editor form accessibility (010 Checkpoint C)", () => {
     expect(source).not.toContain("ondrop");
   });
 
-  it("incluye las acciones visuales de valor, alias, metadata, token y grupo sin apply", async () => {
+  it("incluye las acciones visuales de valor, alias, metadata, token y grupo; los previews nunca aplican directamente", async () => {
     const source = await readFile(new URL("../../../src/infrastructure/viewer/ui/main.ts", import.meta.url), "utf8");
     for (const kind of [
       "update-value",
@@ -49,7 +49,10 @@ describe("editor form accessibility (010 Checkpoint C)", () => {
     ]) {
       expect(source).toContain(kind);
     }
-    expect(source).not.toContain("applyTokenMutation");
-    expect(source).not.toContain("/api/editor/apply");
+    // T033-T036 (Checkpoint E) conectan el apply real, pero SOLO detrás de la aprobación explícita: el
+    // código de los formularios de preview (antes del handler `onApprove`) nunca lo invoca directamente.
+    const beforeApproval = source.slice(0, source.indexOf("onApprove"));
+    expect(beforeApproval).not.toContain("applyTokenMutation");
+    expect(beforeApproval).not.toContain("/api/editor/apply");
   });
 });

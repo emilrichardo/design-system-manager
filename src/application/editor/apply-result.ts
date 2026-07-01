@@ -12,6 +12,9 @@ export type EditorApplyStateV1 =
   | "applied"
   | "unchanged"
   | "conflict"
+  | "source-changed-concurrently"
+  | "source-unavailable"
+  | "write-error"
   | "verification-error"
   | "recovery-required";
 
@@ -36,19 +39,27 @@ export function createEditorRecoveryState(recovery: MutationRecoveryState): Edit
   });
 }
 
-export function mapOutcomeToEditorApplyState(outcome: TokenMutationOutcome): EditorApplyStateV1 {
+/**
+ * T036 — Distingue `source-changed-concurrently` (código `concurrent-source-change` de 008) del resto de
+ * `conflict` genéricos; `not-found`/`read-error` en tiempo de apply se presentan como `source-unavailable`
+ * (la fuente ya no está disponible como cuando se generó el plan) en vez de un `conflict` genérico.
+ */
+export function mapOutcomeToEditorApplyState(outcome: TokenMutationOutcome, conflictCodes: readonly string[] = []): EditorApplyStateV1 {
   switch (outcome) {
     case "applied":
       return "applied";
     case "unchanged":
       return "unchanged";
     case "conflict":
+      return conflictCodes.includes("concurrent-source-change") ? "source-changed-concurrently" : "conflict";
     case "invalid-command":
     case "invalid-design-system":
+      return "conflict";
     case "not-found":
     case "read-error":
+      return "source-unavailable";
     case "write-error":
-      return "conflict";
+      return "write-error";
     case "verification-error":
       return "verification-error";
     case "planned":
@@ -62,7 +73,9 @@ export function mapOutcomeToEditorApplyState(outcome: TokenMutationOutcome): Edi
 
 export function createEditorApplyResult(result: TokenMutationResultV1): EditorApplyResultV1 {
   const recovery = result.recovery === null ? null : createEditorRecoveryState(result.recovery);
-  const state = recovery?.recoveryRequired === true ? "recovery-required" : mapOutcomeToEditorApplyState(result.outcome);
+  const state = recovery?.recoveryRequired === true
+    ? "recovery-required"
+    : mapOutcomeToEditorApplyState(result.outcome, result.conflicts.map((c) => c.code));
   return Object.freeze({
     state,
     wrote: result.wrote,

@@ -1,7 +1,10 @@
-// T031 (010) — Ninguna escritura ocurre antes de la aprobación explícita; no existe todavía ninguna
-// ruta de apply (Checkpoint E); cancelar/volver a editar nunca escribe nada.
+// T031 (010, actualizado en Checkpoint E) — Ninguna escritura ocurre antes de la aprobación explícita.
+// Desde T034 existe `/api/editor/apply`, pero sigue sin re-implementar el gate de aprobación: un comando
+// bloqueado (`canApprove:false`) nunca escribe porque `applyTokenMutation` (008) lo rechaza internamente.
+// Cancelar/volver a editar nunca escribe nada.
 import { readFile } from "node:fs/promises";
 import { afterEach, describe, expect, it } from "vitest";
+import type { ApplyTokenMutationDependencies } from "../../../src/application/token-mutations/apply-token-mutation.js";
 import type { PlanTokenMutationDependencies } from "../../../src/application/token-mutations/plan-token-mutation.js";
 import type { startViewerHttpServer as StartViewerHttpServerType, ViewerHttpServerHandle } from "../../../src/infrastructure/viewer/http-server.js";
 import { TOKENS_REL, newCallCounts, realViewerDeps } from "../../application/viewer/real-deps.js";
@@ -18,6 +21,9 @@ const { createTokenSourceSnapshotReader } = (await import("../../../dist/infrast
 const { serializeCandidate } = (await import("../../../dist/infrastructure/token-mutations/candidate-serializer.js")) as {
   serializeCandidate: PlanTokenMutationDependencies["serialize"];
 };
+const { createTokenSourceWriter } = (await import("../../../dist/infrastructure/token-mutations/token-source-writer.js")) as {
+  createTokenSourceWriter: (rootDir: string) => ApplyTokenMutationDependencies["createWriter"] extends (r: string) => infer W ? W : never;
+};
 
 const hosts: HostProject[] = [];
 const handles: ViewerHttpServerHandle[] = [];
@@ -32,6 +38,10 @@ async function server(): Promise<{ readonly base: string; readonly host: HostPro
   const handle = await startViewerHttpServer({
     deps: realViewerDeps(host.dir, newCallCounts()),
     editorPlanDeps: { snapshot: createTokenSourceSnapshotReader(), serialize: serializeCandidate },
+    editorApplyDeps: {
+      apply: { snapshot: createTokenSourceSnapshotReader(), serialize: serializeCandidate, createWriter: createTokenSourceWriter },
+      viewer: realViewerDeps(host.dir, newCallCounts()),
+    },
     executionDir: host.dir,
     host: "127.0.0.1",
   });
@@ -40,14 +50,18 @@ async function server(): Promise<{ readonly base: string; readonly host: HostPro
 }
 
 describe("approval boundary (T031)", () => {
-  it("ninguna ruta de apply existe todavía: POST /api/editor/apply → 404 (Checkpoint E la añade)", async () => {
-    const { base } = await server();
+  it("apply de un comando bloqueado (removal-with-dependents) nunca escribe: 008 rechaza internamente", async () => {
+    const { base, host } = await server();
+    const before = await readFile(`${host.dir}/${TOKENS_REL}`, "utf8");
     const res = await fetch(`${base}/api/editor/apply`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ formatVersion: "1.0.0", operations: [] }),
+      body: JSON.stringify({ formatVersion: "1.0.0", operations: [{ kind: "remove-token", path: "color.base.blue-500" }] }),
     });
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { readonly data: { readonly apply: { readonly wrote: boolean } } };
+    expect(body.data.apply.wrote).toBe(false);
+    expect(await readFile(`${host.dir}/${TOKENS_REL}`, "utf8")).toBe(before);
   });
 
   it("generar un plan, repetidamente, nunca escribe (plan es siempre read-only)", async () => {
@@ -79,10 +93,12 @@ describe("approval boundary (T031)", () => {
     expect(await readFile(`${host.dir}/${TOKENS_REL}`, "utf8")).toBe(before);
   });
 
-  it("el bundle de la UI compilada nunca invoca apply automáticamente (solo texto informativo tras aprobar)", async () => {
+  it("el bundle de la UI compilada solo invoca apply dentro del handler de aprobación explícita, nunca en preview", async () => {
     const { readFile: readFs } = await import("node:fs/promises");
     const { fileURLToPath } = await import("node:url");
     const source = await readFs(fileURLToPath(new URL("../../../dist/infrastructure/viewer/ui/main.js", import.meta.url)), "utf8");
-    expect(source).not.toContain("/api/editor/apply");
+    const previewSection = source.slice(0, source.indexOf("onApprove"));
+    expect(previewSection).not.toContain("/api/editor/apply");
+    expect(source).toContain("/api/editor/apply");
   });
 });

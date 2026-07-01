@@ -113,14 +113,14 @@ no UI controls, no productive write path.
 
 ### Tasks
 
-- [ ] T033 [US1][US6] Create `src/application/editor/apply-editor-command.ts` to call `applyTokenMutation`, map result and trigger refresh orchestration.
-- [ ] T034 [US1][US6] Extend local editor adapter route for apply, requiring an approvable review/command and returning `EditorApplyResultV1`.
-- [ ] T035 [US1] Implement post-apply Viewer reload in UI and keep apply result visible when reload fails.
-- [ ] T036 [US6] Implement distinct UI states for unchanged, source changed concurrently, write error, verification error, backup available, recovery required and source unavailable.
-- [ ] T037 [P] [US1] Create `tests/integration/editor/apply-refresh.test.ts` for applied -> Viewer reload -> updated token visible, plus refresh-failed preserving apply result.
-- [ ] T038 [P] [US6] Create `tests/integration/editor/concurrency-recovery.test.ts` with fault injection for concurrent-source-change, write-error and verification-error recovery fields.
-- [ ] T039 [P] [US2][US3][US4] Create `tests/integration/editor/no-direct-writes.test.ts` proving only `008` apply writes and preview/error states leave host bytes unchanged.
-- [ ] T040 Gate E: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T033 [US1][US6] Create `src/application/editor/apply-editor-command.ts` to call `applyTokenMutation`, map result and trigger refresh orchestration.
+- [X] T034 [US1][US6] Extend local editor adapter route for apply, requiring an approvable review/command and returning `EditorApplyResultV1`.
+- [X] T035 [US1] Implement post-apply Viewer reload in UI and keep apply result visible when reload fails.
+- [X] T036 [US6] Implement distinct UI states for unchanged, source changed concurrently, write error, verification error, backup available, recovery required and source unavailable.
+- [X] T037 [P] [US1] Create `tests/integration/editor/apply-refresh.test.ts` for applied -> Viewer reload -> updated token visible, plus refresh-failed preserving apply result.
+- [X] T038 [P] [US6] Create `tests/integration/editor/concurrency-recovery.test.ts` with fault injection for concurrent-source-change, write-error and verification-error recovery fields.
+- [X] T039 [P] [US2][US3][US4] Create `tests/integration/editor/no-direct-writes.test.ts` proving only `008` apply writes and preview/error states leave host bytes unchanged.
+- [X] T040 Gate E: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: `008` CLI/token JSON outcomes stay byte-stable; `009` Viewer refresh remains read-only.
 **Suggested commit**: `feat: add editor apply recovery and refresh`
