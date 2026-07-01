@@ -28,9 +28,11 @@
    projections).
 5. The pre-existing contradiction between Constitution Principle IV (Style Dictionary as the intended
    pipeline) and the actual `006-build-export` implementation (a custom deterministic pipeline, no Style
-   Dictionary dependency) is recorded here and in `research.md` of `011` as a known, documented gap. It is
-   **not** resolved by this ADR — resolving it requires an explicit constitutional amendment per the
-   Constitution's own Governance section, which was not requested.
+   Dictionary dependency) was recorded here and in `research.md` of `011` as a known, documented gap, and
+   has since been **resolved** by an explicit, authorized constitutional amendment (constitution `2.0.0`,
+   ratified 2026-07-01, commit `docs: align build principle with implemented pipeline`) before Checkpoint
+   A began. Principle IV now requires deterministic/reproducible/multi-format/adapter-extensible build and
+   export behavior, with Style Dictionary as an optional output adapter, never the Core's authority.
 
 ## Consequences
 
@@ -40,8 +42,8 @@
   same underlying capabilities, so neither view has to be discarded to introduce the other.
 - Any future proposal that would make a level depend upward (e.g. Foundations requiring Brand System to
   exist) must be justified as an explicit exception, not implemented silently.
-- The Style Dictionary contradiction remains an open item until an authorized amendment is made; no
-  feature may claim Style Dictionary compliance without one.
+- The Style Dictionary contradiction is closed: `006-build-export`'s pipeline is now constitutionally
+  compliant by design, not by silent exception.
 
 ## Alternatives Considered
 
@@ -51,5 +53,5 @@
 - **Rewrite `001`–`010` to fit a new taxonomy from scratch**: rejected — violates Constitution Principle
   XVI (incremental, verifiable change) and would discard closed, tested work for no functional gain.
 - **Silently amend Constitution Principle IV to match the real build pipeline**: rejected — the
-  Constitution's Governance section requires an explicit, approved amendment proposal; this ADR documents
-  the gap instead of unilaterally resolving it.
+  Constitution's Governance section requires an explicit, approved amendment proposal. The amendment was
+  instead carried out explicitly and separately (see Decision 5 above), not silently inside this ADR.

@@ -137,7 +137,9 @@ Ejemplos concretos (del brief, conservados literalmente porque fijan la frontera
   (`001`–`010`), que cubrieron exclusivamente Core/Viewer/Editor/Assets de tokens — correctamente
   acotado para su momento (Principio XVI: incrementalidad), pero sin dejar explícito dónde encajaría
   Brand/Component/Patterns. Este documento y `capability-map.md` corrigen esa ausencia.
-- **Hallazgo sin resolver, documentado, no ambiguo**: la constitución (Principio IV) declara Style
+- **Hallazgo resuelto por enmienda explícita**: la constitución (Principio IV, v1.0.0) declaraba Style
   Dictionary como pipeline previsto; la implementación real (`006-build-export`) usa un pipeline propio
-  determinista sin esa dependencia. `011` no amend la constitución unilateralmente — queda registrado
-  aquí y en `research.md` de `011` como pendiente de una enmienda explícita futura.
+  determinista sin esa dependencia. El usuario autorizó la enmienda; la constitución `2.0.0`
+  (2026-07-01) redefine el Principio IV como un contrato de comportamiento (determinismo,
+  reproducibilidad, multi-formato, separación fuente/artefacto, interoperabilidad) del que Style
+  Dictionary es, como máximo, un adapter opcional — nunca la autoridad del Core. Ver ADR-0028.

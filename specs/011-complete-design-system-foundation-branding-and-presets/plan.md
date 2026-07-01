@@ -57,7 +57,7 @@ nuevas, 1 preset nuevo + 1 pack completo + 2 packs reservados, extensión de tip
 | I. Un Design System por proyecto | `brand/` vive en el mismo repositorio anfitrión, sin multi-tenancy. | ✅ Pass |
 | II. Archivos locales como fuente de verdad | `brand/**` son archivos versionables; ninguna DB interna. | ✅ Pass |
 | III. DTCG como formato canónico de tokens | Tokens siguen siendo DTCG puro; `brand` es rol de metadata, no un formato paralelo. | ✅ Pass |
-| IV. Style Dictionary como pipeline | **Contradicción preexistente documentada** (ver `research.md`); `011` no la resuelve unilateralmente, la deja explícita para una enmienda futura autorizada. | ⚠️ Excepción documentada, no nueva de `011` |
+| IV. Build y export deterministas y extensibles mediante adapters (enmendado, constitución `2.0.0`) | El pipeline propio de `006-build-export` cumple determinismo/reproducibilidad/multi-formato/separación fuente-artefacto sin Style Dictionary, ahora alineado explícitamente. | ✅ Pass (enmienda resuelta antes de A/B) |
 | V. Independencia del framework | Sin nuevas dependencias de framework; component tokens son contratos, no componentes React/Vue. | ✅ Pass |
 | VI. El gestor es herramienta, no el Design System | `brand/**` es parte del Design System del usuario, no del paquete. | ✅ Pass |
 | VII. Edición visual sin ocultar el formato fuente | Editor de marca (futuro) sigue mostrando el archivo fuente exacto, igual que `010`. | ✅ Pass |
@@ -128,6 +128,6 @@ guardrail 5 (filesystem detrás de puertos) sin excepción.
 
 > Fill ONLY if Constitution Check has violations that must be justified
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|---|---|---|
-| Principio IV (Style Dictionary) sigue sin resolverse | La contradicción es preexistente a `011` (desde `006`, ADR-0022-0025); resolverla requiere una enmienda constitucional explícita que no fue solicitada en este brief. | Amend unilateral sin aprobación explícita violaría el propio proceso de `Governance` de la constitución. |
+Ninguna. La única excepción pendiente (Principio IV / Style Dictionary) fue resuelta mediante enmienda
+constitucional explícita y autorizada (constitución `2.0.0`, 2026-07-01, ver ADR-0028 actualizado y el
+commit `docs: align build principle with implemented pipeline`) antes de iniciar el Checkpoint A.

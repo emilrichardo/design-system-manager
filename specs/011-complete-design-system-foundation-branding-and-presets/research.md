@@ -61,12 +61,14 @@ Dictionary → Salidas". La implementación real de `006-build-export` (ADR-0022
 pipeline propio, determinista, sin dependencia de Style Dictionary (`package.json` no la incluye). Esto
 es una **contradicción documentada sin ADR que la reconcilie**.
 
-**Decisión para `011`**: no se amend la constitución en esta feature (una enmienda requiere aprobación
-explícita por escrito, ver `Governance` de la constitución, y no fue solicitada). Se documenta el hallazgo
-aquí y en `complete-design-system-model.md` como nota de reconciliación pendiente: el pipeline real de
-build/export es "un pipeline propio, determinista, DTCG-first", y Style Dictionary queda como
-implementación de referencia histórica no vigente. Se recomienda una enmienda `PATCH`/`MINOR` futura del
-Principio IV cuando el usuario la autorice explícitamente.
+**Resuelto**: el usuario autorizó explícitamente la enmienda constitucional. El Principio IV fue
+redefinido (constitución `2.0.0`, enmienda `MAJOR`, ratificada 2026-07-01) de "Style Dictionary como
+pipeline de generación" a "Build y export deterministas, reproducibles y extensibles mediante
+adapters": conserva los objetivos originales (cumplimiento de estándares, determinismo, salida
+multi-formato, separación fuente/artefacto, reproducibilidad, interoperabilidad) y retira la
+obligación tecnológica concreta. Style Dictionary queda como adapter/integración opcional, nunca
+autoridad del Core. Ver ADR-0028 (actualizado) y el commit `docs: align build principle with
+implemented pipeline`.
 
 ### 7. ¿Qué capacidades actuales deben conservarse como subsistemas?
 

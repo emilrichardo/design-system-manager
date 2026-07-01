@@ -1,46 +1,45 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: (plantilla sin versionar) → 1.0.0
-Tipo de cambio: MAJOR (ratificación inicial — se reemplazan todos los placeholders por
-                principios concretos y se define gobernanza).
+Version change: 1.0.0 → 2.0.0
+Tipo de cambio: MAJOR (redefinición del Principio IV — se elimina una obligación tecnológica
+                concreta que contradecía la implementación real, cerrada y probada, del pipeline
+                de build/export; ADR-0028/0029/0030 y la auditoría de `011` documentan el hallazgo).
 
-Principios definidos (17):
-  I.    Un Design System por proyecto
-  II.   Archivos locales como fuente de verdad
-  III.  DTCG como formato canónico de tokens
+Motivo: el Principio IV exigía Style Dictionary como "la herramienta principal prevista" para el
+pipeline de generación. La implementación real de `006-build-export` (ADR-0022 a ADR-0025, cerrada,
+probada, 1576/1576 tests en su momento) construyó un pipeline propio, determinista, DTCG-first, sin
+esa dependencia. Mantener el principio sin cambios convertía una decisión de implementación válida
+en una contradicción constitucional permanente. Se resuelve mediante enmienda explícita (no de forma
+tácita), conservando los objetivos originales del principio y retirando solo la obligación de
+herramienta concreta.
+
+Principio modificado:
   IV.   Style Dictionary como pipeline de generación
-  V.    Independencia del framework
-  VI.   El gestor es una herramienta, no el Design System
-  VII.  Edición visual sin ocultar el formato fuente
-  VIII. Validación antes de generación
-  IX.   Contratos antes que implementaciones
-  X.    Accesibilidad como requisito estructural
-  XI.   Páginas y secciones como validación del sistema
-  XII.  Contenido como contexto opcional
-  XIII. Funcionamiento local-first
-  XIV.  Seguridad en las modificaciones
-  XV.   Integración con agentes controlada
-  XVI.  Cambios incrementales y verificables
-  XVII. Portabilidad y ausencia de bloqueo
+        → Build y export deterministas, reproducibles y extensibles mediante adapters
 
-Secciones añadidas:
-  - Prioridad de los principios (resolución de conflictos)
-  - Governance (enmiendas, excepciones, cumplimiento, versionado, ADR)
+Objetivos preservados del principio original: standards compliance (DTCG), determinism, multi-format
+output, separation between source and artifacts, reproducibility, interoperability.
+Obligación eliminada: el mandato de usar Style Dictionary como "la herramienta principal prevista".
+Style Dictionary pasa a ser un adapter/integración opcional de salida, nunca la autoridad del Core.
 
-Secciones eliminadas: ninguna (la plantilla solo contenía placeholders).
+Principios sin cambios: I, II, III, V–XVII (17 principios en total, sin alteración de numeración,
+alcance ni prioridad relativa).
 
-Plantillas y artefactos dependientes — estado de alineación:
-  ✅ .specify/templates/plan-template.md   — sección "Constitution Check" es genérica;
-                                              no contradice estos principios.
-  ✅ .specify/templates/spec-template.md   — exige scope/"out of scope" y criterios de
-                                              aceptación; coherente con Principios XVI.
-  ✅ .specify/templates/tasks-template.md  — genérico; sin conflicto.
-  ✅ README.md                             — coherente (DTCG, Style Dictionary, local-first).
-  ⚠ Ninguna plantilla requiere edición en esta tarea (alcance limitado a la constitución
-     por instrucción explícita del usuario). Revisar al ejecutar /speckit-plan.
+Secciones añadidas: ninguna nueva en esta enmienda (ver v1.0.0 para las secciones fundacionales).
+Secciones eliminadas: ninguna.
 
-TODOs diferidos: ninguno. RATIFICATION_DATE asignada a la fecha de adopción inicial.
+Plantillas y artefactos dependientes — estado de alineación tras la enmienda:
+  ✅ .specify/templates/plan-template.md   — sección "Constitution Check" es genérica; sin cambio.
+  ✅ .specify/templates/spec-template.md   — sin cambio.
+  ✅ .specify/templates/tasks-template.md  — sin cambio.
+  ✅ README.md                             — no afirma Style Dictionary como obligatorio; sin cambio.
+  ✅ docs/adr/0022–0025-*.md               — quedan reconciliados con la constitución por esta
+                                              enmienda (antes eran una excepción tácita sin ADR).
+  ✅ docs/product/complete-design-system-model.md, specs/011/research.md — actualizados en un commit
+     posterior de esta misma sesión para reflejar la enmienda ya ratificada.
+
+TODOs diferidos: ninguno. Enmienda ratificada en la fecha indicada abajo (Last Amended).
 -->
 
 # Neuraz Design System Manager Constitution
@@ -90,22 +89,32 @@ documentada.
 **Rationale**: Adoptar un estándar abierto preserva la interoperabilidad y evita el bloqueo
 tecnológico (lock-in) a la herramienta.
 
-### IV. Style Dictionary como pipeline de generación
+### IV. Build y export deterministas, reproducibles y extensibles mediante adapters
 
-Style Dictionary es la herramienta principal prevista para transformar los tokens canónicos en
-formatos consumibles (CSS, JavaScript/TypeScript, JSON, SCSS, `theme.json`, etc.). La fuente
-DTCG NUNCA DEBE reemplazarse por los archivos generados. DEBE mantenerse la dirección
-unidireccional:
+El build y export del Design System DEBE ser **determinista** (misma fuente → mismos bytes),
+**reproducible** entre ejecuciones sucesivas sin depender de estado oculto ni de la máquina donde se
+ejecuta, **compatible con los contratos DTCG soportados**, y **extensible mediante adapters** de
+salida. DEBE mantenerse la dirección unidireccional:
 
 ```text
-Tokens DTCG → Validación → Resolución de referencias → Style Dictionary → Salidas
+Tokens DTCG → Validación → Resolución de referencias → Pipeline de build/export → Salidas
+                                                          (CSS, JS/TS, JSON, SCSS, theme.json, etc.)
 ```
 
-Los archivos generados son **artefactos derivados** y DEBEN poder reconstruirse en cualquier
-momento a partir de la fuente DTCG.
+Los archivos generados son **artefactos derivados** y DEBEN poder reconstruirse en cualquier momento
+a partir de la fuente DTCG. **Style Dictionary PUEDE utilizarse como adapter o integración opcional**
+de un formato de salida, pero NO ES una dependencia obligatoria ni la autoridad del Core: el Core
+PUEDE implementar y mantener su propio pipeline determinista siempre que cumpla los mismos objetivos
+de este principio (cumplimiento de estándares, determinismo, salida multi-formato, separación entre
+fuente y artefactos, reproducibilidad e interoperabilidad).
 
-**Rationale**: Separar fuente y artefacto evita derivas y corrupción de datos, y permite
-regenerar salidas de forma determinista.
+**Rationale**: Separar fuente y artefacto evita derivas y corrupción de datos, y permite regenerar
+salidas de forma determinista. Exigir una librería concreta como autoridad arquitectónica del pipeline
+contradice el Principio V (independencia de framework) y el Principio IX (contratos antes que
+implementaciones) cuando el Core ya demuestra — con tests cerrados y ADR-0022 a ADR-0025 — que puede
+cumplir estos objetivos sin esa dependencia. El principio fija el **contrato de comportamiento**
+(determinismo, reproducibilidad, multi-formato, separación fuente/artefacto, interoperabilidad), no
+la implementación que lo satisface.
 
 ### V. Independencia del framework
 
@@ -312,4 +321,4 @@ La versión sigue versionado semántico:
 - **MINOR**: adición de un principio o sección, o ampliación material de una guía existente.
 - **PATCH**: aclaraciones, correcciones de redacción y refinamientos no semánticos.
 
-**Version**: 1.0.0 | **Ratified**: 2026-06-25 | **Last Amended**: 2026-06-25
+**Version**: 2.0.0 | **Ratified**: 2026-06-25 | **Last Amended**: 2026-07-01

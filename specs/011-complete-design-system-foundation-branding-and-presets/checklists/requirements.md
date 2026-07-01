@@ -35,9 +35,9 @@
 
 ## Notes
 
-- La contradicción constitucional preexistente (Principio IV / Style Dictionary) se documenta en
-  `research.md` como hallazgo de auditoría, no como requisito de esta feature — no bloquea la
-  aprobación del spec, pero queda registrada para una enmienda futura explícita.
+- La contradicción constitucional preexistente (Principio IV / Style Dictionary) fue resuelta por
+  enmienda explícita y autorizada (constitución `2.0.0`, 2026-07-01) antes de iniciar la
+  implementación de A/B — ver ADR-0028 actualizado y `research.md` §6.
 - Los packs `dashboard`/`institutional` quedan deliberadamente "reservados sin catálogo" en
   `contracts/preset-web-complete.md` en vez de forzar un catálogo inventado — esto es una decisión de
   alcance documentada, no un `[NEEDS CLARIFICATION]` pendiente.
