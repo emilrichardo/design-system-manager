@@ -1,7 +1,8 @@
 // T001 (008) — Operación de mutación de tokens: unión discriminada de 15 operaciones (token/grupo).
 // Dominio puro e inmutable: sin filesystem, sin CLI, sin `Error`. Los paths son lógicos (`a.b.c`); los
 // valores son DTCG JSON-safe. No persiste un campo `category` propio: `update-category` edita la
-// metadata Neuraz bajo `$extensions` (la categoría foundation de 004 es path-derived y read-only).
+// metadata Neuraz bajo `$extensions` (la categoría foundation de 004 es path-derived y read-only);
+// `update-foundation-level` edita la metadata foundation persistible de 004.
 
 /** Valor DTCG JSON-safe (objeto/escala/array; nunca bytes ni `Error`). */
 export type DtcgValue = unknown;
@@ -12,6 +13,7 @@ export type TokenOperationKind =
   | "update-type"
   | "update-description"
   | "update-category"
+  | "update-foundation-level"
   | "set-alias"
   | "remove-alias"
   | "rename-token"
@@ -29,6 +31,7 @@ export const TOKEN_MUTATION_OPERATION_KINDS: readonly TokenMutationOperationKind
   "update-type",
   "update-description",
   "update-category",
+  "update-foundation-level",
   "set-alias",
   "remove-alias",
   "rename-token",
@@ -70,6 +73,12 @@ export interface UpdateCategoryOp {
   readonly path: string;
   /** Metadata de clasificación Neuraz (`$extensions`); `null` la limpia. */
   readonly category: string | null;
+}
+export interface UpdateFoundationLevelOp {
+  readonly kind: "update-foundation-level";
+  readonly path: string;
+  /** Metadata `$extensions[namespace].foundation.level`; `null` la limpia. */
+  readonly level: "primitive" | "semantic" | null;
 }
 export interface SetAliasOp {
   readonly kind: "set-alias";
@@ -125,6 +134,7 @@ export type TokenMutationOperationV1 =
   | UpdateTypeOp
   | UpdateDescriptionOp
   | UpdateCategoryOp
+  | UpdateFoundationLevelOp
   | SetAliasOp
   | RemoveAliasOp
   | RenameTokenOp

@@ -45,6 +45,22 @@ describe("buildCandidateDocument (T013)", () => {
     expect((node.$extensions as PlainDoc)["com.unknown"]).toEqual({ keep: true }); // desconocido preservado
   });
 
+  it("update-foundation-level escribe y limpia metadata foundation preservando extensiones ajenas", () => {
+    const classified = buildCandidateDocument(baseDoc(), [
+      { kind: "update-foundation-level", path: "color.brand.500", level: "primitive" },
+    ]);
+    const node = getNode(classified, "color.brand.500") as PlainDoc;
+    expect((node.$extensions as PlainDoc)["com.unknown"]).toEqual({ keep: true });
+    expect((node.$extensions as PlainDoc)["ar.neuraz.design-system-manager"]).toEqual({ foundation: { level: "primitive" } });
+
+    const cleaned = buildCandidateDocument(classified, [
+      { kind: "update-foundation-level", path: "color.brand.500", level: null },
+    ]);
+    const cleanedNode = getNode(cleaned, "color.brand.500") as PlainDoc;
+    expect((cleanedNode.$extensions as PlainDoc)["com.unknown"]).toEqual({ keep: true });
+    expect((cleanedNode.$extensions as PlainDoc)["ar.neuraz.design-system-manager"]).toEqual({});
+  });
+
   it("set-alias escribe {target}; remove-alias inlina el valor resuelto", () => {
     const out = buildCandidateDocument(baseDoc(), [
       { kind: "create-token", path: "color.accent", value: "{color.brand.500}", type: "color" },

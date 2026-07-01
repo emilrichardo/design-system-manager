@@ -11,6 +11,7 @@ import {
   getNode,
   isPlainObject,
   isTokenNode,
+  setFoundationLevel,
   setNeurazCategory,
   setNode,
   type PlainDoc,
@@ -58,6 +59,11 @@ function applyOne(document: PlainDoc, op: TokenMutationOperationV1, options: Can
     case "update-category": {
       const n = tokenNodeAt(document, op.path);
       if (n) setNeurazCategory(n, op.category);
+      return;
+    }
+    case "update-foundation-level": {
+      const n = tokenNodeAt(document, op.path);
+      if (n) setFoundationLevel(n, op.level);
       return;
     }
     case "set-alias": {

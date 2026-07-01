@@ -134,6 +134,13 @@ export function validateCommand(source: AnalyzedTokenSource, command: TokenMutat
         if (!state.tokens.has(op.path)) add(issue("token-not-found", op.path, `Token inexistente: ${op.path}.`));
         break;
       }
+      case "update-foundation-level": {
+        if (!state.tokens.has(op.path)) add(issue("token-not-found", op.path, `Token inexistente: ${op.path}.`));
+        else if (op.level !== "primitive" && op.level !== "semantic" && op.level !== null) {
+          add(issue("invalid-dtcg-value", op.path, `Nivel foundation inválido en ${op.path}.`));
+        }
+        break;
+      }
       case "set-alias": {
         const st = state.tokens.get(op.path);
         if (!st) {

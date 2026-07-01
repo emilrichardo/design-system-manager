@@ -521,10 +521,12 @@ function renderEditorDraftForms(section: HTMLElement): void {
   const metaType = labeledSelect("editor-meta-type", "Declared type", EDITOR_VALUE_TYPES);
   const description = labeledInput("editor-description", "Description");
   const category = labeledInput("editor-category", "Neuraz category metadata");
+  const foundationLevel = labeledSelect("editor-foundation-level", "Foundation level", ["none", "primitive", "semantic"]);
   appendFormField(metaForm, metaPath);
   appendFormField(metaForm, metaType);
   appendFormField(metaForm, description);
   appendFormField(metaForm, category);
+  appendFormField(metaForm, foundationLevel);
   for (const [label, kind, field] of [
     ["Preview update type", "update-type", "type"],
     ["Preview update description", "update-description", "description"],
@@ -539,6 +541,13 @@ function renderEditorDraftForms(section: HTMLElement): void {
     });
     metaForm.append(button);
   }
+  const foundationButton = document.createElement("button");
+  foundationButton.type = "button";
+  foundationButton.textContent = "Preview update foundation level";
+  foundationButton.addEventListener("click", () => {
+    preview(editorCommand([{ kind: "update-foundation-level", path: metaPath.value, level: foundationLevel.value === "none" ? null : foundationLevel.value }]));
+  });
+  metaForm.append(foundationButton);
 
   const aliasForm = editorForm("Alias editor");
   const aliasPath = labeledInput("editor-alias-path", "Alias token path", "text", "color.brand.primary");

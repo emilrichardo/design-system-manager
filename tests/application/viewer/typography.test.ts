@@ -75,6 +75,20 @@ describe("projectTypography (T035)", () => {
     expect(result.weight).toBeNull();
   });
 
+  it("tipo escalar fontFamily con fallback array: muestra la lista completa", () => {
+    const t = token({ effectiveType: "fontFamily", resolvedValue: ["Inter", "sans-serif"] });
+    const result = projectTypography(t, []);
+    expect(result.family).toBe("Inter, sans-serif");
+    expect(result.weight).toBeNull();
+  });
+
+  it("compuesto typography con fontFamily array: muestra la lista completa", () => {
+    const t = token({ resolvedValue: { fontFamily: ["Space Grotesk", "sans-serif"], fontWeight: 700 } });
+    const result = projectTypography(t, []);
+    expect(result.family).toBe("Space Grotesk, sans-serif");
+    expect(result.weight).toBe(700);
+  });
+
   it("tipo escalar fontWeight solo: weight=valor, family null", () => {
     const t = token({ effectiveType: "fontWeight", resolvedValue: 600 });
     const result = projectTypography(t, []);

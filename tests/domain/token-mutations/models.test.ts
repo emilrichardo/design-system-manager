@@ -23,9 +23,10 @@ import {
 } from "../../../src/domain/token-mutations/index.js";
 
 describe("operations & command", () => {
-  it("hay exactamente 15 operaciones cerradas (11 token + 4 grupo)", () => {
-    expect(TOKEN_MUTATION_OPERATION_KINDS).toHaveLength(15);
+  it("hay exactamente 16 operaciones cerradas (12 token + 4 grupo)", () => {
+    expect(TOKEN_MUTATION_OPERATION_KINDS).toHaveLength(16);
     expect(isTokenMutationOperationKind("create-token")).toBe(true);
+    expect(isTokenMutationOperationKind("update-foundation-level")).toBe(true);
     expect(isTokenMutationOperationKind("remove-empty-group")).toBe(true);
     expect(isTokenMutationOperationKind("force-remove")).toBe(false);
   });

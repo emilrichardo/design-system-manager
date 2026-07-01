@@ -42,9 +42,14 @@ describe("calculateDiff (T014)", () => {
     expect(diffOf([{ kind: "remove-token", path: "color.brand.500" }]).entries[0]).toMatchObject({ kind: "removed", path: "color.brand.500", before: "#3b82f6" });
   });
 
-  it("metadata-changed (description/category) y group-changed", () => {
+  it("metadata-changed (description/category/foundation-level) y group-changed", () => {
     expect(diffOf([{ kind: "update-description", path: "color.brand.500", description: "x" }]).entries[0].kind).toBe("metadata-changed");
     expect(diffOf([{ kind: "update-category", path: "color.brand.500", category: "primitive" }]).entries[0].kind).toBe("metadata-changed");
+    expect(diffOf([{ kind: "update-foundation-level", path: "color.brand.500", level: "primitive" }]).entries[0]).toMatchObject({
+      kind: "metadata-changed",
+      before: null,
+      after: "primitive",
+    });
     expect(diffOf([{ kind: "create-group", path: "spacing" }]).entries[0].kind).toBe("group-changed");
   });
 

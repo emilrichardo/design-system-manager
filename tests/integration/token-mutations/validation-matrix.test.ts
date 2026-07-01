@@ -23,6 +23,7 @@ describe("validateCommand matrix (T023)", () => {
 
   it("invalid-dtcg-value", () => {
     expect(codes([{ kind: "update-value", path: "color.brand.500", value: undefined as unknown }])).toContain("invalid-dtcg-value");
+    expect(codes([{ kind: "update-foundation-level", path: "color.brand.500", level: "core" } as unknown as TokenMutationOperationV1])).toContain("invalid-dtcg-value");
   });
 
   it("alias-not-found / alias-to-group / alias-cycle", () => {

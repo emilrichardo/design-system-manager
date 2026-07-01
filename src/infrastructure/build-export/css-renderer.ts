@@ -7,8 +7,8 @@
 //   SUPPORTED:               number
 //   CONDITIONALLY_SUPPORTED: color (hex+alpha 1), dimension (px/rem/em/%), duration (ms/s),
 //                            fontWeight (1..1000 entero o normal/bold), fontFamily (string|string[]),
-//                            cubicBezier ([x1,y1,x2,y2] con x1/x2 ∈ [0,1]), string
-//   UNSUPPORTED_IN_CSS_V1:   boolean, strokeStyle, border, transition, shadow, gradient, typography
+//                            cubicBezier ([x1,y1,x2,y2] con x1/x2 ∈ [0,1]), shadow, string
+//   UNSUPPORTED_IN_CSS_V1:   boolean, strokeStyle, border, transition, gradient, typography
 import type { BuildArtifact } from "../../domain/build-export/artifact.js";
 import { artifactContentType, artifactFilename, type BuildFormat } from "../../domain/build-export/build-format.js";
 import { createBuildArtifact } from "../../domain/build-export/artifact.js";
@@ -28,6 +28,7 @@ export type CssErrorCode =
   | "css-font-family-unsupported-shape"
   | "css-font-weight-unsupported-shape"
   | "css-cubic-bezier-unsupported-shape"
+  | "css-shadow-unsupported-shape"
   | "css-string-unsupported-type"
   | "css-boolean-unsupported"
   | "css-type-unsupported"
@@ -170,8 +171,57 @@ function serializeString(value: unknown, tokenPath: string): string | CssRenderE
   return cssDoubleQuotedString(value);
 }
 
+function serializeShadowColor(value: unknown, tokenPath: string): string | CssRenderError {
+  if (value === null || typeof value !== "object") {
+    return fmtError("css-shadow-unsupported-shape", tokenPath, "shadow", `Shadow color inválido en ${tokenPath}.`);
+  }
+  const obj = value as Record<string, unknown>;
+  if (obj.colorSpace !== "srgb" || typeof obj.hex !== "string" || !/^#[0-9a-fA-F]{6}$/.test(obj.hex)) {
+    return fmtError("css-shadow-unsupported-shape", tokenPath, "shadow", `Shadow color no representable en ${tokenPath}.`);
+  }
+  const alpha = obj.alpha === undefined ? 1 : obj.alpha;
+  if (typeof alpha !== "number" || !Number.isFinite(alpha) || alpha < 0 || alpha > 1) {
+    return fmtError("css-shadow-unsupported-shape", tokenPath, "shadow", `Shadow alpha inválida en ${tokenPath}.`);
+  }
+  const hex = obj.hex;
+  if (alpha === 1) return hex.toLowerCase();
+  const r = Number.parseInt(hex.slice(1, 3), 16);
+  const g = Number.parseInt(hex.slice(3, 5), 16);
+  const b = Number.parseInt(hex.slice(5, 7), 16);
+  return `rgb(${r} ${g} ${b} / ${alpha})`;
+}
+
+function serializeOneShadow(value: unknown, tokenPath: string): string | CssRenderError {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return fmtError("css-shadow-unsupported-shape", tokenPath, "shadow", `Shadow no es un objeto en ${tokenPath}.`);
+  }
+  const obj = value as Record<string, unknown>;
+  const offsetX = serializeDimension(obj.offsetX, tokenPath);
+  const offsetY = serializeDimension(obj.offsetY, tokenPath);
+  const blur = serializeDimension(obj.blur ?? { value: 0, unit: "px" }, tokenPath);
+  const spread = serializeDimension(obj.spread ?? { value: 0, unit: "px" }, tokenPath);
+  const color = serializeShadowColor(obj.color, tokenPath);
+  for (const part of [offsetX, offsetY, blur, spread, color]) {
+    if (typeof part !== "string") return fmtError("css-shadow-unsupported-shape", tokenPath, "shadow", `Shadow no representable en ${tokenPath}.`);
+  }
+  const inset = obj.inset === true ? " inset" : "";
+  return `${offsetX} ${offsetY} ${blur} ${spread} ${color}${inset}`;
+}
+
+function serializeShadow(value: unknown, tokenPath: string): string | CssRenderError {
+  if (Array.isArray(value)) {
+    if (value.length === 0) return fmtError("css-shadow-unsupported-shape", tokenPath, "shadow", `Shadow array vacío en ${tokenPath}.`);
+    const parts = value.map((entry) => serializeOneShadow(entry, tokenPath));
+    for (const part of parts) {
+      if (typeof part !== "string") return part;
+    }
+    return parts.join(", ");
+  }
+  return serializeOneShadow(value, tokenPath);
+}
+
 // ── Despacho por tipo efectivo ──────────────────────────────────────────────────────────────────
-const UNSUPPORTED_TYPES = new Set(["strokeStyle", "border", "transition", "shadow", "gradient", "typography"]);
+const UNSUPPORTED_TYPES = new Set(["strokeStyle", "border", "transition", "gradient", "typography"]);
 
 function serializeConcreteValue(token: NormalizedBuildToken): string | CssRenderError {
   const type = token.effectiveType;
@@ -191,6 +241,8 @@ function serializeConcreteValue(token: NormalizedBuildToken): string | CssRender
       return serializeFontFamily(value, token.path);
     case "cubicBezier":
       return serializeCubicBezier(value, token.path);
+    case "shadow":
+      return serializeShadow(value, token.path);
     case "string":
       return serializeString(value, token.path);
     case "boolean":

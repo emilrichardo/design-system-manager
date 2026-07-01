@@ -49,14 +49,14 @@ const EMPTY_SUBFIELDS: TypographySubfields = { family: null, weight: null, style
  */
 function readSubfields(effectiveType: string | null, value: SafeJsonValue): TypographySubfields {
   if (effectiveType === "fontFamily") {
-    return { ...EMPTY_SUBFIELDS, family: typeof value === "string" ? value : null };
+    return { ...EMPTY_SUBFIELDS, family: readFontFamily(value) };
   }
   if (effectiveType === "fontWeight") {
     return { ...EMPTY_SUBFIELDS, weight: typeof value === "string" || typeof value === "number" ? value : null };
   }
   if (effectiveType === "typography" && typeof value === "object" && value !== null && !Array.isArray(value)) {
     const rec = value as Record<string, unknown>;
-    const family = typeof rec["fontFamily"] === "string" ? rec["fontFamily"] : null;
+    const family = readFontFamily(rec["fontFamily"] as SafeJsonValue);
     const weight = typeof rec["fontWeight"] === "string" || typeof rec["fontWeight"] === "number" ? (rec["fontWeight"] as string | number) : null;
     const style = typeof rec["fontStyle"] === "string" ? rec["fontStyle"] : null;
     return {
@@ -69,6 +69,14 @@ function readSubfields(effectiveType: string | null, value: SafeJsonValue): Typo
     };
   }
   return EMPTY_SUBFIELDS;
+}
+
+function readFontFamily(value: SafeJsonValue): string | null {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value) && value.length > 0 && value.every((entry) => typeof entry === "string")) {
+    return value.join(", ");
+  }
+  return null;
 }
 
 /** Normaliza un nombre de familia para comparación difusa (minúsculas, solo alfanuméricos). */

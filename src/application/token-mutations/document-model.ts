@@ -83,6 +83,7 @@ export interface TokenSummary {
   readonly description: string | null;
   readonly aliasTarget: string | null;
   readonly category: string | null;
+  readonly foundationLevel: string | null;
 }
 
 const ALIAS_RE = /^\{([^}]+)\}$/;
@@ -102,6 +103,16 @@ function neurazCategory(node: PlainDoc): string | null {
   return typeof ns.category === "string" ? ns.category : null;
 }
 
+function neurazFoundationLevel(node: PlainDoc): string | null {
+  const ext = node.$extensions;
+  if (!isPlainObject(ext)) return null;
+  const ns = ext[NEURAZ_NS];
+  if (!isPlainObject(ns)) return null;
+  const foundation = ns.foundation;
+  if (!isPlainObject(foundation)) return null;
+  return typeof foundation.level === "string" ? foundation.level : null;
+}
+
 /** Mapa plano path→resumen de cada token del documento, en orden del documento. */
 export function tokenSummaryMap(document: PlainDoc): Map<string, TokenSummary> {
   const out = new Map<string, TokenSummary>();
@@ -117,6 +128,7 @@ export function tokenSummaryMap(document: PlainDoc): Map<string, TokenSummary> {
           description: typeof child.$description === "string" ? child.$description : null,
           aliasTarget: aliasTargetOfValue(child.$value),
           category: neurazCategory(child),
+          foundationLevel: neurazFoundationLevel(child),
         });
       } else if (isGroupNode(child)) {
         walk(child, path);
@@ -157,4 +169,23 @@ export function setNeurazCategory(node: PlainDoc, category: string | null): void
   const ext = isPlainObject(node.$extensions) ? (node.$extensions as PlainDoc) : (node.$extensions = {});
   const ns = isPlainObject(ext[NEURAZ_NS]) ? (ext[NEURAZ_NS] as PlainDoc) : (ext[NEURAZ_NS] = {});
   ns.category = category;
+}
+
+/** Asigna `$extensions[NEURAZ_NS].foundation.level` (o lo limpia con `null`). */
+export function setFoundationLevel(node: PlainDoc, level: "primitive" | "semantic" | null): void {
+  if (level === null) {
+    const ext = node.$extensions;
+    if (isPlainObject(ext) && isPlainObject(ext[NEURAZ_NS])) {
+      const ns = ext[NEURAZ_NS] as PlainDoc;
+      if (isPlainObject(ns.foundation)) {
+        delete (ns.foundation as PlainDoc).level;
+        if (Object.keys(ns.foundation as PlainDoc).length === 0) delete ns.foundation;
+      }
+    }
+    return;
+  }
+  const ext = isPlainObject(node.$extensions) ? (node.$extensions as PlainDoc) : (node.$extensions = {});
+  const ns = isPlainObject(ext[NEURAZ_NS]) ? (ext[NEURAZ_NS] as PlainDoc) : (ext[NEURAZ_NS] = {});
+  const foundation = isPlainObject(ns.foundation) ? (ns.foundation as PlainDoc) : (ns.foundation = {});
+  foundation.level = level;
 }

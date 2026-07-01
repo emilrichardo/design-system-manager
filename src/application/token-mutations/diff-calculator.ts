@@ -49,6 +49,9 @@ export function calculateDiff(beforeDoc: PlainDoc, afterDoc: PlainDoc, operation
       case "update-category":
         entries.push(entry("metadata-changed", op.path, { before: before.get(op.path)?.category ?? null, after: after.get(op.path)?.category ?? null }));
         break;
+      case "update-foundation-level":
+        entries.push(entry("metadata-changed", op.path, { before: before.get(op.path)?.foundationLevel ?? null, after: after.get(op.path)?.foundationLevel ?? null }));
+        break;
       case "set-alias":
         entries.push(entry("alias-changed", op.path, { before: before.get(op.path)?.aliasTarget ?? null, after: op.target }));
         break;

@@ -3,7 +3,7 @@ import { renderCssArtifact } from "../../../src/infrastructure/build-export/css-
 import { setOf, tokenOf } from "../../infrastructure/build-export/css-renderer-helpers.js";
 
 describe("CSS all-or-nothing (T053)", () => {
-  it("un token valido seguido por uno unsupported no produce artifact", () => {
+  it("un token valido seguido por una sombra invalida no produce artifact", () => {
     const result = renderCssArtifact(
       setOf([
         tokenOf({ path: "color.brand", effectiveType: "color", value: { colorSpace: "srgb", components: [0, 0, 0], hex: "#0066FF" } }),
@@ -13,7 +13,7 @@ describe("CSS all-or-nothing (T053)", () => {
 
     expect(result.outcome).toBe("unsupported-value");
     if (result.outcome === "unsupported-value") {
-      expect(result.errors[0]).toMatchObject({ code: "css-type-unsupported", tokenPath: "shadow.card", type: "shadow" });
+      expect(result.errors[0]).toMatchObject({ code: "css-shadow-unsupported-shape", tokenPath: "shadow.card", type: "shadow" });
     }
   });
 
