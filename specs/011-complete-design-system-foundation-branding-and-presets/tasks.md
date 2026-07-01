@@ -114,20 +114,20 @@ completa devuelve `0` warnings genéricos y los issues específicos correctos; u
 **Goal**: El writer transaccional de `brand/**` existe; `build`/`export` incluyen la proyección segura
 de brand documentation; el matching de fuentes (contracts/typography-projection.md) está corregido.
 
-- [ ] T017 Crear `src/infrastructure/brand/brand-writer.ts` — mismo patrón transaccional (staging,
+- [x] T017 Crear `src/infrastructure/brand/brand-writer.ts` — mismo patrón transaccional (staging,
   verificación, backup, recovery) que `src/infrastructure/token-mutations/token-source-writer.ts`, pero
   para los 4 archivos de `design-system/brand/**` (JSON + Markdown narrativo donde corresponda).
-- [ ] T018 [P] Crear `src/application/brand/plan-brand-mutation.ts` y `apply-brand-mutation.ts` — caso de
+- [x] T018 [P] Crear `src/application/brand/plan-brand-mutation.ts` y `apply-brand-mutation.ts` — caso de
   uso propio de plan/diff/apply para narrativa de marca (nunca reutiliza
   `TokenMutationCommandV1`/`applyTokenMutation` de `008` para contenido no-token, per `FR-015`).
-- [ ] T019 [P] Extender `src/infrastructure/build-export/` para publicar `brand.json` (proyección segura,
+- [x] T019 [P] Extender `src/infrastructure/build-export/` para publicar `brand.json` (proyección segura,
   no toda la narrativa a CSS) como artefacto adicional del build, sin cambiar el contrato de
   `tokens.css`/`tokens.resolved.json`/`tokens.ts`/`manifest.json` (`FR-018`).
-- [ ] T020 Corregir `src/application/viewer/typography.ts` y `renderTypography` (`main.ts`) según
+- [x] T020 Corregir `src/application/viewer/typography.ts` y `renderTypography` (`main.ts`) según
   `contracts/typography-projection.md`: discriminar por `kind`, calcular `FontAssetMatchV1` solo para
   `font-family`/`typography-composite`, eliminar `family=(none)`/`license=no-matching-asset` en
   `dimension`.
-- [ ] T021 Tests de integración: plan/apply/idempotencia/recovery del writer de brand
+- [x] T021 Tests de integración: plan/apply/idempotencia/recovery del writer de brand
   (`tests/integration/brand/brand-writer.test.ts`, espejo de
   `tests/integration/token-mutations/*-idempotency.test.ts`); build incluye `brand.json` cuando
   `brand/` existe y lo omite (sin error) cuando `brand: absent` (`tests/integration/build-export/

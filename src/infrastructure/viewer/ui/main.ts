@@ -149,12 +149,24 @@ function typographyRow(entry: ViewerTypographyV1): HTMLLIElement {
   const li = document.createElement("li");
   const preview = document.createElement("p");
   preview.className = "typography-preview";
-  if (entry.family !== null) preview.style.fontFamily = entry.family;
-  if (entry.size !== null) preview.style.fontSize = describeValue(entry.size);
   preview.textContent = entry.token.path;
   const details = document.createElement("p");
-  details.textContent = `family=${entry.family ?? "(none)"} weight=${entry.weight ?? "(none)"} style=${entry.style ?? "(none)"} license=${entry.licenseState}`;
+  if (entry.kind === "font-family") {
+    if (entry.family !== null) preview.style.fontFamily = entry.family;
+    details.textContent = `family=${entry.family ?? "(none)"} match=${entry.matchState}`;
+  } else if (entry.kind === "typography-composite") {
+    if (entry.family !== null) preview.style.fontFamily = entry.family;
+    if (entry.size !== null) preview.style.fontSize = describeValue(entry.size);
+    details.textContent = `family=${entry.family ?? "(none)"} weight=${entry.weight ?? "(none)"} style=${entry.style ?? "(none)"} match=${entry.matchState}`;
+  } else {
+    details.textContent = `value=${describeValue(entry.value)}`;
+  }
   li.append(preview, details);
+  if ("matchedAssets" in entry && entry.matchedAssets.length > 0) {
+    const assets = document.createElement("p");
+    assets.textContent = `assets=${entry.matchedAssets.map((asset) => asset.logicalPath).join(", ")}`;
+    li.append(assets);
+  }
   return li;
 }
 

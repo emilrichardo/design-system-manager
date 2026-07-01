@@ -12,6 +12,13 @@ export interface BuildManifestSummary {
   readonly byteLength: number;
 }
 
+export interface BuildBrandArtifactSummary {
+  readonly status: "absent" | "generated";
+  readonly relativePath: string | null;
+  readonly contentHash: string | null;
+  readonly byteLength: number | null;
+}
+
 /** Identidad lógica de la fuente (sin ruta absoluta). */
 export interface BuildSourceRef {
   readonly logicalPath: string;
@@ -27,6 +34,7 @@ export interface BuildResult {
   readonly outputAvailable: boolean | null;
   readonly artifacts: readonly BuildArtifactMetadata[];
   readonly manifest: BuildManifestSummary | null;
+  readonly brandArtifact: BuildBrandArtifactSummary | null;
   readonly verification: BuildVerification | null;
   readonly backupRelativePath: string | null;
   readonly recoveryRequired: boolean;

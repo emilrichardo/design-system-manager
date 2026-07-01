@@ -27,11 +27,13 @@ export function makeRequest(overrides: Partial<ArtifactSetWriteRequest> = {}): A
   return {
     outputRoot: BUILD_OUTPUT_ROOT,
     artifacts,
+    extraFiles: [],
     manifest,
     strategy: "candidate-directory-set-v1",
     expectedHashes: {
       source: "0".repeat(64),
       artifacts: Object.fromEntries(artifacts.map((a) => [a.relativePath, a.contentHash])),
+      extraFiles: {},
       buildManifest: manifest.contentHash,
     },
     ...overrides,

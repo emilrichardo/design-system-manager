@@ -5,9 +5,11 @@
 import type { BuildArtifact } from "../../domain/build-export/artifact.js";
 import { BUILD_FORMATS, artifactFilename, type BuildFormat } from "../../domain/build-export/build-format.js";
 import {
+  BUILD_BRAND_ARTIFACT_FILENAME,
   BUILD_MANIFEST_FORMAT_VERSION,
   isSafeRelativePath,
   isSha256Hex,
+  type BuildBrandArtifactV1,
   type BuildManifestArtifactV1,
   type BuildManifestV1,
 } from "../../domain/build-export/build-manifest.js";
@@ -40,6 +42,11 @@ export interface ManifestBuilderInput {
   readonly source: string;
   readonly sourceHash: string;
   readonly artifacts: readonly BuildArtifact[];
+  readonly brandArtifact?: {
+    readonly relativePath: string;
+    readonly contentHash: string;
+    readonly byteLength: number;
+  } | null;
 }
 
 /** Ensambla un `BuildManifestV1` readonly y determinista (orden css/json/typescript). */
@@ -70,6 +77,33 @@ export function buildBuildManifest(input: ManifestBuilderInput): ManifestBuilder
     if (!seenFormats.has(format)) return fail("artifact-missing", `Falta el artifact de formato ${format}.`, null);
   }
 
+  let brand: BuildBrandArtifactV1 = {
+    status: "absent",
+    relativePath: null,
+    contentHash: null,
+    byteLength: null,
+  };
+  if (input.brandArtifact !== undefined && input.brandArtifact !== null) {
+    if (input.brandArtifact.relativePath !== BUILD_BRAND_ARTIFACT_FILENAME) {
+      return fail("non-contractual-path", `Path no contractual para brand artifact: ${input.brandArtifact.relativePath}.`, input.brandArtifact.relativePath);
+    }
+    if (!isSafeRelativePath(input.brandArtifact.relativePath)) {
+      return fail("unsafe-path", `Path inseguro: ${input.brandArtifact.relativePath}.`, input.brandArtifact.relativePath);
+    }
+    if (!isSha256Hex(input.brandArtifact.contentHash)) {
+      return fail("invalid-hash", `contentHash inválido en ${input.brandArtifact.relativePath}.`, input.brandArtifact.relativePath);
+    }
+    if (!Number.isInteger(input.brandArtifact.byteLength) || input.brandArtifact.byteLength < 0) {
+      return fail("invalid-byte-length", `byteLength inválido en ${input.brandArtifact.relativePath}.`, input.brandArtifact.relativePath);
+    }
+    brand = {
+      status: "generated",
+      relativePath: BUILD_BRAND_ARTIFACT_FILENAME,
+      contentHash: input.brandArtifact.contentHash,
+      byteLength: input.brandArtifact.byteLength,
+    };
+  }
+
   const ordered = [...entries].sort((a, b) => BUILD_FORMATS.indexOf(a.format) - BUILD_FORMATS.indexOf(b.format));
   return {
     ok: true,
@@ -78,6 +112,7 @@ export function buildBuildManifest(input: ManifestBuilderInput): ManifestBuilder
       source: input.source,
       sourceHash: input.sourceHash,
       artifacts: Object.freeze(ordered.map((entry) => Object.freeze(entry))),
+      brand: Object.freeze(brand),
     }),
   };
 }

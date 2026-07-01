@@ -1,23 +1,43 @@
-// T004/T031 (009) — Tipos de `ViewerTypographyV1`/`ViewerLicenseState` (data-model.md,
-// contracts/viewer-typography-v1.contract.md) y `projectTypography` (Checkpoint D): lee subcampos
-// TAL CUAL desde el `resolvedValue` ya cargado (nunca un default fabricado); enlaza con `007` por
-// coincidencia de nombre de familia contra el `logicalPath` del asset de fuente (007 no expone metadata
-// de familia tipada — es el único identificador disponible; no se re-consulta `listAssets`, se reusa el
-// resultado ya obtenido en la sesión).
-import type { ViewerTokenV1, SafeJsonValue } from "./token.js";
 import type { ViewerAssetV1 } from "./asset.js";
+import type { SafeJsonValue, ViewerTokenV1 } from "./token.js";
 
-/**
- * Estado de licencia mostrado en la vista Typography (data-model.md, enumeración `ViewerLicenseState`).
- * `no-matching-asset` es específico del Viewer (nunca persistido ni escrito a `007`).
- */
-export type ViewerLicenseState = "declared" | "unspecified" | "no-matching-asset";
+export type ViewerTypographyKind =
+  | "font-family"
+  | "font-size"
+  | "font-weight"
+  | "line-height"
+  | "letter-spacing"
+  | "typography-composite";
 
-/**
- * Proyección de un token typography (`category === "typography"`). Todo subcampo es `null` cuando el
- * valor DTCG resuelto no lo declara — nunca un default/adivinado (FR-011).
- */
-export interface ViewerTypographyV1 {
+export interface FontAssetMatchV1 {
+  readonly logicalPath: string;
+  readonly family: string | null;
+  readonly weight: string | null;
+  readonly style: string | null;
+  readonly format: string | null;
+  readonly license: {
+    readonly status: "declared" | "unspecified";
+    readonly identifier: string | null;
+  };
+  readonly matchState: "matched" | "ambiguous";
+}
+
+export interface ViewerTypographyFontFamilyV1 {
+  readonly kind: "font-family";
+  readonly token: ViewerTokenV1;
+  readonly family: string | null;
+  readonly matchedAssets: readonly FontAssetMatchV1[];
+  readonly matchState: "matched" | "no-candidates" | "ambiguous";
+}
+
+export interface ViewerTypographyValueV1 {
+  readonly kind: "font-size" | "font-weight" | "line-height" | "letter-spacing";
+  readonly token: ViewerTokenV1;
+  readonly value: SafeJsonValue | null;
+}
+
+export interface ViewerTypographyCompositeV1 {
+  readonly kind: "typography-composite";
   readonly token: ViewerTokenV1;
   readonly family: string | null;
   readonly weight: string | number | null;
@@ -25,11 +45,16 @@ export interface ViewerTypographyV1 {
   readonly size: SafeJsonValue | null;
   readonly lineHeight: SafeJsonValue | null;
   readonly letterSpacing: SafeJsonValue | null;
-  readonly linkedFontAsset: ViewerAssetV1 | null;
-  readonly licenseState: ViewerLicenseState;
+  readonly matchedAssets: readonly FontAssetMatchV1[];
+  readonly matchState: "matched" | "no-candidates" | "ambiguous";
 }
 
-interface TypographySubfields {
+export type ViewerTypographyV1 =
+  | ViewerTypographyFontFamilyV1
+  | ViewerTypographyValueV1
+  | ViewerTypographyCompositeV1;
+
+interface TypographyCompositeFields {
   readonly family: string | null;
   readonly weight: string | number | null;
   readonly style: string | null;
@@ -38,38 +63,14 @@ interface TypographySubfields {
   readonly letterSpacing: SafeJsonValue | null;
 }
 
-const EMPTY_SUBFIELDS: TypographySubfields = { family: null, weight: null, style: null, size: null, lineHeight: null, letterSpacing: null };
-
-/**
- * Lee los subcampos DTCG estándar TAL CUAL desde `resolvedValue`, según el `effectiveType` ya resuelto:
- * `typography` (compuesto DTCG con sus propios campos estándar `fontFamily`/`fontWeight`/`fontStyle`/
- * `fontSize`/`lineHeight`/`letterSpacing`), o un tipo escalar único (`fontFamily`/`fontWeight` solos).
- * Cualquier otro `effectiveType` (p. ej. `dimension`/`number` sueltos bajo la categoría typography, o
- * indeterminable) ⇒ todos los subcampos `null` — nunca se adivina a qué subcampo pertenecería.
- */
-function readSubfields(effectiveType: string | null, value: SafeJsonValue): TypographySubfields {
-  if (effectiveType === "fontFamily") {
-    return { ...EMPTY_SUBFIELDS, family: readFontFamily(value) };
-  }
-  if (effectiveType === "fontWeight") {
-    return { ...EMPTY_SUBFIELDS, weight: typeof value === "string" || typeof value === "number" ? value : null };
-  }
-  if (effectiveType === "typography" && typeof value === "object" && value !== null && !Array.isArray(value)) {
-    const rec = value as Record<string, unknown>;
-    const family = readFontFamily(rec["fontFamily"] as SafeJsonValue);
-    const weight = typeof rec["fontWeight"] === "string" || typeof rec["fontWeight"] === "number" ? (rec["fontWeight"] as string | number) : null;
-    const style = typeof rec["fontStyle"] === "string" ? rec["fontStyle"] : null;
-    return {
-      family,
-      weight,
-      style,
-      size: rec["fontSize"] ?? null,
-      lineHeight: rec["lineHeight"] ?? null,
-      letterSpacing: rec["letterSpacing"] ?? null,
-    };
-  }
-  return EMPTY_SUBFIELDS;
-}
+const EMPTY_COMPOSITE_FIELDS: TypographyCompositeFields = {
+  family: null,
+  weight: null,
+  style: null,
+  size: null,
+  lineHeight: null,
+  letterSpacing: null,
+};
 
 function readFontFamily(value: SafeJsonValue): string | null {
   if (typeof value === "string") return value;
@@ -79,40 +80,89 @@ function readFontFamily(value: SafeJsonValue): string | null {
   return null;
 }
 
-/** Normaliza un nombre de familia para comparación difusa (minúsculas, solo alfanuméricos). */
+function readCompositeFields(value: SafeJsonValue): TypographyCompositeFields {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return EMPTY_COMPOSITE_FIELDS;
+  const record = value as Record<string, unknown>;
+  return {
+    family: readFontFamily((record.fontFamily ?? null) as SafeJsonValue),
+    weight: typeof record.fontWeight === "string" || typeof record.fontWeight === "number" ? record.fontWeight : null,
+    style: typeof record.fontStyle === "string" ? record.fontStyle : null,
+    size: (record.fontSize ?? null) as SafeJsonValue | null,
+    lineHeight: (record.lineHeight ?? null) as SafeJsonValue | null,
+    letterSpacing: (record.letterSpacing ?? null) as SafeJsonValue | null,
+  };
+}
+
 function normalizeFamilyName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-/** Nombre base del asset (sin directorios ni extensión) para comparar contra una familia tipográfica. */
 function assetBaseName(logicalPath: string): string {
   const last = logicalPath.split("/").pop() ?? logicalPath;
   return last.replace(/\.[^.]+$/, "");
 }
 
-/**
- * Enlaza con un asset de fuente (`007`, `kind === "font"`) ya cargado en la sesión (sin una segunda
- * `listAssets`), por coincidencia difusa entre `family` y el nombre base del asset — `007` no expone
- * metadata de familia tipada; es el único identificador disponible.
- */
-function findLinkedFontAsset(family: string | null, fontAssets: readonly ViewerAssetV1[]): ViewerAssetV1 | null {
-  if (family === null) return null;
+function assetFormat(asset: ViewerAssetV1): string | null {
+  const format = asset.mimeType.split("/")[1] ?? null;
+  return format === null ? null : format.toLowerCase();
+}
+
+function createFontAssetMatch(asset: ViewerAssetV1, matchState: "matched" | "ambiguous"): FontAssetMatchV1 {
+  return {
+    logicalPath: asset.logicalPath,
+    family: null,
+    weight: null,
+    style: null,
+    format: assetFormat(asset),
+    license: {
+      status: asset.license.status,
+      identifier: asset.license.identifier,
+    },
+    matchState,
+  };
+}
+
+function matchFontAssets(family: string | null, fontAssets: readonly ViewerAssetV1[]): Pick<ViewerTypographyFontFamilyV1, "matchedAssets" | "matchState"> {
+  if (family === null) return { matchedAssets: [], matchState: "no-candidates" };
   const target = normalizeFamilyName(family);
-  if (target.length === 0) return null;
-  return fontAssets.find((a) => normalizeFamilyName(assetBaseName(a.logicalPath)) === target) ?? null;
+  if (target.length === 0) return { matchedAssets: [], matchState: "no-candidates" };
+  // El inventario actual de 007 no expone metadata tipográfica estructurada; mientras exista esa
+  // limitación, la coincidencia reutiliza el identificador disponible del asset sin fabricar defaults.
+  const matches = fontAssets.filter((asset) => normalizeFamilyName(assetBaseName(asset.logicalPath)) === target);
+  if (matches.length === 0) return { matchedAssets: [], matchState: "no-candidates" };
+  if (matches.length === 1) return { matchedAssets: [createFontAssetMatch(matches[0]!, "matched")], matchState: "matched" };
+  return { matchedAssets: matches.map((asset) => createFontAssetMatch(asset, "ambiguous")), matchState: "ambiguous" };
 }
 
-function deriveLicenseState(linkedFontAsset: ViewerAssetV1 | null): ViewerLicenseState {
-  if (linkedFontAsset === null) return "no-matching-asset";
-  return linkedFontAsset.license.status === "declared" ? "declared" : "unspecified";
+function inferValueKind(token: ViewerTokenV1): ViewerTypographyValueV1["kind"] {
+  const path = token.path.toLowerCase();
+  if (path.includes("line-height") || path.includes("lineheight")) return "line-height";
+  if (path.includes("letter-spacing") || path.includes("letterspacing")) return "letter-spacing";
+  if (token.effectiveType === "fontWeight") return "font-weight";
+  return "font-size";
 }
 
-/**
- * Proyecta `ViewerTypographyV1` desde un `ViewerTokenV1` ya categorizado como `typography` y los assets
- * `font` YA cargados en la sesión (una sola `listAssets`, reusada — nunca una segunda consulta por token).
- */
 export function projectTypography(token: ViewerTokenV1, fontAssets: readonly ViewerAssetV1[]): ViewerTypographyV1 {
-  const subfields = readSubfields(token.effectiveType, token.resolvedValue);
-  const linkedFontAsset = findLinkedFontAsset(subfields.family, fontAssets);
-  return { token, ...subfields, linkedFontAsset, licenseState: deriveLicenseState(linkedFontAsset) };
+  if (token.effectiveType === "typography") {
+    const fields = readCompositeFields(token.resolvedValue);
+    const match = matchFontAssets(fields.family, fontAssets);
+    return { kind: "typography-composite", token, ...fields, ...match };
+  }
+
+  if (token.effectiveType === "fontFamily") {
+    const family = readFontFamily(token.resolvedValue);
+    const match = matchFontAssets(family, fontAssets);
+    return { kind: "font-family", token, family, ...match };
+  }
+
+  return {
+    kind: inferValueKind(token),
+    token,
+    value:
+      token.effectiveType === "fontWeight" ||
+      token.effectiveType === "dimension" ||
+      token.effectiveType === "number"
+        ? token.resolvedValue
+        : null,
+  };
 }

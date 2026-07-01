@@ -4,7 +4,7 @@
 // usa node:fs; nunca expone rutas absolutas en los modelos públicos; defensa de contención por root.
 import { lstat, readFile, readdir } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
-import { BUILD_MANIFEST_FILENAME, BUILD_OUTPUT_ROOT } from "../../domain/build-export/build-manifest.js";
+import { BUILD_BRAND_ARTIFACT_FILENAME, BUILD_MANIFEST_FILENAME, BUILD_OUTPUT_ROOT } from "../../domain/build-export/build-manifest.js";
 import { artifactFilename, BUILD_FORMATS } from "../../domain/build-export/build-format.js";
 import type { RawNodeKind, RawOutputNode, RequiredPathStatus } from "../../domain/build-export/build-snapshot.js";
 import type { BuildOutputInspection, BuildOutputInspector } from "../../application/build-export/build-ports.js";
@@ -12,7 +12,7 @@ import type { PreviousBuildManifestInput, RequiredPathNode } from "../../applica
 import { sha256Hex } from "./hash.js";
 
 const ARTIFACT_PATHS = BUILD_FORMATS.map((f) => artifactFilename(f));
-const REQUIRED_PATHS = [...ARTIFACT_PATHS, BUILD_MANIFEST_FILENAME];
+const REQUIRED_PATHS = [...ARTIFACT_PATHS, BUILD_MANIFEST_FILENAME, BUILD_BRAND_ARTIFACT_FILENAME];
 
 async function rawKindOf(abs: string): Promise<RawNodeKind> {
   const st = await lstat(abs);
@@ -122,7 +122,7 @@ export interface BuildOutputObservation {
 /** Observa el output dir (lstat, sin seguir symlinks). `rootDir` es la raíz del host (absoluta). */
 export async function observeBuildOutput(rootDir: string): Promise<BuildOutputObservation> {
   const buildDir = join(rootDir, ...BUILD_OUTPUT_ROOT.split("/"));
-  const requiredPathStates = await Promise.all(ARTIFACT_PATHS.map((rel) => requiredPathStatus(buildDir, rel)));
+  const requiredPathStates = await Promise.all([...ARTIFACT_PATHS, BUILD_BRAND_ARTIFACT_FILENAME].map((rel) => requiredPathStatus(buildDir, rel)));
   const previousManifest = await readPreviousManifest(buildDir);
   const rawUnknownNodes = await readUnknownNodes(buildDir);
   return {

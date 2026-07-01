@@ -18,7 +18,7 @@ import {
 } from "node:fs/promises";
 import { basename, dirname, join, posix } from "node:path";
 import { artifactFilename, BUILD_FORMATS } from "../../domain/build-export/build-format.js";
-import { BUILD_MANIFEST_FILENAME, BUILD_OUTPUT_ROOT } from "../../domain/build-export/build-manifest.js";
+import { BUILD_BRAND_ARTIFACT_FILENAME, BUILD_MANIFEST_FILENAME, BUILD_OUTPUT_ROOT } from "../../domain/build-export/build-manifest.js";
 import type { BuildVerification, VerificationArtifactStatus } from "../../domain/build-export/verification.js";
 import type { ArtifactSetWriteRequest, ArtifactSetWriteResult, ArtifactSetWriter } from "../../application/build-export/build-ports.js";
 import { sha256Hex } from "./hash.js";
@@ -77,7 +77,7 @@ export const nodeWriterFileSystem: WriterFileSystem = {
 };
 
 const ARTIFACT_PATHS = BUILD_FORMATS.map((f) => artifactFilename(f));
-const REQUIRED_PATHS = new Set<string>([...ARTIFACT_PATHS, BUILD_MANIFEST_FILENAME]);
+const REQUIRED_PATHS = new Set<string>([...ARTIFACT_PATHS, BUILD_MANIFEST_FILENAME, BUILD_BRAND_ARTIFACT_FILENAME]);
 
 function safeMessage(e: unknown): string {
   const code = typeof e === "object" && e !== null && "code" in e ? String((e as { code: unknown }).code) : null;
@@ -205,6 +205,7 @@ function unsafeTarget(message: string): ArtifactSetWriteResult {
 export function createArtifactSetWriter(rootDir: string, fs: WriterFileSystem = nodeWriterFileSystem): ArtifactSetWriter {
   return {
     async write(request: ArtifactSetWriteRequest): Promise<ArtifactSetWriteResult> {
+      const extraFiles = request.extraFiles ?? [];
       const buildDir = join(rootDir, ...BUILD_OUTPUT_ROOT.split("/"));
       const parent = dirname(buildDir);
       const base = basename(buildDir);
@@ -215,6 +216,7 @@ export function createArtifactSetWriter(rootDir: string, fs: WriterFileSystem = 
 
       const expectedFiles: ExpectedFile[] = [
         ...request.artifacts.map((a) => ({ relativePath: a.relativePath, contentHash: a.contentHash, byteLength: a.byteLength })),
+        ...extraFiles.map((a) => ({ relativePath: a.relativePath, contentHash: a.contentHash, byteLength: a.byteLength })),
         { relativePath: request.manifest.relativePath, contentHash: request.manifest.contentHash, byteLength: request.manifest.byteLength },
       ];
 
@@ -242,6 +244,9 @@ export function createArtifactSetWriter(rootDir: string, fs: WriterFileSystem = 
         }
         for (const artifact of request.artifacts) {
           await fs.writeFile(join(stagingDir, artifact.relativePath), artifact.bytes);
+        }
+        for (const file of extraFiles) {
+          await fs.writeFile(join(stagingDir, file.relativePath), file.bytes);
         }
         await fs.writeFile(join(stagingDir, request.manifest.relativePath), request.manifest.bytes);
       } catch (e) {

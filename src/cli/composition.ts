@@ -73,6 +73,7 @@ import { listAssets } from "../application/assets/list-assets.js";
 import { inspectAsset } from "../application/assets/inspect-asset.js";
 import { observeBuildOutput } from "../infrastructure/build-export/output-snapshot-reader.js";
 import { planTokenMutation } from "../application/token-mutations/plan-token-mutation.js";
+import { readBrandSource } from "../infrastructure/brand/brand-source-reader.js";
 import type { CliIO } from "./io.js";
 
 export function createRealDependencies(io: CliIO): InitializeDependencies {
@@ -175,6 +176,7 @@ export function createBuildExportDependencies(io: CliIO, exportOutput: ExportOut
   return {
     build: {
       snapshotReader,
+      readBrandSource: () => readBrandSource(rootDir),
       createProjection: createBuildProjection,
       renderers: createArtifactRenderers(),
       buildManifest: buildBuildManifest,

@@ -195,6 +195,7 @@ export function serializeBuildManifestV1(manifest: BuildManifestV1): Uint8Array 
     source: manifest.source,
     sourceHash: manifest.sourceHash,
     artifacts: orderedArtifacts,
+    brand: manifest.brand,
   };
 
   const text = `${JSON.stringify(document, null, 2)}\n`;

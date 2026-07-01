@@ -4,6 +4,8 @@
 // Nunca sigue symlinks. No escribe; solo clasifica. Conflictos deterministas y mensajes seguros
 // (paths lógicos relativos, sin rutas absolutas, sin `Error`/stack).
 import { BUILD_FORMATS, artifactFilename, type BuildFormat } from "../../domain/build-export/build-format.js";
+import { BUILD_BRAND_ARTIFACT_FILENAME } from "../../domain/build-export/build-manifest.js";
+import type { BuildManifestV1 } from "../../domain/build-export/build-manifest.js";
 import { validateBuildManifestV1 } from "../../domain/build-export/build-manifest.js";
 import type { BuildConflict, BuildConflictCode, BuildOwnership, BuildOwnershipState } from "../../domain/build-export/build-outcome.js";
 
@@ -65,13 +67,17 @@ function blocked(conflicts: readonly BuildConflict[]): BuildOwnership {
 /** Clasifica el ownership del output. `empty`/`trusted` permiten publicar; el resto bloquea. */
 export function classifyBuildOwnership(input: OwnershipInput): BuildOwnership {
   const artifactSpecs = BUILD_FORMATS.map((format) => ({ format, path: artifactFilename(format) }));
+  const declaredSpecs = (manifest: BuildManifestV1) => [
+    ...manifest.artifacts.map((artifact) => ({ path: artifact.relativePath, format: artifact.format as BuildFormat | null })),
+    ...(manifest.brand.status === "generated" ? [{ path: BUILD_BRAND_ARTIFACT_FILENAME, format: null }] : []),
+  ];
   const nodeByPath = new Map(input.artifactNodes.map((node) => [node.relativePath, node]));
   const nodeOf = (path: string): RequiredPathNode => nodeByPath.get(path) ?? { relativePath: path, kind: "absent" };
 
   const pm = input.previousManifest;
 
   if (pm.state === "absent") {
-    const occupied = artifactSpecs.filter((spec) => nodeOf(spec.path).kind !== "absent");
+    const occupied = [...artifactSpecs, { path: BUILD_BRAND_ARTIFACT_FILENAME, format: null }].filter((spec) => nodeOf(spec.path).kind !== "absent");
     if (occupied.length === 0) return Object.freeze({ state: "empty", conflicts: Object.freeze([]) });
     return blocked(
       occupied.map((spec) =>
@@ -90,14 +96,22 @@ export function classifyBuildOwnership(input: OwnershipInput): BuildOwnership {
   }
 
   const conflicts: BuildConflict[] = [];
-  for (const artifact of validation.manifest.artifacts) {
-    const node = nodeOf(artifact.relativePath);
+  for (const spec of declaredSpecs(validation.manifest)) {
+    const node = nodeOf(spec.path);
     if (node.kind === "absent") {
-      conflicts.push(conflict("managed-artifact-missing", artifact.relativePath, artifact.format, `Artifact administrado ausente: ${artifact.relativePath}.`));
+      conflicts.push(conflict("managed-artifact-missing", spec.path, spec.format, `Artifact administrado ausente: ${spec.path}.`));
     } else if (node.kind !== "file") {
-      conflicts.push(conflict("managed-artifact-modified", artifact.relativePath, artifact.format, `Artifact administrado reemplazado por un nodo ${node.kind}: ${artifact.relativePath}.`));
-    } else if (node.contentHash !== artifact.contentHash || node.byteLength !== artifact.byteLength) {
-      conflicts.push(conflict("managed-artifact-modified", artifact.relativePath, artifact.format, `Artifact administrado modificado: ${artifact.relativePath}.`));
+      conflicts.push(conflict("managed-artifact-modified", spec.path, spec.format, `Artifact administrado reemplazado por un nodo ${node.kind}: ${spec.path}.`));
+    } else if (
+      (spec.path === BUILD_BRAND_ARTIFACT_FILENAME &&
+        (node.contentHash !== validation.manifest.brand.contentHash || node.byteLength !== validation.manifest.brand.byteLength)) ||
+      (spec.path !== BUILD_BRAND_ARTIFACT_FILENAME &&
+        (() => {
+          const artifact = validation.manifest.artifacts.find((entry) => entry.relativePath === spec.path);
+          return artifact !== undefined && (node.contentHash !== artifact.contentHash || node.byteLength !== artifact.byteLength);
+        })())
+    ) {
+      conflicts.push(conflict("managed-artifact-modified", spec.path, spec.format, `Artifact administrado modificado: ${spec.path}.`));
     }
   }
 

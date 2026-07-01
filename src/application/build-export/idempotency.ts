@@ -17,6 +17,12 @@ export interface IdempotencyInput {
   readonly sourceHash: string;
   /** Metadata de los artifacts recién renderizados (sin bytes). */
   readonly candidateArtifacts: readonly BuildArtifactMetadata[];
+  readonly candidateBrandArtifact: {
+    readonly status: "absent" | "generated";
+    readonly relativePath: string | null;
+    readonly contentHash: string | null;
+    readonly byteLength: number | null;
+  };
 }
 
 export interface IdempotencyDecision {
@@ -57,6 +63,25 @@ export function decideUnchanged(input: IdempotencyInput): IdempotencyDecision {
     if (node === undefined || node.kind !== "file") return decided("artifact-not-present");
     if (node.contentHash !== declaredArtifact.contentHash) return decided("artifact-bytes-changed");
     if (node.byteLength !== declaredArtifact.byteLength) return decided("artifact-disk-bytelength-changed");
+  }
+
+  if (manifest.brand.status !== input.candidateBrandArtifact.status) return decided("brand-status-changed");
+  if (manifest.brand.status === "generated") {
+    const brandPath = manifest.brand.relativePath;
+    if (brandPath === null) return decided("brand-manifest-changed");
+    if (
+      brandPath !== input.candidateBrandArtifact.relativePath ||
+      manifest.brand.contentHash !== input.candidateBrandArtifact.contentHash ||
+      manifest.brand.byteLength !== input.candidateBrandArtifact.byteLength
+    ) {
+      return decided("brand-manifest-changed");
+    }
+    const node = onDisk.get(brandPath);
+    if (node === undefined || node.kind !== "file") return decided("brand-not-present");
+    if (node.contentHash !== manifest.brand.contentHash) return decided("brand-bytes-changed");
+    if (node.byteLength !== manifest.brand.byteLength) return decided("brand-disk-bytelength-changed");
+  } else if (input.candidateBrandArtifact.status !== "absent") {
+    return decided("brand-status-changed");
   }
 
   return { unchanged: true, reason: null };

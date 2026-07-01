@@ -118,15 +118,24 @@ export interface CandidateManifestInput {
   readonly byteLength: number;
 }
 
+export interface CandidateExtraFileInput {
+  readonly relativePath: string;
+  readonly bytes: Uint8Array;
+  readonly contentHash: string;
+  readonly byteLength: number;
+}
+
 /** Petición de publicación del conjunto completo (sin publicaciones parciales). */
 export interface ArtifactSetWriteRequest {
   readonly outputRoot: string;
   readonly artifacts: readonly BuildArtifact[];
+  readonly extraFiles: readonly CandidateExtraFileInput[];
   readonly manifest: CandidateManifestInput;
   readonly strategy: "candidate-directory-set-v1";
   readonly expectedHashes: {
     readonly source: string;
     readonly artifacts: Readonly<Record<string, string>>;
+    readonly extraFiles: Readonly<Record<string, string>>;
     readonly buildManifest: string;
   };
 }

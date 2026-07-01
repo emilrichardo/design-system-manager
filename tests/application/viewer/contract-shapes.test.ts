@@ -112,19 +112,15 @@ describe("Viewer contract shapes (T008)", () => {
   it("ViewerColorV1/ViewerTypographyV1 fixtures respect null policy for absent sub-fields", () => {
     const color: ViewerColorV1 = { token, swatch: { resolvedValue: "#ff0000", sRgb: { r: 255, g: 0, b: 0 } }, contrast: null };
     const typography: ViewerTypographyV1 = {
+      kind: "font-family",
       token,
       family: null,
-      weight: null,
-      style: null,
-      size: null,
-      lineHeight: null,
-      letterSpacing: null,
-      linkedFontAsset: null,
-      licenseState: "no-matching-asset",
+      matchedAssets: [],
+      matchState: "no-candidates",
     };
     assertNoForbiddenKeys(color);
     assertNoForbiddenKeys(typography);
-    expect(typography.family).toBeNull();
+    expect(typography.kind).toBe("font-family");
   });
 
   it("ViewerAliasV1/ViewerAssetV1 fixtures never carry raw bytes", () => {

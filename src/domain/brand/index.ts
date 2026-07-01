@@ -3,6 +3,8 @@
 // son checkpoint D).
 export type { BrandReviewState, BrandEvidenceV1 } from "./brand-evidence.js";
 export { BRAND_REVIEW_STATES, isBrandReviewState, createBrandEvidence, isValidBrandEvidence } from "./brand-evidence.js";
+export type { BrandDocumentKey, BrandDocumentSnapshot, BrandSourceSnapshot } from "./brand-store.js";
+export { BRAND_ROOT, BRAND_FILES } from "./brand-store.js";
 
 export type { BrandProfileStatus, BrandAudienceV1, BrandPersonalityV1, BrandPrincipleV1, BrandProfileV1 } from "./brand-profile.js";
 export {

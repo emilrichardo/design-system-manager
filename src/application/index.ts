@@ -15,6 +15,8 @@ export * from "./json/index.js";
 export * from "./foundations/index.js";
 // Feature 005 — puertos headless de presets.
 export * from "./presets/index.js";
+export * from "./brand/plan-brand-mutation.js";
+export * from "./brand/apply-brand-mutation.js";
 export * from "./brand/validate-brand.js";
 // Feature 010 — contratos headless del Visual Token Editor.
 export * from "./editor/index.js";

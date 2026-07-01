@@ -9,6 +9,7 @@ import { createBuildProjection } from "../../../src/application/build-export/cre
 import { buildBuildManifest } from "../../../src/application/build-export/manifest-builder.js";
 import { serializeBuildManifestV1 } from "../../../src/infrastructure/build-export/json-renderer.js";
 import { classifyBuildOwnership } from "../../../src/application/build-export/ownership.js";
+import type { BrandSourceSnapshot } from "../../../src/domain/brand/index.js";
 import type {
   AnalyzedSourceSnapshot,
   ArtifactRenderResult,
@@ -103,7 +104,19 @@ export const EMPTY_INSPECTION: BuildOutputInspection = {
     { relativePath: "tokens.css", kind: "absent" },
     { relativePath: "tokens.resolved.json", kind: "absent" },
     { relativePath: "tokens.ts", kind: "absent" },
+    { relativePath: "brand.json", kind: "absent" },
   ],
+};
+
+export const ABSENT_BRAND_SOURCE: BrandSourceSnapshot = {
+  root: "/x",
+  status: "absent",
+  documents: {
+    brandProfile: { relativePath: "design-system/brand/brand.json", state: "absent", value: null, contentHash: null, byteLength: null },
+    voice: { relativePath: "design-system/brand/voice-and-tone.json", state: "absent", value: null, contentHash: null, byteLength: null },
+    visualLanguage: { relativePath: "design-system/brand/visual-language.json", state: "absent", value: null, contentHash: null, byteLength: null },
+    usageGuidelines: { relativePath: "design-system/brand/usage-guidelines.json", state: "absent", value: null, contentHash: null, byteLength: null },
+  },
 };
 
 export const PUBLISHED_WRITE: ArtifactSetWriteResult = {
@@ -137,6 +150,7 @@ export function buildDeps(
 ): BuildDesignSystemDependencies {
   return {
     snapshotReader: fakeSnapshotReader({ outcome: "ready", snapshot }),
+    readBrandSource: async () => ABSENT_BRAND_SOURCE,
     createProjection: createBuildProjection,
     renderers: overrides.renderers ?? [countingRenderer("css"), countingRenderer("json"), countingRenderer("typescript")],
     buildManifest: buildBuildManifest,

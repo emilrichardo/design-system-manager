@@ -8,6 +8,7 @@ import { BUILD_FORMATS, artifactFilename, isBuildFormat, type BuildFormat } from
 export const BUILD_MANIFEST_FORMAT_VERSION = "1.0.0";
 /** Filename relativo del build manifest dentro del output root (no es un artifact listado). */
 export const BUILD_MANIFEST_FILENAME = "manifest.json";
+export const BUILD_BRAND_ARTIFACT_FILENAME = "brand.json";
 /** Raíz lógica de salida. */
 export const BUILD_OUTPUT_ROOT = "design-system/build";
 /** Path lógico de la fuente de tokens (no el host manifest). */
@@ -21,12 +22,20 @@ export interface BuildManifestArtifactV1 {
   readonly byteLength: number;
 }
 
+export interface BuildBrandArtifactV1 {
+  readonly status: "absent" | "generated";
+  readonly relativePath: string | null;
+  readonly contentHash: string | null;
+  readonly byteLength: number | null;
+}
+
 /** Build manifest v1. `formatVersion` es la primera clave; `artifacts` en orden css/json/typescript. */
 export interface BuildManifestV1 {
   readonly formatVersion: typeof BUILD_MANIFEST_FORMAT_VERSION;
   readonly source: string;
   readonly sourceHash: string;
   readonly artifacts: readonly BuildManifestArtifactV1[];
+  readonly brand: BuildBrandArtifactV1;
 }
 
 /** SHA-256 hex en minúsculas (64 chars `[0-9a-f]`). */
@@ -51,7 +60,7 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
 }
 
 const ARTIFACT_KEYS = ["format", "relativePath", "contentHash", "byteLength"] as const;
-const ROOT_KEYS = ["formatVersion", "source", "sourceHash", "artifacts"] as const;
+const ROOT_KEYS = ["formatVersion", "source", "sourceHash", "artifacts", "brand"] as const;
 
 export type BuildManifestValidation =
   | { readonly ok: true; readonly manifest: BuildManifestV1 }
@@ -107,6 +116,51 @@ export function validateBuildManifestV1(candidate: unknown): BuildManifestValida
     if (!seenFormats.has(format)) return invalid(`falta el artifact de formato ${format}`);
   }
 
+  const brandCandidate = "brand" in candidate ? candidate.brand : undefined;
+  let brand: BuildBrandArtifactV1 = {
+    status: "absent",
+    relativePath: null,
+    contentHash: null,
+    byteLength: null,
+  };
+  if (brandCandidate !== undefined) {
+    if (!isPlainRecord(brandCandidate)) return invalid("brand no es un objeto plano");
+    if (brandCandidate.status !== "absent" && brandCandidate.status !== "generated") {
+      return invalid("brand.status inválido");
+    }
+    if (brandCandidate.status === "absent") {
+      if (
+        brandCandidate.relativePath !== null ||
+        brandCandidate.contentHash !== null ||
+        brandCandidate.byteLength !== null
+      ) {
+        return invalid("brand absent no debe declarar artifact");
+      }
+      brand = {
+        status: "absent",
+        relativePath: null,
+        contentHash: null,
+        byteLength: null,
+      };
+    } else {
+      if (brandCandidate.relativePath !== BUILD_BRAND_ARTIFACT_FILENAME) return invalid("brand.relativePath no contractual");
+      if (!isSha256Hex(brandCandidate.contentHash)) return invalid("brand.contentHash inválido");
+      if (
+        typeof brandCandidate.byteLength !== "number" ||
+        !Number.isInteger(brandCandidate.byteLength) ||
+        brandCandidate.byteLength < 0
+      ) {
+        return invalid("brand.byteLength inválido");
+      }
+      brand = {
+        status: "generated",
+        relativePath: BUILD_BRAND_ARTIFACT_FILENAME,
+        contentHash: brandCandidate.contentHash,
+        byteLength: brandCandidate.byteLength,
+      };
+    }
+  }
+
   // Orden canónico css/json/typescript (defensivo).
   const ordered = [...artifacts].sort((a, b) => BUILD_FORMATS.indexOf(a.format) - BUILD_FORMATS.indexOf(b.format));
   return {
@@ -116,6 +170,7 @@ export function validateBuildManifestV1(candidate: unknown): BuildManifestValida
       source: candidate.source,
       sourceHash: candidate.sourceHash,
       artifacts: Object.freeze(ordered.map((a) => Object.freeze(a))),
+      brand: Object.freeze(brand),
     }),
   };
 }

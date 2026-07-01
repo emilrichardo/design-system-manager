@@ -11,9 +11,12 @@ import type { BuildProjectionResult } from "./create-build-projection.js";
 import { decideUnchanged } from "./idempotency.js";
 import type { ManifestBuilderInput, ManifestBuilderResult } from "./manifest-builder.js";
 import type { OwnershipInput } from "./ownership.js";
+import { buildBrandArtifact, BRAND_ARTIFACT_RELATIVE_PATH } from "./brand-artifact.js";
+import type { BrandSourceSnapshot } from "../../domain/brand/index.js";
 
 export interface BuildDesignSystemDependencies {
   readonly snapshotReader: SourceSnapshotReader;
+  readonly readBrandSource: () => Promise<BrandSourceSnapshot>;
   readonly createProjection: (snapshot: AnalyzedSourceSnapshot) => BuildProjectionResult;
   /** Renderers en orden canónico css/json/typescript. */
   readonly renderers: readonly ArtifactRenderer[];
@@ -31,6 +34,7 @@ const EMPTY: Omit<BuildResult, "outcome" | "wrote"> = {
   outputAvailable: null,
   artifacts: [],
   manifest: null,
+  brandArtifact: null,
   verification: null,
   backupRelativePath: null,
   recoveryRequired: false,
@@ -73,8 +77,33 @@ export async function buildDesignSystem(input: { readonly executionDir: string }
     artifacts.push(rendered.artifact);
   }
 
+  const brandSource = await deps.readBrandSource();
+  const brandArtifact = buildBrandArtifact(brandSource);
+  const brandArtifactHash = brandArtifact.status === "generated" && brandArtifact.bytes !== null ? deps.hashBytes(brandArtifact.bytes) : null;
+  const extraFiles =
+    brandArtifact.status === "generated" && brandArtifact.bytes !== null && brandArtifactHash !== null && brandArtifact.byteLength !== null
+      ? [{
+          relativePath: BRAND_ARTIFACT_RELATIVE_PATH,
+          bytes: brandArtifact.bytes,
+          contentHash: brandArtifactHash,
+          byteLength: brandArtifact.byteLength,
+        }]
+      : [];
+
   // Manifest solo tras los 3 artifacts.
-  const manifestResult = deps.buildManifest({ source: snapshot.logicalSourcePath, sourceHash: snapshot.sourceHash, artifacts });
+  const manifestResult = deps.buildManifest({
+    source: snapshot.logicalSourcePath,
+    sourceHash: snapshot.sourceHash,
+    artifacts,
+    brandArtifact:
+      brandArtifact.status === "generated" && brandArtifactHash !== null && brandArtifact.byteLength !== null
+        ? {
+            relativePath: BRAND_ARTIFACT_RELATIVE_PATH,
+            contentHash: brandArtifactHash,
+            byteLength: brandArtifact.byteLength,
+          }
+        : null,
+  });
   if (!manifestResult.ok) {
     // Inconsistencia inesperada sobre artifacts contractuales: se propaga al adapter (internal-error en H/L).
     throw new Error(`build manifest builder failed: ${manifestResult.error.code}`);
@@ -89,7 +118,20 @@ export async function buildDesignSystem(input: { readonly executionDir: string }
   const ownership = deps.classifyOwnership({ previousManifest: inspection.previousManifest, artifactNodes: inspection.artifactNodes });
   if (!ownershipAllowsPublish(ownership.state)) {
     const primary: BuildConflict | null = ownership.conflicts[0] ?? null;
-    return result("conflict", false, { source: sourceRef, outputDirectory: BUILD_OUTPUT_ROOT, outputAvailable: true, artifacts: metadata, manifest: manifestSummary, conflict: primary });
+    return result("conflict", false, {
+      source: sourceRef,
+      outputDirectory: BUILD_OUTPUT_ROOT,
+      outputAvailable: true,
+      artifacts: metadata,
+      manifest: manifestSummary,
+      brandArtifact: {
+        status: brandArtifact.status,
+        relativePath: brandArtifact.status === "generated" ? BRAND_ARTIFACT_RELATIVE_PATH : null,
+        contentHash: brandArtifactHash,
+        byteLength: brandArtifact.byteLength,
+      },
+      conflict: primary,
+    });
   }
 
   // Idempotencia (T136): se decide `unchanged` ANTES de crear staging, comparando manifest, hashes,
@@ -100,20 +142,40 @@ export async function buildDesignSystem(input: { readonly executionDir: string }
     ownershipTrusted: ownership.state === "trusted",
     sourceHash: snapshot.sourceHash,
     candidateArtifacts: metadata,
+    candidateBrandArtifact: {
+      status: brandArtifact.status,
+      relativePath: brandArtifact.status === "generated" ? BRAND_ARTIFACT_RELATIVE_PATH : null,
+      contentHash: brandArtifactHash,
+      byteLength: brandArtifact.byteLength,
+    },
   });
   if (idempotency.unchanged) {
-    return result("unchanged", false, { source: sourceRef, outputDirectory: BUILD_OUTPUT_ROOT, outputAvailable: true, artifacts: metadata, manifest: manifestSummary });
+    return result("unchanged", false, {
+      source: sourceRef,
+      outputDirectory: BUILD_OUTPUT_ROOT,
+      outputAvailable: true,
+      artifacts: metadata,
+      manifest: manifestSummary,
+      brandArtifact: {
+        status: brandArtifact.status,
+        relativePath: brandArtifact.status === "generated" ? BRAND_ARTIFACT_RELATIVE_PATH : null,
+        contentHash: brandArtifactHash,
+        byteLength: brandArtifact.byteLength,
+      },
+    });
   }
 
   // Publicación del conjunto completo mediante el writer port.
   const writeResult = await deps.writer.write({
     outputRoot: BUILD_OUTPUT_ROOT,
     artifacts,
+    extraFiles,
     manifest: { relativePath: BUILD_MANIFEST_FILENAME, bytes: manifestBytes, contentHash: manifestHash, byteLength: manifestBytes.length },
     strategy: "candidate-directory-set-v1",
     expectedHashes: {
       source: snapshot.sourceHash,
       artifacts: Object.fromEntries(artifacts.map((a) => [a.relativePath, a.contentHash])),
+      extraFiles: Object.fromEntries(extraFiles.map((file) => [file.relativePath, file.contentHash])),
       buildManifest: manifestHash,
     },
   });
@@ -124,6 +186,12 @@ export async function buildDesignSystem(input: { readonly executionDir: string }
     outputAvailable: writeResult.outputAvailable,
     artifacts: metadata,
     manifest: manifestSummary,
+    brandArtifact: {
+      status: brandArtifact.status,
+      relativePath: brandArtifact.status === "generated" ? BRAND_ARTIFACT_RELATIVE_PATH : null,
+      contentHash: brandArtifactHash,
+      byteLength: brandArtifact.byteLength,
+    },
     verification: writeResult.verification,
     backupRelativePath: writeResult.backupRelativePath,
     recoveryRequired: writeResult.recoveryRequired,

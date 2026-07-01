@@ -24,6 +24,7 @@ const BASE: BuildResult = {
   outputAvailable: true,
   artifacts: ARTIFACTS,
   manifest: { relativePath: "manifest.json", contentHash: hex(2), byteLength: 200 },
+  brandArtifact: { status: "absent", relativePath: null, contentHash: null, byteLength: null },
   verification: { status: "passed", checks: [], artifacts: [] },
   backupRelativePath: null,
   recoveryRequired: false,
