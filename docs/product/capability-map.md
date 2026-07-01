@@ -40,8 +40,8 @@
 | Capability | Module | Status | Current feature | Future feature |
 |---|---|---|---|---|
 | Visualizador del Design System (`neuraz-ds view`, solo lectura) | Studio (UI) | implemented | 009-design-system-viewer | — |
-| Editor visual de tokens (escribe vía `planTokenMutation`/`applyTokenMutation`) | Studio (UI) | planned | — | Visual Token Editor |
-| Diff y aprobación de candidatos (reutiliza `TokenMutationDiffV1`) | Candidates pipeline | planned | — | Candidate review |
+| Editor visual de tokens (escribe vía `planTokenMutation`/`applyTokenMutation`) | Studio (UI) | planned | 010-visual-token-editor | — |
+| Diff y aprobación de candidatos (reutiliza `TokenMutationDiffV1`) | Candidates pipeline | planned | 010-visual-token-editor | Candidate review |
 
 ## Assets
 
@@ -84,3 +84,6 @@
   proyecta `002`/`004`/`005`/`006`/`007` y el plan read-only de `008` sin reimplementar ninguno; su
   adapter `node:http`+bundle estático (`ADR-0026`) no añade dependencia runtime nueva y sirve de base para
   el futuro Visual Token Editor (reutiliza shell, navegación y proyecciones en vez de duplicarlas).
+- `010-visual-token-editor` esta especificada, no implementada: reutilizara el shell del Viewer y los
+  casos de uso `planTokenMutation`/`applyTokenMutation` de `008`, con diff visual, aprobacion explicita,
+  apply transaccional, recovery y recarga del Viewer (`ADR-0027`).
