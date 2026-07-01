@@ -12,7 +12,7 @@ afterEach(async () => {
 });
 
 describe("overview/navigation number consistency (T018)", () => {
-  it("navigation.sections tiene las 14 secciones canónicas en orden fijo", async () => {
+  it("navigation.sections tiene las 17 secciones canónicas en orden fijo", async () => {
     const p = await makeHostProject();
     hosts.push(p);
     const session = await buildViewerSession({ executionDir: p.dir }, realViewerDeps(p.dir, newCallCounts()));

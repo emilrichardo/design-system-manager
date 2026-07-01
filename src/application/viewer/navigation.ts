@@ -5,7 +5,9 @@ import type { ViewerResolvedStateV1 } from "./session.js";
 import type { ViewerOverviewV1 } from "./overview.js";
 import type { FoundationCategoryId } from "../../domain/foundations/foundation-category.js";
 
-/** Las 14 secciones canónicas del Viewer, en orden fijo de navegación. */
+/** Las 17 secciones canónicas del Viewer, en orden fijo de navegación. Las 3 finales
+ * (`brand`/`components`/`quality`) se añaden en `011` Checkpoint E; las 14 previas se preservan sin
+ * reordenamiento (compatibilidad con `009`/`010` y consumers históricos del contrato). */
 export type ViewerSectionId =
   | "overview"
   | "colors"
@@ -20,9 +22,12 @@ export type ViewerSectionId =
   | "assets"
   | "presets"
   | "issues"
-  | "build";
+  | "build"
+  | "brand"
+  | "components"
+  | "quality";
 
-/** Orden canónico fijo de las 14 secciones (nunca reordenado en tiempo de ejecución). */
+/** Orden canónico fijo de las 17 secciones (nunca reordenado en tiempo de ejecución). */
 export const VIEWER_SECTION_ORDER: readonly ViewerSectionId[] = [
   "overview",
   "colors",
@@ -38,6 +43,9 @@ export const VIEWER_SECTION_ORDER: readonly ViewerSectionId[] = [
   "presets",
   "issues",
   "build",
+  "brand",
+  "components",
+  "quality",
 ] as const;
 
 /** Type guard de runtime (p. ej. para validar un `:id` de ruta HTTP sin castear ciegamente). */
@@ -70,14 +78,24 @@ const CATEGORY_BY_SECTION: Readonly<Record<"colors" | "typography" | "spacing" |
   motion: "motion",
 };
 
+/** Conteos adicionales para las 3 secciones introducidas en `011` E (brand/components/quality).
+ * Todos opcionales: si faltan, la sección se renderiza con `count: 0` y el `sessionState` canónico
+ * (un proyecto sin Brand System sigue mostrando "brand" con count 0 — nunca falla). */
+export interface ViewerNavigationExtras {
+  readonly brandFieldsCompleted?: number;
+  readonly componentTokenCount?: number;
+  readonly qualityIssueCount?: number;
+}
+
 /**
- * Proyecta `ViewerNavigationV1`: las 14 secciones canónicas en orden fijo, con `count`/`state` derivados
- * exclusivamente de `overview`/`categoryById` (ya calculados para la misma sesión; FR-016/SC-006).
+ * Proyecta `ViewerNavigationV1`: las 17 secciones canónicas en orden fijo, con `count`/`state` derivados
+ * exclusivamente de `overview`/`categoryById`/`extras` (ya calculados para la misma sesión; FR-016/SC-006).
  */
 export function projectNavigation(
   overview: ViewerOverviewV1,
   categoryById: ReadonlyMap<FoundationCategoryId, ViewerCategoryNavEntry>,
   sessionState: ViewerResolvedStateV1,
+  extras: ViewerNavigationExtras = {},
 ): ViewerNavigationV1 {
   const categoryEntry = (id: FoundationCategoryId): ViewerCategoryNavEntry => categoryById.get(id) ?? { count: 0, state: sessionState };
 
@@ -107,6 +125,12 @@ export function projectNavigation(
         return { id, count: overview.issues.total, state: sessionState };
       case "build":
         return { id, count: overview.build.formats.length, state: sessionState };
+      case "brand":
+        return { id, count: extras.brandFieldsCompleted ?? 0, state: sessionState };
+      case "components":
+        return { id, count: extras.componentTokenCount ?? 0, state: sessionState };
+      case "quality":
+        return { id, count: extras.qualityIssueCount ?? overview.issues.total, state: sessionState };
       default: {
         const exhaustive: never = id;
         return exhaustive;

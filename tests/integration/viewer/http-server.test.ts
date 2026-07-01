@@ -69,7 +69,7 @@ describe("Viewer HTTP server (T026)", () => {
     }
   });
 
-  it("GET / sirve el shell HTML con las 14 secciones", async () => {
+  it("GET / sirve el shell HTML con las 17 secciones", async () => {
     const { base } = await server();
     const res = await fetch(`${base}/`);
     expect(res.status).toBe(200);

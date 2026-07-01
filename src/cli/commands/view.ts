@@ -9,6 +9,7 @@ import type { ViewerSessionV1 } from "../../application/viewer/session.js";
 import { buildViewerSession } from "../../application/viewer/build-session.js";
 import type { ViewerSessionDependencies } from "../../application/viewer/ports.js";
 import type { PlanTokenMutationDependencies } from "../../application/token-mutations/plan-token-mutation.js";
+import type { ApplyBrandMutationDependencies } from "../../application/brand/apply-brand-mutation.js";
 import { startViewerHttpServer, type ViewerHttpServerHandle } from "../../infrastructure/viewer/http-server.js";
 
 export function runViewSession(executionDir: string, deps: ViewerSessionDependencies): Promise<ViewerSessionV1> {
@@ -18,6 +19,8 @@ export function runViewSession(executionDir: string, deps: ViewerSessionDependen
 export interface EditorServerDependencies {
   readonly plan: PlanTokenMutationDependencies;
   readonly apply: ApplyEditorCommandDependencies;
+  /** T025 (011) — Brand Editor deps (plan/apply sobre `design-system/brand/**`). Opcional. */
+  readonly brandApply?: ApplyBrandMutationDependencies;
 }
 
 export function runViewServer(
@@ -30,6 +33,12 @@ export function runViewServer(
     deps,
     executionDir,
     ...(port === undefined ? {} : { port }),
-    ...(editorDeps === undefined ? {} : { editorPlanDeps: editorDeps.plan, editorApplyDeps: editorDeps.apply }),
+    ...(editorDeps === undefined
+      ? {}
+      : {
+          editorPlanDeps: editorDeps.plan,
+          editorApplyDeps: editorDeps.apply,
+          ...(editorDeps.brandApply === undefined ? {} : { editorBrandApplyDeps: editorDeps.brandApply }),
+        }),
   });
 }

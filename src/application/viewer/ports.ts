@@ -10,6 +10,7 @@ import type { PresetListResult } from "../presets/preset-ports.js";
 import type { SourceSnapshotPort as MutationSourceSnapshotPort } from "../token-mutations/ports.js";
 import type { TokenMutationCommandV1 } from "../../domain/token-mutations/command.js";
 import type { TokenMutationResultV1 } from "../../domain/token-mutations/result.js";
+import type { BrandSourceSnapshot } from "../../domain/brand/index.js";
 
 /** Bound `listAssets` (007): sin dependencias explícitas visibles al Viewer, ya cerradas por composición. */
 export type ViewerListAssets = () => Promise<AssetListResult>;
@@ -37,6 +38,14 @@ export type ViewerPlanRenameMoveImpact = (
 ) => Promise<TokenMutationResultV1>;
 
 /**
+ * T022 (011) — Bound, read-only `readBrandSource` (D): lee los 4 documentos `design-system/brand/**`
+ * sin tocar tokens ni assets. Devuelve `BrandSourceSnapshot` con `status: "absent"` cuando no hay
+ * Brand System (proyectos 001-010), de modo que la vista `brand` muestre "Brand System: absent" sin
+ * fallar ni inventar información (FR-017).
+ */
+export type ViewerReadBrandSource = () => Promise<BrandSourceSnapshot>;
+
+/**
  * Dependencias de una sesión del Viewer. Cada puerto referencia, sin redefinir, la superficie pública ya
  * cerrada del use case correspondiente:
  * - `analyze` (002): análisis único del Design System.
@@ -45,6 +54,8 @@ export type ViewerPlanRenameMoveImpact = (
  * - `listPresets` (005), `listAssets`/`inspectAsset` (007): lecturas read-only ya existentes.
  * - `readAnalyzedTokenSource` (008): vista analizada de la fuente (`AnalyzedTokenSource`, incluida
  *   `dependentsOf`), reutilizada para Aliases; `planRenameMoveImpact` reusa el planner read-only de 008.
+ * - `readBrandSource` (D, 011): lectura read-only de `design-system/brand/**` para las vistas
+ *   `brand`/`quality` (nunca toca tokens/assets; ausente es válido).
  */
 export interface ViewerSessionDependencies {
   /** No se invoca en `buildViewerSession`: `readBuildSnapshot` ya ejecuta el mismo análisis 002
@@ -59,4 +70,7 @@ export interface ViewerSessionDependencies {
   readonly readBuildManifest: ViewerReadBuildManifest;
   readonly readAnalyzedTokenSource: MutationSourceSnapshotPort;
   readonly planRenameMoveImpact: ViewerPlanRenameMoveImpact;
+  /** T022 (011) — opcional para no romper fakes existentes que todavía no lo cablean; las vistas
+   * `brand`/`quality` lo tratan como `absent` cuando falta (degradación explícita, nunca error). */
+  readonly readBrandSource?: ViewerReadBrandSource;
 }

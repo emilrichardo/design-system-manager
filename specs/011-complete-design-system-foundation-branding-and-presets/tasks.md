@@ -151,22 +151,22 @@ incluye brand cuando existe; la vista de tipografía del Viewer ya no muestra ca
 **Goal**: Las 3 vistas nuevas (`brand`, `components`, `quality`) y la edición de brand/component tokens
 funcionan de punta a punta sobre el shell existente de `009`/`010`, sin reescritura.
 
-- [ ] T022 Añadir proyección `brand` al Viewer (`src/application/viewer/brand.ts` +
+- [x] T022 Añadir proyección `brand` al Viewer (`src/application/viewer/brand.ts` +
   `src/infrastructure/viewer/ui/`): identidad, purpose, values, personality, voice, tone, visual
   language, logos, fonts, colores de marca, imagery guidance, missing assets, provenance, confidence,
   completion status — todo derivado de `BrandProfileV1`/`BrandVisualLanguageV1`/`BrandQualitySummaryV1`
   ya calculados, sin lógica nueva en la capa HTTP/UI.
-- [ ] T023 [P] Añadir proyección `components` al Viewer: agrupación por
+- [x] T023 [P] Añadir proyección `components` al Viewer: agrupación por
   component/part/variant/state/size con matrices `variant × state`, `size × variant`, `part ×
   property` cuando aplique (`ComponentTokenGroupV1` de `data-model.md`).
-- [ ] T024 [P] Añadir proyección `quality` al Viewer: brand completeness, asset completeness, cobertura
+- [x] T024 [P] Añadir proyección `quality` al Viewer: brand completeness, asset completeness, cobertura
   primitive/semantic/component, tokens sin clasificar, aliases rotos, referencias directas a primitive
   (bypass de semantic), cobertura de validación de tipos, font matching, licencias faltantes,
   completitud de provenance.
-- [ ] T025 Extender el Editor (`010`) con formularios de brand profile/principios/voice-and-tone/
+- [x] T025 Extender el Editor (`010`) con formularios de brand profile/principios/voice-and-tone/
   visual-language (usa T018, plan→diff→aprobación→apply propio) y de component tokens (usa `008`
   existente sin cambios, solo nuevos campos de metadata de capa en el formulario).
-- [ ] T026 Tests de accesibilidad y de contrato de las 3 vistas + Editor extendido
+- [x] T026 Tests de accesibilidad y de contrato de las 3 vistas + Editor extendido
   (`tests/infrastructure/viewer/brand-view.test.ts`,
   `tests/infrastructure/viewer/components-view.test.ts`,
   `tests/infrastructure/viewer/quality-view.test.ts`, `tests/application/editor/brand-editing.test.ts`)

@@ -4,6 +4,7 @@
 import {
   createAssetDependencies,
   createBoundAnalyze,
+  createBrandEditorDependencies,
   createBuildExportDependencies,
   createFoundationsDependencies,
   createFoundationsJsonDependencies,
@@ -32,6 +33,7 @@ try {
   const io = processIO;
   const analyze = createBoundAnalyze();
   const editorDeps = createEditorDependencies();
+  const brandEditorDeps = createBrandEditorDependencies(process.cwd());
   const code = await runCli({
     argv: process.argv,
     cwd: process.cwd(),
@@ -51,6 +53,7 @@ try {
     editorServerDeps: {
       plan: editorDeps.plan,
       apply: { apply: editorDeps.apply, viewer: createViewerDependencies(process.cwd()) },
+      brandApply: brandEditorDeps.apply,
     },
     version: readCliVersion(),
   });

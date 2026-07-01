@@ -18,6 +18,10 @@ import {
   toEditorSessionJsonEnvelope,
 } from "../../application/editor/json/map-editor.js";
 import { planEditorCommand } from "../../application/editor/plan-editor-command.js";
+import type { BrandMutationCommand, BrandMutationPlannedDocuments } from "../../application/brand/plan-brand-mutation.js";
+import type { ApplyBrandMutationDependencies, ApplyBrandMutationResult } from "../../application/brand/apply-brand-mutation.js";
+import { planBrandMutation } from "../../application/brand/plan-brand-mutation.js";
+import { applyBrandMutation } from "../../application/brand/apply-brand-mutation.js";
 import type { PlanTokenMutationDependencies } from "../../application/token-mutations/plan-token-mutation.js";
 import { buildViewerSession } from "../../application/viewer/build-session.js";
 import { buildViewerSectionDetail } from "../../application/viewer/build-section-detail.js";
@@ -61,6 +65,58 @@ function isTokenMutationCommand(value: unknown): value is TokenMutationCommandV1
   if (typeof value !== "object" || value === null) return false;
   const command = value as { readonly formatVersion?: unknown; readonly operations?: unknown };
   return command.formatVersion === TOKEN_MUTATION_FORMAT_VERSION && Array.isArray(command.operations) && command.operations.every(isTokenMutationOperation);
+}
+
+/** T025 (011) — Valida la forma mínima de un `BrandMutationCommand`. No valida el contenido interno
+ * de cada documento (eso lo hace `planBrandMutation` vía el dominio). Acepta comandos vacíos (se
+ * resuelven a `outcome: "unchanged"` en el planner, igual que `008`). */
+function isBrandMutationCommand(value: unknown): value is BrandMutationCommand {
+  if (typeof value !== "object" || value === null) return false;
+  const command = value as { readonly brandProfile?: unknown; readonly voice?: unknown; readonly visualLanguage?: unknown; readonly usageGuidelines?: unknown };
+  if ("brandProfile" in command && command.brandProfile !== undefined) {
+    if (typeof command.brandProfile !== "object" || command.brandProfile === null) return false;
+  }
+  if ("voice" in command && command.voice !== undefined) {
+    if (typeof command.voice !== "object" || command.voice === null) return false;
+  }
+  if ("visualLanguage" in command && command.visualLanguage !== undefined) {
+    if (typeof command.visualLanguage !== "object" || command.visualLanguage === null) return false;
+  }
+  if ("usageGuidelines" in command && command.usageGuidelines !== undefined) {
+    if (!Array.isArray(command.usageGuidelines)) return false;
+  }
+  return true;
+}
+
+interface BrandEditorPlanJsonData {
+  readonly plan: ReturnType<typeof planBrandMutation>["plan"];
+  readonly outcome: ReturnType<typeof planBrandMutation>["outcome"];
+  readonly documents: BrandMutationPlannedDocuments;
+}
+
+interface BrandEditorApplyJsonData {
+  readonly apply: ApplyBrandMutationResult;
+  readonly refresh: { readonly state: "reloaded" | "failed" };
+}
+
+function toBrandPlanJsonEnvelope(data: BrandEditorPlanJsonData): unknown {
+  return Object.freeze({
+    formatVersion: "1.0.0",
+    action: "editor-brand-plan",
+    state: data.plan.writable ? "approval-required" : "unchanged",
+    data,
+    error: null,
+  });
+}
+
+function toBrandApplyJsonEnvelope(data: BrandEditorApplyJsonData): unknown {
+  return Object.freeze({
+    formatVersion: "1.0.0",
+    action: "editor-brand-apply",
+    state: data.apply.outcome,
+    data,
+    error: data.apply.error,
+  });
 }
 
 // T045 — CSS de accesibilidad inline (sin CDN/hoja externa, offline-first): foco visible con contraste
@@ -117,6 +173,9 @@ export interface ViewerHttpServerOptions {
   readonly deps: ViewerSessionDependencies;
   readonly editorPlanDeps?: PlanTokenMutationDependencies;
   readonly editorApplyDeps?: ApplyEditorCommandDependencies;
+  /** T025 (011) — deps del Brand Editor (plan/apply sobre `design-system/brand/**`). Opcional: sin
+   * ellas, `/api/editor/brand/*` responden 500 como las rutas de tokens cuando faltan. */
+  readonly editorBrandApplyDeps?: ApplyBrandMutationDependencies;
   readonly executionDir: string;
   /** Puerto efímero por defecto (`0`); el SO asigna uno libre. */
   readonly port?: number;
@@ -223,6 +282,56 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, options:
       // comandos no-writable/bloqueados internamente y nunca escribe en esos casos.
       const result = await applyEditorCommand({ executionDir: options.executionDir }, body, options.editorApplyDeps);
       writeJson(res, 200, toEditorApplyJsonEnvelope(result));
+      return;
+    }
+    if (pathname === "/api/editor/brand/plan") {
+      if (options.editorBrandApplyDeps === undefined) {
+        writeJson(res, 500, toEditorInternalErrorJsonEnvelope());
+        return;
+      }
+      let body: unknown;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        writeJson(res, 400, toEditorInvalidRequestJsonEnvelope("Request body must be valid JSON."));
+        return;
+      }
+      if (!isBrandMutationCommand(body)) {
+        writeJson(res, 400, toEditorInvalidRequestJsonEnvelope("Request body must be a BrandMutationCommand."));
+        return;
+      }
+      const snapshot = await options.editorBrandApplyDeps.readSource.read(options.executionDir);
+      const planned = planBrandMutation(snapshot, body);
+      writeJson(res, 200, toBrandPlanJsonEnvelope({ plan: planned.plan, outcome: planned.outcome, documents: planned.documents }));
+      return;
+    }
+    if (pathname === "/api/editor/brand/apply") {
+      if (options.editorBrandApplyDeps === undefined) {
+        writeJson(res, 500, toEditorInternalErrorJsonEnvelope());
+        return;
+      }
+      let body: unknown;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        writeJson(res, 400, toEditorInvalidRequestJsonEnvelope("Request body must be valid JSON."));
+        return;
+      }
+      if (!isBrandMutationCommand(body)) {
+        writeJson(res, 400, toEditorInvalidRequestJsonEnvelope("Request body must be a BrandMutationCommand."));
+        return;
+      }
+      const result = await applyBrandMutation({ executionDir: options.executionDir }, body, options.editorBrandApplyDeps);
+      let refresh: BrandEditorApplyJsonData["refresh"] = { state: "failed" };
+      if (result.outcome === "applied" || result.outcome === "unchanged") {
+        try {
+          await buildViewerSession({ executionDir: options.executionDir }, options.deps);
+          refresh = { state: "reloaded" };
+        } catch {
+          refresh = { state: "failed" };
+        }
+      }
+      writeJson(res, 200, toBrandApplyJsonEnvelope({ apply: result, refresh }));
       return;
     }
     res.writeHead(404).end();

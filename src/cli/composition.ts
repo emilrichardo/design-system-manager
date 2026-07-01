@@ -74,6 +74,10 @@ import { inspectAsset } from "../application/assets/inspect-asset.js";
 import { observeBuildOutput } from "../infrastructure/build-export/output-snapshot-reader.js";
 import { planTokenMutation } from "../application/token-mutations/plan-token-mutation.js";
 import { readBrandSource } from "../infrastructure/brand/brand-source-reader.js";
+import { createBrandWriter } from "../infrastructure/brand/brand-writer.js";
+import { planBrandMutation, type BrandMutationCommand, type BrandMutationPlanResult } from "../application/brand/plan-brand-mutation.js";
+import { applyBrandMutation, type ApplyBrandMutationDependencies, type ApplyBrandMutationResult } from "../application/brand/apply-brand-mutation.js";
+import type { BrandSourceReaderPort } from "../application/brand/brand-ports.js";
 import type { CliIO } from "./io.js";
 
 export function createRealDependencies(io: CliIO): InitializeDependencies {
@@ -260,6 +264,9 @@ export function createViewerDependencies(cwd: string): ViewerSessionDependencies
     readBuildManifest: async () => (await observeBuildOutput(rootDir)).previousManifest,
     readAnalyzedTokenSource: mutationSnapshot,
     planRenameMoveImpact: (command) => planTokenMutation({ executionDir: cwd }, command, { snapshot: mutationSnapshot, serialize: serializeCandidate }),
+    // T022 (011) — lectura read-only de `design-system/brand/**` (D). Ausente es válido; la vista
+    // `brand` muestra "Brand System: absent" sin fallar (FR-017).
+    readBrandSource: () => readBrandSource(rootDir),
   };
 }
 
@@ -277,4 +284,41 @@ export function createEditorDependencies(): EditorCliDependencies {
     plan: { snapshot, serialize: serializeCandidate },
     apply: { snapshot, serialize: serializeCandidate, createWriter: (rootDir: string) => createTokenSourceWriter(rootDir) },
   };
+}
+
+// Feature 011 (Checkpoint E) — Brand Editor. Reusa el writer transaccional de brand (D) sobre los 4
+// documentos `design-system/brand/**`; nunca pasa por `008-token-mutations` para contenido narrativo
+// no-token (FR-015). `readSource`/`createWriter` se anclan a la raíz del host resuelta desde `cwd`.
+export interface BrandEditorCliDependencies {
+  readonly readSource: BrandSourceReaderPort;
+  readonly plan: (command: BrandMutationCommand) => Promise<BrandMutationPlanResult>;
+  readonly apply: ApplyBrandMutationDependencies;
+}
+
+export interface BrandEditorApplyRequest {
+  readonly executionDir: string;
+  readonly command: BrandMutationCommand;
+}
+
+export function createBrandEditorDependencies(cwd: string): BrandEditorCliDependencies {
+  const resolution = resolveHostRoot(cwd);
+  const rootDir = resolution.ok ? resolution.hostRoot.rootDir : cwd;
+  const readSource: BrandSourceReaderPort = { read: () => readBrandSource(rootDir) };
+  return {
+    readSource,
+    plan: async (command) => planBrandMutation(await readSource.read(rootDir), command),
+    apply: {
+      hashBytes: sha256Hex,
+      readSource,
+      createWriter: () => createBrandWriter(rootDir),
+    },
+  };
+}
+
+/** Aplica un comando de marca contra un `cwd` concreto (usado por el adapter HTTP del Editor). */
+export async function applyBrandEditorMutation(
+  request: BrandEditorApplyRequest,
+  deps: ApplyBrandMutationDependencies,
+): Promise<ApplyBrandMutationResult> {
+  return applyBrandMutation({ executionDir: request.executionDir }, request.command, deps);
 }

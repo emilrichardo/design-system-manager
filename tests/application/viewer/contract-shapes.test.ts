@@ -61,8 +61,8 @@ describe("Viewer contract shapes (T008)", () => {
     expect(deriveEmptyState("not-found", { tokensTotal: 0, assetsTotal: 0, presetsTotal: 0 })).toBe("not-found");
   });
 
-  it("ViewerNavigationV1 has exactly the 14 canonical sections in fixed order", () => {
-    expect(VIEWER_SECTION_ORDER).toHaveLength(14);
+  it("ViewerNavigationV1 has exactly the 17 canonical sections in fixed order", () => {
+    expect(VIEWER_SECTION_ORDER).toHaveLength(17);
     const navigation: ViewerNavigationV1 = {
       sections: VIEWER_SECTION_ORDER.map((id) => ({ id, count: 0, state: "ready" })),
     };

@@ -10,7 +10,7 @@ import type { ViewerTokenV1 } from "../../../src/application/viewer/token.js";
 import { makeHostProject, type HostProject } from "../../helpers/build-host.js";
 import { newCallCounts, realViewerDeps } from "../../application/viewer/real-deps.js";
 
-const VIEWER_SECTIONS = ["overview", "colors", "typography", "spacing", "radius", "borders", "shadows", "motion", "aliases", "foundations", "assets", "presets", "issues", "build"];
+const VIEWER_SECTIONS = ["overview", "colors", "typography", "spacing", "radius", "borders", "shadows", "motion", "aliases", "foundations", "assets", "presets", "issues", "build", "brand", "components", "quality"];
 
 const hosts: HostProject[] = [];
 const handles: ViewerHttpServerHandle[] = [];
@@ -30,7 +30,7 @@ function allSourceFiles(dir: string): string[] {
 }
 
 describe("Viewer works fully offline (T050)", () => {
-  it("sesión completa: abrir + cada una de las 14 secciones responden 200 vía loopback", async () => {
+  it("sesión completa: abrir + cada una de las 17 secciones responden 200 vía loopback", async () => {
     const p = await makeHostProject();
     hosts.push(p);
     const deps = realViewerDeps(p.dir, newCallCounts());

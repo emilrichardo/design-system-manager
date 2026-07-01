@@ -8,6 +8,9 @@ import type { ViewerTypographyV1 } from "../../../application/viewer/typography.
 import type { ViewerFoundationV1 } from "../../../application/viewer/foundation.js";
 import type { ViewerTokenV1 } from "../../../application/viewer/token.js";
 import type { ViewerIssueV1 } from "../../../application/viewer/issue.js";
+import type { ViewerBrandV1, ViewerBrandAssetGroupV1, ViewerBrandProfileV1 } from "../../../application/viewer/brand.js";
+import type { ViewerComponentGroupV1, ViewerComponentMatrixV1 } from "../../../application/viewer/components.js";
+import type { ViewerQualityV1 } from "../../../application/viewer/quality.js";
 import type { EditorReviewV1, EditorIssueV1 } from "../../../application/editor/review.js";
 import type { TokenMutationDiffEntry } from "../../../domain/token-mutations/diff.js";
 
@@ -533,7 +536,7 @@ function renderEditorDraftForms(section: HTMLElement): void {
   const metaType = labeledSelect("editor-meta-type", "Declared type", EDITOR_VALUE_TYPES);
   const description = labeledInput("editor-description", "Description");
   const category = labeledInput("editor-category", "Neuraz category metadata");
-  const foundationLevel = labeledSelect("editor-foundation-level", "Foundation level", ["none", "primitive", "semantic"]);
+  const foundationLevel = labeledSelect("editor-foundation-level", "Foundation level", ["none", "primitive", "semantic", "component"]);
   appendFormField(metaForm, metaPath);
   appendFormField(metaForm, metaType);
   appendFormField(metaForm, description);
@@ -560,6 +563,50 @@ function renderEditorDraftForms(section: HTMLElement): void {
     preview(editorCommand([{ kind: "update-foundation-level", path: metaPath.value, level: foundationLevel.value === "none" ? null : foundationLevel.value }]));
   });
   metaForm.append(foundationButton);
+
+  // T025 (011) — Campos de metadata de component token. Sólo preview: el plano real usa el motor de
+  // 008 existente sin cambios. Los campos component/part/variant/state/size/property se exponen en el
+  // formulario y se incluyen en el draft JSON para inspección, señalando al usuario que su escritura
+  // requiere el operador de 008 correspondiente (actualmente `update-foundation-level` escribe solo
+  // `layer`; los demás campos son visibles pero no escritos por 008 en esta feature).
+  const componentMetaHeading = document.createElement("h4");
+  componentMetaHeading.textContent = "Component token metadata (preview)";
+  metaForm.append(componentMetaHeading);
+  const componentComponent = labeledInput("editor-component-component", "Component (e.g. button)");
+  const componentPart = labeledInput("editor-component-part", "Part (e.g. container)");
+  const componentVariant = labeledInput("editor-component-variant", "Variant");
+  const componentState = labeledInput("editor-component-state", "State");
+  const componentSize = labeledInput("editor-component-size", "Size");
+  const componentProperty = labeledInput("editor-component-property", "Property");
+  appendFormField(metaForm, componentComponent);
+  appendFormField(metaForm, componentPart);
+  appendFormField(metaForm, componentVariant);
+  appendFormField(metaForm, componentState);
+  appendFormField(metaForm, componentSize);
+  appendFormField(metaForm, componentProperty);
+  const componentPreviewButton = document.createElement("button");
+  componentPreviewButton.type = "button";
+  componentPreviewButton.textContent = "Preview component metadata draft";
+  componentPreviewButton.addEventListener("click", () => {
+    const layer = foundationLevel.value === "none" ? null : foundationLevel.value;
+    preview(
+      editorCommand([
+        {
+          kind: "update-foundation-level",
+          path: metaPath.value,
+          level: layer,
+          // Component metadata fields are surfaced for review; 008 writes `level` only (sin cambios).
+          component: componentComponent.value || null,
+          part: componentPart.value || null,
+          variant: componentVariant.value || null,
+          state: componentState.value || null,
+          size: componentSize.value || null,
+          property: componentProperty.value || null,
+        },
+      ]),
+    );
+  });
+  metaForm.append(componentPreviewButton);
 
   const aliasForm = editorForm("Alias editor");
   const aliasPath = labeledInput("editor-alias-path", "Alias token path", "text", "color.brand.primary");
@@ -608,6 +655,214 @@ function renderEditorDraftForms(section: HTMLElement): void {
   section.append(formStatus, valueForm, metaForm, aliasForm, adminForm, output, planForm);
 }
 
+// T025 (011) — Brand Editor. Flujo draft → plan → approval → apply propio (no reutiliza
+// 008-token-mutations para contenido narrativo no-token, FR-015). Campos narrativos como textareas.
+function labeledTextArea(id: string, labelText: string, value = ""): HTMLTextAreaElement {
+  const label = document.createElement("label");
+  label.htmlFor = id;
+  label.textContent = labelText;
+  const area = document.createElement("textarea");
+  area.id = id;
+  area.name = id;
+  area.rows = 3;
+  area.value = value;
+  area.setAttribute("aria-label", labelText);
+  label.append(area);
+  return area;
+}
+
+interface BrandPlanFileEntry {
+  readonly relativePath: string;
+  readonly status: "create" | "update" | "unchanged";
+}
+
+interface BrandPlanEnvelopeData {
+  readonly plan: { readonly files: readonly BrandPlanFileEntry[]; readonly writable: boolean };
+  readonly outcome: "planned" | "unchanged";
+  readonly documents: Record<string, unknown>;
+}
+
+interface BrandApplyEnvelopeData {
+  readonly apply: {
+    readonly outcome: "applied" | "unchanged" | "conflict" | "write-error" | "verification-error";
+    readonly wrote: boolean;
+    readonly error: { readonly code: string; readonly message: string } | null;
+  };
+  readonly refresh: { readonly state: "reloaded" | "failed" };
+}
+
+function readTextareaLines(area: HTMLTextAreaElement): readonly string[] {
+  return area.value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
+
+function renderBrandPlanReview(container: HTMLElement, data: BrandPlanEnvelopeData, command: Record<string, unknown>, onApplied: () => void): void {
+  clear(container);
+  const heading3 = document.createElement("h4");
+  heading3.textContent = `Brand plan review: ${data.outcome}`;
+  container.setAttribute("aria-live", "polite");
+  container.append(heading3);
+  if (!data.plan.writable) {
+    container.append(statusParagraph("This brand command produces no changes (all documents unchanged)."));
+    return;
+  }
+  const list = document.createElement("ul");
+  list.setAttribute("aria-label", "Brand document changes (read-only)");
+  for (const file of data.plan.files) {
+    const li = document.createElement("li");
+    li.textContent = `${file.relativePath}: ${file.status}`;
+    list.append(li);
+  }
+  container.append(list);
+  const actions = document.createElement("div");
+  const approveButton = document.createElement("button");
+  approveButton.type = "button";
+  approveButton.textContent = "Approve brand changes";
+  approveButton.addEventListener("click", async () => {
+    approveButton.disabled = true;
+    const envelope = await fetchEditorJson("/api/editor/brand/apply", "POST", command);
+    if (envelope === null || envelope.data === null) {
+      approveButton.disabled = false;
+      container.append(statusParagraph("Could not apply this brand plan. The previous brand files are unaffected."));
+      return;
+    }
+    const applyData = envelope.data as BrandApplyEnvelopeData;
+    let message = `Brand apply: ${applyData.apply.outcome}.`;
+    if (applyData.apply.error !== null) message += ` ${applyData.apply.error.code} — ${applyData.apply.error.message}`;
+    if (applyData.refresh.state === "reloaded") message += " Viewer refreshed.";
+    else if (applyData.apply.outcome === "applied" || applyData.apply.outcome === "unchanged") message += " Viewer could not refresh automatically; reload the page.";
+    container.append(statusParagraph(message));
+    if (applyData.apply.outcome === "applied" || applyData.apply.outcome === "unchanged") {
+      onApplied();
+    }
+  });
+  const cancelButton = document.createElement("button");
+  cancelButton.type = "button";
+  cancelButton.textContent = "Cancel brand plan";
+  cancelButton.addEventListener("click", () => {
+    clear(container);
+  });
+  actions.append(approveButton, cancelButton);
+  container.append(actions);
+}
+
+function renderBrandEditorForms(section: HTMLElement): void {
+  const wrapper = document.createElement("section");
+  wrapper.setAttribute("aria-labelledby", "brand-editor-title");
+  const title = document.createElement("h3");
+  title.id = "brand-editor-title";
+  title.textContent = "Brand editor";
+  const intro = document.createElement("p");
+  intro.textContent = "Brand edits use a separate plan→apply flow and never touch tokens. Narrative fields accept Markdown.";
+  wrapper.append(title, intro);
+
+  const form = document.createElement("form");
+  const formHeading = document.createElement("h4");
+  formHeading.textContent = "Brand profile";
+  form.append(formHeading);
+
+  const name = labeledInput("brand-profile-name", "Name");
+  const purpose = labeledTextArea("brand-profile-purpose", "Purpose");
+  const mission = labeledTextArea("brand-profile-mission", "Mission");
+  const vision = labeledTextArea("brand-profile-vision", "Vision");
+  const positioning = labeledTextArea("brand-profile-positioning", "Positioning");
+  const values = labeledTextArea("brand-profile-values", "Values (one per line)");
+  const differentiators = labeledTextArea("brand-profile-differentiators", "Differentiators (one per line)");
+  appendFormField(form, name);
+  form.append(purpose.parentElement ?? purpose);
+  form.append(mission.parentElement ?? mission);
+  form.append(vision.parentElement ?? vision);
+  form.append(positioning.parentElement ?? positioning);
+  form.append(values.parentElement ?? values);
+  form.append(differentiators.parentElement ?? differentiators);
+
+  const voiceHeading = document.createElement("h4");
+  voiceHeading.textContent = "Voice and tone";
+  form.append(voiceHeading);
+  const voicePrinciples = labeledTextArea("brand-voice-principles", "Voice principles (one per line)");
+  const errorMessageGuidance = labeledTextArea("brand-voice-error-guidance", "Error-message guidance");
+  const ctaGuidance = labeledTextArea("brand-voice-cta-guidance", "CTA guidance");
+  form.append(voicePrinciples.parentElement ?? voicePrinciples);
+  form.append(errorMessageGuidance.parentElement ?? errorMessageGuidance);
+  form.append(ctaGuidance.parentElement ?? ctaGuidance);
+
+  const visualHeading = document.createElement("h4");
+  visualHeading.textContent = "Visual language";
+  form.append(visualHeading);
+  const iconStyle = labeledInput("brand-vl-icon", "Icon style");
+  const shapeLanguage = labeledInput("brand-vl-shape", "Shape language");
+  const motionLanguage = labeledInput("brand-vl-motion", "Motion language");
+  const brandColors = labeledTextArea("brand-vl-brand-colors", "Brand color token paths (one per line)");
+  appendFormField(form, iconStyle);
+  appendFormField(form, shapeLanguage);
+  appendFormField(form, motionLanguage);
+  form.append(brandColors.parentElement ?? brandColors);
+
+  const status = document.createElement("p");
+  status.id = "brand-editor-status";
+  status.setAttribute("aria-live", "polite");
+  status.textContent = "Brand editor idle.";
+
+  const reviewPanel = document.createElement("div");
+  reviewPanel.id = "brand-editor-review";
+
+  const planButton = document.createElement("button");
+  planButton.type = "button";
+  planButton.textContent = "Generate brand plan";
+  planButton.addEventListener("click", async () => {
+    const command: Record<string, unknown> = {};
+    const profile: Record<string, unknown> = { formatVersion: "1.0.0", status: "partial" };
+    if (name.value.trim().length > 0) profile.name = name.value.trim();
+    if (purpose.value.trim().length > 0) profile.purpose = purpose.value.trim();
+    if (mission.value.trim().length > 0) profile.mission = mission.value.trim();
+    if (vision.value.trim().length > 0) profile.vision = vision.value.trim();
+    if (positioning.value.trim().length > 0) profile.positioning = positioning.value.trim();
+    const valuesList = readTextareaLines(values);
+    if (valuesList.length > 0) profile.values = valuesList;
+    const differentiatorsList = readTextareaLines(differentiators);
+    if (differentiatorsList.length > 0) profile.differentiators = differentiatorsList;
+    if (Object.keys(profile).length > 2) command.brandProfile = profile;
+
+    const voice: Record<string, unknown> = { formatVersion: "1.0.0" };
+    const voicePrinciplesList = readTextareaLines(voicePrinciples);
+    if (voicePrinciplesList.length > 0) voice.voicePrinciples = voicePrinciplesList;
+    if (errorMessageGuidance.value.trim().length > 0) voice.errorMessageGuidance = errorMessageGuidance.value.trim();
+    if (ctaGuidance.value.trim().length > 0) voice.ctaGuidance = ctaGuidance.value.trim();
+    if (Object.keys(voice).length > 1) command.voice = voice;
+
+    const visualLanguage: Record<string, unknown> = { formatVersion: "1.0.0" };
+    if (iconStyle.value.trim().length > 0) visualLanguage.iconStyle = iconStyle.value.trim();
+    if (shapeLanguage.value.trim().length > 0) visualLanguage.shapeLanguage = shapeLanguage.value.trim();
+    if (motionLanguage.value.trim().length > 0) visualLanguage.motionLanguage = motionLanguage.value.trim();
+    const brandColorsList = readTextareaLines(brandColors);
+    if (brandColorsList.length > 0) visualLanguage.brandColors = brandColorsList;
+    if (Object.keys(visualLanguage).length > 1) command.visualLanguage = visualLanguage;
+
+    if (Object.keys(command).length === 0) {
+      status.textContent = "Fill in at least one field before generating a brand plan.";
+      return;
+    }
+    status.textContent = "Generating brand plan...";
+    const envelope = await fetchEditorJson("/api/editor/brand/plan", "POST", command);
+    if (envelope === null || envelope.data === null) {
+      status.textContent = "Could not generate a brand plan.";
+      clear(reviewPanel);
+      return;
+    }
+    status.textContent = `Brand plan ready (${envelope.state}). Review and approve.`;
+    renderBrandPlanReview(reviewPanel, envelope.data as BrandPlanEnvelopeData, command, () => {
+      status.textContent = "Brand applied. Reloading the current view.";
+      void refreshCurrentView();
+    });
+  });
+
+  form.append(status, planButton, reviewPanel);
+  wrapper.append(form);
+  section.append(wrapper);
+}
+
 function renderEditorEntry(el: HTMLElement): void {
   const section = document.createElement("section");
   section.setAttribute("aria-labelledby", "editor-entry-title");
@@ -633,6 +888,7 @@ function renderEditorEntry(el: HTMLElement): void {
   });
   section.append(title, status, button);
   renderEditorDraftForms(section);
+  renderBrandEditorForms(section);
   el.append(section);
 }
 
@@ -660,6 +916,380 @@ const EDITOR_APPLY_STATE_MESSAGES: Readonly<Record<string, string>> = {
   "recovery-required": "A previous write requires recovery before continuing. Nothing new was applied.",
 };
 
+// T022 (011) — Vista Brand. Sólo proyecciones públicas; nunca revalida assets desde la UI (007 sigue
+// siendo la autoridad). Estados explícitos en texto (no sólo color). `absent` se muestra tal cual.
+function brandAssetGroup(group: ViewerBrandAssetGroupV1): HTMLLIElement {
+  const li = document.createElement("li");
+  const groupHeading = document.createElement("h4");
+  groupHeading.textContent = `${group.kind} (${group.references.length})`;
+  li.append(groupHeading);
+  if (group.references.length === 0) {
+    li.append(statusParagraph("No references declared in this group."));
+    return li;
+  }
+  const list = document.createElement("ul");
+  list.setAttribute("aria-label", `${group.kind} references`);
+  for (const reference of group.references) {
+    const refLi = document.createElement("li");
+    const role = reference.variantRole ?? "(unspecified)";
+    const resolutionText =
+      reference.resolution === "resolved" ? "resolved" : reference.resolution === "missing" ? "missing — link this asset via Asset Manager" : "placeholder";
+    refLi.textContent = `${role}: ${reference.logicalPath ?? "(no logical path)"} [${reference.assetKind}${reference.required ? "; required" : ""}] — ${resolutionText}`;
+    list.append(refLi);
+  }
+  li.append(list);
+  return li;
+}
+
+function renderBrand(el: HTMLElement, brand: ViewerBrandV1): void {
+  el.append(heading(`Brand System: ${brand.status}`));
+  if (brand.status === "absent") {
+    el.append(statusParagraph("No Brand System found in this project (design-system/brand/ is absent). Use the brand editor below to add one."));
+    return;
+  }
+  const profile: ViewerBrandProfileV1 | null = brand.profile;
+  if (profile !== null) {
+    const identity = document.createElement("section");
+    const identityHeading = document.createElement("h3");
+    identityHeading.textContent = "Identity";
+    identity.append(identityHeading);
+    const fields: readonly [string, string | null][] = [
+      ["Name", profile.name],
+      ["Short name", profile.shortName],
+      ["Description", profile.description],
+      ["Purpose", profile.purpose],
+      ["Mission", profile.mission],
+      ["Vision", profile.vision],
+      ["Positioning", profile.positioning],
+      ["Promise", profile.promise],
+    ];
+    const list = document.createElement("dl");
+    for (const [label, value] of fields) {
+      const dt = document.createElement("dt");
+      dt.textContent = label;
+      const dd = document.createElement("dd");
+      dd.textContent = value ?? "(not set)";
+      list.append(dt, dd);
+    }
+    if (profile.values.length > 0) {
+      const dt = document.createElement("dt");
+      dt.textContent = "Values";
+      const dd = document.createElement("dd");
+      dd.textContent = profile.values.join(", ");
+      list.append(dt, dd);
+    }
+    if (profile.differentiators.length > 0) {
+      const dt = document.createElement("dt");
+      dt.textContent = "Differentiators";
+      const dd = document.createElement("dd");
+      dd.textContent = profile.differentiators.join(", ");
+      list.append(dt, dd);
+    }
+    identity.append(list);
+    if (profile.audiences.length > 0) {
+      const audiencesHeading = document.createElement("h4");
+      audiencesHeading.textContent = "Audiences";
+      const audiencesList = document.createElement("ul");
+      for (const audience of profile.audiences) {
+        const li = document.createElement("li");
+        li.textContent = `${audience.name}${audience.description !== null ? ` — ${audience.description}` : ""}`;
+        audiencesList.append(li);
+      }
+      identity.append(audiencesHeading, audiencesList);
+    }
+    if (profile.personality !== null) {
+      const personalityHeading = document.createElement("h4");
+      personalityHeading.textContent = "Personality";
+      const personalityP = document.createElement("p");
+      personalityP.textContent = `Attributes: ${profile.personality.attributes.join(", ")}${profile.personality.narrative !== null ? `\n${profile.personality.narrative}` : ""}`;
+      identity.append(personalityHeading, personalityP);
+    }
+    if (profile.principles.length > 0) {
+      const principlesHeading = document.createElement("h4");
+      principlesHeading.textContent = "Principles";
+      const principlesList = document.createElement("ul");
+      for (const principle of profile.principles) {
+        const li = document.createElement("li");
+        li.textContent = `${principle.id}: ${principle.statement}${principle.rationale !== null ? ` — ${principle.rationale}` : ""}`;
+        principlesList.append(li);
+      }
+      identity.append(principlesHeading, principlesList);
+    }
+    el.append(identity);
+  }
+
+  if (brand.voice !== null) {
+    const voiceSection = document.createElement("section");
+    const voiceHeading = document.createElement("h3");
+    voiceHeading.textContent = "Voice and tone";
+    voiceSection.append(voiceHeading);
+    if (brand.voice.voicePrinciples.length > 0) {
+      const p = document.createElement("p");
+      p.textContent = `Voice principles: ${brand.voice.voicePrinciples.join("; ")}`;
+      voiceSection.append(p);
+    }
+    if (brand.voice.toneDimensions.length > 0) {
+      const dimsHeading = document.createElement("h4");
+      dimsHeading.textContent = "Tone dimensions";
+      const dimsList = document.createElement("ul");
+      for (const dimension of brand.voice.toneDimensions) {
+        const li = document.createElement("li");
+        const completeness = dimension.complete ? "complete" : "incomplete (needs do/don't examples)";
+        li.textContent = `${dimension.axis}: ${dimension.position ?? "(unspecified)"} [${completeness}]`;
+        if (dimension.examples.do.length > 0 || dimension.examples.dont.length > 0) {
+          const examples = document.createElement("ul");
+          for (const example of dimension.examples.do) {
+            const ex = document.createElement("li");
+            ex.textContent = `do: ${example}`;
+            examples.append(ex);
+          }
+          for (const example of dimension.examples.dont) {
+            const ex = document.createElement("li");
+            ex.textContent = `don't: ${example}`;
+            examples.append(ex);
+          }
+          li.append(examples);
+        }
+        dimsList.append(li);
+      }
+      voiceSection.append(dimsHeading, dimsList);
+    }
+    if (brand.voice.terminology.preferred.length > 0 || brand.voice.terminology.forbidden.length > 0) {
+      const termP = document.createElement("p");
+      termP.textContent = `Preferred: ${brand.voice.terminology.preferred.join(", ") || "(none)"} — Avoided: ${brand.voice.terminology.forbidden.join(", ") || "(none)"}`;
+      voiceSection.append(termP);
+    }
+    for (const [label, value] of [
+      ["Microcopy guidance", brand.voice.microcopyGuidance],
+      ["Error-message guidance", brand.voice.errorMessageGuidance],
+      ["CTA guidance", brand.voice.ctaGuidance],
+    ] as const) {
+      if (value !== null) {
+        const p = document.createElement("p");
+        p.textContent = `${label}: ${value}`;
+        voiceSection.append(p);
+      }
+    }
+    el.append(voiceSection);
+  }
+
+  if (brand.visualLanguage !== null) {
+    const vl = brand.visualLanguage;
+    const vlSection = document.createElement("section");
+    const vlHeading = document.createElement("h3");
+    vlHeading.textContent = "Visual language";
+    vlSection.append(vlHeading);
+    const fields: readonly [string, string | null][] = [
+      ["Icon style", vl.iconStyle],
+      ["Illustration style", vl.illustrationStyle],
+      ["Photography style", vl.photographyStyle],
+      ["Image treatment", vl.imageTreatment],
+      ["Composition guidance", vl.compositionGuidance],
+      ["Shape language", vl.shapeLanguage],
+      ["Border language", vl.borderLanguage],
+      ["Shadow language", vl.shadowLanguage],
+      ["Motion language", vl.motionLanguage],
+      ["Clear space", vl.clearSpace],
+      ["Minimum size", vl.minimumSize],
+    ];
+    const list = document.createElement("dl");
+    for (const [label, value] of fields) {
+      const dt = document.createElement("dt");
+      dt.textContent = label;
+      const dd = document.createElement("dd");
+      dd.textContent = value ?? "(not set)";
+      list.append(dt, dd);
+    }
+    vlSection.append(list);
+    if (vl.brandColors.length > 0 || vl.supportingColors.length > 0) {
+      const colorsP = document.createElement("p");
+      colorsP.textContent = `Brand colors: ${vl.brandColors.join(", ") || "(none)"} — Supporting: ${vl.supportingColors.join(", ") || "(none)"}`;
+      vlSection.append(colorsP);
+    }
+    if (vl.typographicRoles.length > 0) {
+      const rolesP = document.createElement("p");
+      rolesP.textContent = `Typographic roles: ${vl.typographicRoles.map((role) => `${role.role} → ${role.tokenPath}`).join("; ")}`;
+      vlSection.append(rolesP);
+    }
+    if (vl.usageRules.length > 0) {
+      const rulesHeading = document.createElement("h4");
+      rulesHeading.textContent = "Usage rules";
+      const rulesList = document.createElement("ul");
+      for (const rule of vl.usageRules) {
+        const li = document.createElement("li");
+        li.textContent = `[${rule.kindLabel}] ${rule.description}${rule.relatedAsset !== null ? ` (related: ${rule.relatedAsset})` : ""}`;
+        rulesList.append(li);
+      }
+      vlSection.append(rulesHeading, rulesList);
+    }
+    el.append(vlSection);
+  }
+
+  if (brand.assetGroups.length > 0) {
+    const assetsSection = document.createElement("section");
+    const assetsHeading = document.createElement("h3");
+    assetsHeading.textContent = "Brand asset references";
+    assetsSection.append(assetsHeading);
+    const groupsList = document.createElement("ul");
+    for (const group of brand.assetGroups) groupsList.append(brandAssetGroup(group));
+    assetsSection.append(groupsList);
+    el.append(assetsSection);
+  }
+
+  const qualitySection = document.createElement("section");
+  const qualityHeading = document.createElement("h3");
+  qualityHeading.textContent = "Brand quality";
+  qualitySection.append(qualityHeading);
+  const qualityP = document.createElement("p");
+  qualityP.textContent = `Fields completed: ${brand.quality.fieldsCompleted}/${brand.quality.fieldsTotal}. Provenance: ${Object.entries(brand.quality.provenanceBreakdown).map(([status, count]) => `${status}=${count}`).join(", ")}.`;
+  qualitySection.append(qualityP);
+  if (brand.quality.missingAssets.length > 0) {
+    const missingHeading = document.createElement("h4");
+    missingHeading.textContent = "Missing required assets";
+    const missingList = document.createElement("ul");
+    for (const missing of brand.quality.missingAssets) {
+      const li = document.createElement("li");
+      li.textContent = `${missing.variantRole} — ${missing.reason}`;
+      missingList.append(li);
+    }
+    qualitySection.append(missingHeading, missingList);
+  }
+  el.append(qualitySection);
+
+  if (brand.standards.length > 0) {
+    const standardsP = document.createElement("p");
+    standardsP.textContent = `Standards: ${brand.standards.map((standard) => `${standard.id} (${standard.alignment})`).join(", ")}`;
+    el.append(standardsP);
+  }
+}
+
+// T023 (011) — Vista Components. Component tokens agrupados (no anatomía completa de 012).
+function renderMatrix(matrix: ViewerComponentMatrixV1): HTMLElement {
+  const section = document.createElement("section");
+  const heading3 = document.createElement("h4");
+  heading3.textContent = `Matrix ${matrix.kind}`;
+  section.append(heading3);
+  const table = document.createElement("table");
+  table.setAttribute("role", "table");
+  table.setAttribute("aria-label", `${matrix.kind} matrix for component`);
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+  const corner = document.createElement("th");
+  corner.scope = "col";
+  corner.textContent = matrix.kind === "variant-state" ? "variant \\ state" : matrix.kind === "size-variant" ? "size \\ variant" : "part \\ property";
+  headerRow.append(corner);
+  for (const column of matrix.columns) {
+    const th = document.createElement("th");
+    th.scope = "col";
+    th.textContent = column;
+    headerRow.append(th);
+  }
+  thead.append(headerRow);
+  table.append(thead);
+  const tbody = document.createElement("tbody");
+  for (const row of matrix.rows) {
+    const tr = document.createElement("tr");
+    const th = document.createElement("th");
+    th.scope = "row";
+    th.textContent = row;
+    tr.append(th);
+    for (const column of matrix.columns) {
+      const cell = matrix.cells.find((candidate) => candidate.row === row && candidate.column === column);
+      const td = document.createElement("td");
+      td.textContent = cell === undefined ? "—" : `${cell.paths.length} token${cell.paths.length === 1 ? "" : "s"}`;
+      if (cell !== undefined) td.textContent += `: ${cell.paths.join(", ")}`;
+      tr.append(td);
+    }
+    tbody.append(tr);
+  }
+  table.append(tbody);
+  section.append(table);
+  return section;
+}
+
+function renderComponents(el: HTMLElement, groups: readonly ViewerComponentGroupV1[]): void {
+  el.append(heading("Components"));
+  if (groups.length === 0) {
+    el.append(statusParagraph("No component tokens declared yet. Component tokens require layer metadata ($extensions) with layer: \"component\"."));
+    return;
+  }
+  for (const group of groups) {
+    const section = document.createElement("section");
+    const heading3 = document.createElement("h3");
+    heading3.textContent = group.component;
+    section.append(heading3);
+    const summary = document.createElement("p");
+    summary.textContent = `parts: ${group.parts.join(", ") || "(none)"} — variants: ${group.variants.join(", ") || "(none)"} — states: ${group.states.join(", ") || "(none)"} — sizes: ${group.sizes.join(", ") || "(none)"}`;
+    section.append(summary);
+    const tokensList = document.createElement("ul");
+    tokensList.setAttribute("aria-label", `Tokens for ${group.component}`);
+    for (const token of group.tokens) {
+      const li = document.createElement("li");
+      const meta = [token.part, token.variant, token.state, token.size, token.property].filter((value) => value !== null && value.length > 0);
+      li.textContent = `${token.path}${meta.length > 0 ? ` [${meta.join(" / ")}]` : ""}`;
+      tokensList.append(li);
+    }
+    section.append(tokensList);
+    for (const matrix of group.matrices) section.append(renderMatrix(matrix));
+    el.append(section);
+  }
+}
+
+// T024 (011) — Vista Quality. Resumen integral de calidad.
+function renderQuality(el: HTMLElement, quality: ViewerQualityV1): void {
+  el.append(heading("Design System quality"));
+  const counters = quality.counters;
+  const summary = document.createElement("p");
+  summary.textContent = `Brand: ${counters.brand.overallStatus}. Tokens: ${counters.tokens.total} (primitive=${counters.tokens.primitive}, semantic=${counters.tokens.semantic}, component=${counters.tokens.component}, brandRole=${counters.tokens.brandRole}, unclassified=${counters.tokens.unclassified}). Assets: ${counters.assets.total} (licenseMissing=${counters.assets.licenseMissing}, fontsMatched=${counters.assets.fontsMatched}/${counters.assets.fontAssets}). Components: ${counters.components.groups} groups, ${counters.components.componentTokens} tokens. Build: ${counters.build.hasBuild ? (counters.build.stale ? "stale" : "current") : "absent"}.`;
+  el.append(summary);
+
+  const tokensSection = document.createElement("section");
+  const tokensHeading = document.createElement("h3");
+  tokensHeading.textContent = "Token health";
+  tokensSection.append(tokensHeading);
+  const tokensList = document.createElement("ul");
+  const tokenMetrics: readonly [string, number][] = [
+    ["Unresolved aliases", counters.tokens.unresolvedAliases],
+    ["Broken aliases", counters.tokens.brokenAliases],
+    ["Alias cycles", counters.tokens.aliasCycles],
+    ["Component → primitive bypasses", counters.tokens.componentBypassesSemantic],
+    ["Brand → component bypasses", counters.tokens.brandBypassesSemantic],
+    ["Unknown token types", counters.tokens.unknownTypes],
+    ["Deep validation coverage", counters.tokens.deepValidationCoverage],
+    ["Total deep-validatable tokens", counters.tokens.totalDeepValidatable],
+  ];
+  for (const [label, value] of tokenMetrics) {
+    const li = document.createElement("li");
+    li.textContent = `${label}: ${value}`;
+    tokensList.append(li);
+  }
+  tokensSection.append(tokensList);
+  el.append(tokensSection);
+
+  if (quality.issueGroups.length > 0) {
+    const issuesSection = document.createElement("section");
+    const issuesHeading = document.createElement("h3");
+    issuesHeading.textContent = "Issues grouped by cause";
+    issuesSection.append(issuesHeading);
+    const issuesList = document.createElement("ul");
+    for (const group of quality.issueGroups) {
+      const li = document.createElement("li");
+      li.textContent = `[${group.severity}] ${group.code}: ${group.count} occurrence(s). ${group.cause}${group.samplePaths.length > 0 ? ` — e.g. ${group.samplePaths.join(", ")}` : ""}`;
+      issuesList.append(li);
+    }
+    issuesSection.append(issuesList);
+    el.append(issuesSection);
+  } else {
+    el.append(statusParagraph("No issues detected."));
+  }
+
+  if (quality.standards.length > 0) {
+    const standardsP = document.createElement("p");
+    standardsP.textContent = `Standards references: ${quality.standards.map((standard) => `${standard.id} (${standard.alignment})`).join(", ")}`;
+    el.append(standardsP);
+  }
+}
+
 function renderSection(el: HTMLElement, envelope: ViewerJsonEnvelopeLike): void {
   clear(el);
   if (envelope.data === null) {
@@ -679,6 +1309,12 @@ function renderSection(el: HTMLElement, envelope: ViewerJsonEnvelopeLike): void 
   } else if (envelope.section === "issues") {
     el.append(heading("Issues"));
     el.append(renderIssuesList(envelope.data as readonly ViewerIssueV1[]));
+  } else if (envelope.section === "brand") {
+    renderBrand(el, envelope.data as ViewerBrandV1);
+  } else if (envelope.section === "components") {
+    renderComponents(el, envelope.data as readonly ViewerComponentGroupV1[]);
+  } else if (envelope.section === "quality") {
+    renderQuality(el, envelope.data as ViewerQualityV1);
   } else {
     renderGeneric(el, envelope.section, envelope.state, envelope.data);
   }

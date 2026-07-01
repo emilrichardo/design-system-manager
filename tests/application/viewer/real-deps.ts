@@ -11,6 +11,7 @@ import { inspectAsset } from "../../../src/application/assets/inspect-asset.js";
 import { createAssetStoreReader } from "../../../src/infrastructure/assets/asset-store-reader.js";
 import { observeBuildOutput } from "../../../src/infrastructure/build-export/output-snapshot-reader.js";
 import { createTokenSourceSnapshotReader } from "../../../src/infrastructure/token-mutations/source-snapshot-reader.js";
+import { readBrandSource } from "../../../src/infrastructure/brand/brand-source-reader.js";
 import { planTokenMutation } from "../../../src/application/token-mutations/plan-token-mutation.js";
 import { serializeCandidate } from "../../../src/infrastructure/token-mutations/candidate-serializer.js";
 import type { ViewerSessionDependencies } from "../../../src/application/viewer/ports.js";
@@ -57,6 +58,7 @@ export function realViewerDeps(rootDir: string, counts: CallCounts): ViewerSessi
     },
     readAnalyzedTokenSource: mutationSnapshot,
     planRenameMoveImpact: (command) => planTokenMutation({ executionDir: rootDir }, command, { snapshot: mutationSnapshot, serialize: serializeCandidate }),
+    readBrandSource: () => readBrandSource(rootDir),
   };
 }
 

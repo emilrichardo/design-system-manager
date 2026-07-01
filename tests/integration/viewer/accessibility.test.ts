@@ -44,7 +44,7 @@ describe("Viewer accessibility (T049)", () => {
   it("cada sección de navegación es un <a> real con texto visible (label), no un div con solo onclick", async () => {
     const html = await shell();
     const links = [...html.matchAll(/<a href="#(\w+)" data-section="(\w+)">(\w+)<\/a>/g)];
-    expect(links.length).toBe(14);
+    expect(links.length).toBe(17);
     for (const [, hrefId, dataId, text] of links) {
       expect(hrefId).toBe(dataId);
       expect(text.length).toBeGreaterThan(0);
