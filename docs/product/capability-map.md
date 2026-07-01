@@ -2,7 +2,16 @@
 
 > Estado real de cada capacidad del producto. Solo se marca `implemented` lo realmente cubierto por las
 > features cerradas `001`–`010`. Todo lo demás es `planned`, `exploratory` u `out-of-scope`.
-> Visión en [vision.md](vision.md); reglas en [architecture-guardrails.md](architecture-guardrails.md).
+> Visión en [vision.md](vision.md); reglas en [architecture-guardrails.md](architecture-guardrails.md);
+> taxonomía completa de 5 niveles + capa transversal en
+> [complete-design-system-model.md](complete-design-system-model.md); roadmap de features futuras en
+> [complete-design-system-roadmap.md](complete-design-system-roadmap.md).
+>
+> Esta tabla organiza capacidades por **subsistema técnico** (Core/Interfaces/Studio/Assets/
+> Importadores); las secciones **Brand System**, **Component System**, **Patterns and Templates** y
+> **Governance and Distribution** (abajo) mapean las mismas capacidades al **nivel del modelo completo**
+> al que pertenecen — ninguna fila nueva implica trabajo ya hecho que no esté también en las secciones
+> existentes.
 
 ## Estados
 
@@ -61,6 +70,44 @@
 | Análisis de imágenes y capturas | Importers | exploratory | — | Image/screenshot analysis |
 | Inferencia de tokens y presets | AI (fuera del Core) | exploratory | — | Token/preset inference |
 
+## Brand System (Nivel 1 del modelo completo)
+
+| Capability | Module | Status | Current feature | Future feature |
+|---|---|---|---|---|
+| Brand profile (identidad, propósito, valores, principios) | Brand System | planned | — | 011 (spec/contratos) → implementación |
+| Voice and tone | Brand System | planned | — | 011 (spec/contratos) → implementación |
+| Visual language (logo system, paleta, tipografía, estilo) | Brand System | planned | — | 011 (spec/contratos) → implementación |
+| Brand tokens (`brandRole` sobre primitives) | Brand System / Tokens | planned | — | 011 (spec/contratos) → implementación |
+| Brand asset intake (logos/fuentes faltantes) | Brand System / Assets | planned | — | 011 (protocolo) → 015 (implementación operativa) |
+| Brand provenance y confidence | Brand System | planned | — | 011 (spec/contratos) → implementación |
+
+## Component System (Nivel 3 del modelo completo)
+
+| Capability | Module | Status | Current feature | Future feature |
+|---|---|---|---|---|
+| Vocabulario de component tokens (catálogo mínimo, capas) | Component System / Tokens | planned | — | 011 (spec/contratos) |
+| Anatomy, parts, slots, variantes, estados completos | Component System | exploratory | — | 012-component-catalog |
+| Reglas de accesibilidad y contenido por componente | Component System | exploratory | — | 012-component-catalog |
+
+## Patterns and Templates (Nivel 4 del modelo completo)
+
+| Capability | Module | Status | Current feature | Future feature |
+|---|---|---|---|---|
+| Patrones (navegación, formularios, búsqueda, comercio, datos, feedback, layout) | Patterns | exploratory | — | 013-patterns-templates-and-content-guidelines |
+| Plantillas de página y responsive | Templates | exploratory | — | 013-patterns-templates-and-content-guidelines |
+| Guías de composición de contenido | Content | exploratory | — | 013-patterns-templates-and-content-guidelines |
+
+## Governance and Distribution (Nivel 5 del modelo completo)
+
+| Capability | Module | Status | Current feature | Future feature |
+|---|---|---|---|---|
+| Gobernanza de la constitución del paquete (ADR, enmiendas) | Governance (paquete) | implemented | .specify/memory/constitution.md | — |
+| Status/versionado/deprecación del Design System **del usuario** | Governance (Design System) | planned | — | 021-governance-versioning-and-release |
+| Quality summary extendido (brand/asset/capas/provenance) | Governance | planned | — | 011 (spec/contratos) → implementación |
+| Distribución del paquete (npm, CLI) | Distribution | implemented | 001–010 | — |
+| MCP server | Distribution | planned | — | 019-mcp-server |
+| Skills para agentes de intake de marca/candidatos | Distribution | exploratory | — | 018-agent-orchestration-skill |
+
 ## Fuera de alcance
 
 | Capability | Module | Status | Current feature | Future feature |
@@ -77,6 +124,10 @@
   **candidatos** (reglas 7–9), assets se mantienen separados de DTCG (regla 6) y la UI es cliente, no
   autoridad (regla 4).
 - Ninguna fila marcada `implemented` corresponde a capacidades futuras: solo refleja `001`–`010`.
+- `011-complete-design-system-foundation-branding-and-presets` define spec/plan/contratos (modelo de 5
+  niveles, Brand System, capas de token, 13 tipos DTCG, `web-complete`+packs, vistas de Viewer/Editor
+  extendidas) sin implementar código productivo; por eso las filas que la referencian quedan `planned`,
+  no `implemented`, hasta que su `tasks.md` (checkpoints A–F) se ejecute.
 - `008-token-mutations` reutiliza el planner/diff/writer headless para MCP/Studio (regla 4): la CLI es un
   adapter delgado, no la autoridad; el Visual Token Editor y el MCP server futuros consumirán la misma
   API sin reescribir validación, aliases ni escritura.

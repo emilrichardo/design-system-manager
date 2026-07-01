@@ -1,19 +1,31 @@
 # Visión — Neuraz Design System Studio
 
 > Documento de visión. No implementa ni compromete fechas. Describe el destino del producto y cómo el
-> Core actual (`001`–`006`) es su fundamento. Las reglas no negociables viven en
+> Core actual (`001`–`010`) es su fundamento. Las reglas no negociables viven en
 > [architecture-guardrails.md](architecture-guardrails.md); el estado real de cada capacidad, en
-> [capability-map.md](capability-map.md).
+> [capability-map.md](capability-map.md); el modelo canónico completo (los 5 niveles + capa
+> transversal), en [complete-design-system-model.md](complete-design-system-model.md).
 
 ## 1. Qué es
 
-**Neuraz Design System Studio** es el producto completo para administrar un Design System local. Hoy
-existe su **Core headless** (un paquete npm con CLI: init, validate/inspect, JSON, foundations, presets,
-build/export). El Studio añadirá, alrededor de ese mismo Core, un visualizador, un editor visual,
-gestión de assets e importadores — sin cambiar la naturaleza local-first del sistema.
+**Neuraz Design System Studio nunca es solamente un token manager, un token editor, un editor DTCG ni un
+preset manager.** Es un **gestor, generador, documentador y distribuidor de Design Systems completos**:
+local-first, Git-first, headless-first y agent-friendly. Los tokens son una capa central — no el
+producto entero. El producto completo administra cinco niveles (Brand System, Foundations and Tokens,
+Component System, Patterns and Templates, Governance and Distribution) y una capa transversal de
+Import/Inference/Agent Orchestration; ver el detalle en
+[complete-design-system-model.md](complete-design-system-model.md).
+
+Hoy existe su **Core headless** (un paquete npm con CLI: init, validate/inspect, JSON, foundations,
+presets, build/export, mutaciones de tokens) y su **Studio inicial** (visualizador y editor visual de
+tokens, gestión de assets). El Brand System, el Component System completo, Patterns/Templates y la
+gobernanza del Design System del usuario están sentando sus bases documentales/contractuales en
+`011-complete-design-system-foundation-branding-and-presets` — sin cambiar la naturaleza local-first del
+sistema.
 
 El Design System siempre permanece como **archivos en el repositorio anfitrión** (DTCG como formato
-canónico de tokens). El Studio nunca se convierte en la fuente de verdad: es un cliente del Core.
+canónico de tokens; Markdown/JSON para la narrativa de marca que no es DTCG). El Studio nunca se
+convierte en la fuente de verdad: es un cliente del Core.
 
 ## 2. A quién sirve
 
@@ -36,9 +48,23 @@ negocio: invoca el Core y presenta resultados. Esto permite que CLI, MCP y Studi
 
 ## 4. Alcance del producto completo
 
-El producto contempla, además del Core headless:
+El producto contempla, además del Core headless, los cinco niveles del
+[modelo completo](complete-design-system-model.md):
 
-- **Visualizador** del Design System (tokens, foundations, categorías, estados).
+- **Brand System**: identidad, propósito, voice & tone, visual language, brand tokens, brand assets,
+  provenance — nunca reducido a "colores y logo".
+- **Foundations and Tokens**: primitive/semantic/component, 13 tipos DTCG con soporte profundo, presets
+  (`neutral-base`, `web-complete`, packs).
+- **Component System**: contratos de componentes (anatomy, parts, slots, variantes, estados,
+  accesibilidad, contenido) — no solo su representación como tokens.
+- **Patterns and Templates**: composición reutilizable de componentes para páginas/flujos reales.
+- **Governance and Distribution**: ownership, status, versionado, deprecación, release, distribución del
+  paquete (CLI, MCP futuro, skills, CI/CD).
+
+Y una **capa transversal** de Import, Inference and Agent Orchestration:
+
+- **Visualizador** del Design System (tokens, foundations, categorías, estados, brand, componentes,
+  calidad general).
 - **Editor visual** que escribe a través del Core (nunca directo al filesystem).
 - **Gestión manual de fuentes** (tipografías) con respeto explícito de licencias.
 - **Assets**: logos, SVG, iconos e imágenes, separados de los tokens DTCG.
