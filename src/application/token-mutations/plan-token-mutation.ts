@@ -15,7 +15,7 @@ import type { AnalyzedTokenSource, SourceSnapshotPort } from "./ports.js";
 import type { PlainDoc } from "./document-model.js";
 
 export interface SerializeCandidate {
-  (document: unknown): { readonly contentHash: string };
+  (document: unknown): { readonly text: string; readonly contentHash: string };
 }
 
 export interface PlanTokenMutationDependencies {
@@ -23,9 +23,16 @@ export interface PlanTokenMutationDependencies {
   readonly serialize: SerializeCandidate;
 }
 
+/** Resultado interno de construir el plan a partir de una fuente ya leída; `candidateText` solo existe
+ * cuando `result.outcome === "planned"` (lo usa `applyTokenMutation` para escribir sin reserializar). */
+export interface MutationPlanComputation {
+  readonly result: TokenMutationResultV1;
+  readonly candidateText: string | null;
+}
+
 const CONFLICT_CODES = new Set(["rename-collision", "move-collision", "token-exists", "removal-with-dependents", "group-removal-non-empty", "concurrent-source-change"]);
 
-function readFailure(outcome: "not-found" | "read-error" | "invalid-design-system", reason: string): TokenMutationResultV1 {
+export function readFailure(outcome: "not-found" | "read-error" | "invalid-design-system", reason: string): TokenMutationResultV1 {
   return Object.freeze({ outcome, wrote: false, plan: null, diff: null, conflicts: [], recovery: null, source: null, error: { code: outcome, message: reason, path: null, details: null } });
 }
 
@@ -62,25 +69,27 @@ function enrichDiff(baseEntries: readonly TokenMutationDiffEntry[], before: Plai
   return buildDiff(entries);
 }
 
-export async function planTokenMutation(input: { readonly executionDir: string }, command: TokenMutationCommandV1, deps: PlanTokenMutationDependencies): Promise<TokenMutationResultV1> {
-  const read = await deps.snapshot.read(input);
-  if (read.outcome !== "ready") return readFailure(read.outcome, read.reason);
-  const source: AnalyzedTokenSource = read.source;
+/** Construye el plan a partir de una fuente ya leída (sin I/O); compartido por `plan` y `apply` para que
+ * `apply` solo lea el snapshot una vez y conozca el `rootDir` de esa misma lectura. */
+export function buildMutationPlanComputation(source: AnalyzedTokenSource, command: TokenMutationCommandV1, serialize: SerializeCandidate): MutationPlanComputation {
   const before = source.document as PlainDoc;
 
   const issues = validateCommand(source, command);
   if (issues.length > 0) {
     const outcome = issues.some((i) => CONFLICT_CODES.has(i.code)) ? "conflict" : "invalid-command";
-    return Object.freeze({
-      outcome,
-      wrote: false,
-      plan: null,
-      diff: null,
-      conflicts: Object.freeze(issues as MutationIssue[]),
-      recovery: null,
-      source: source.identity,
-      error: { code: outcome, message: "El comando no es válido.", path: null, details: null },
-    });
+    return {
+      candidateText: null,
+      result: Object.freeze({
+        outcome,
+        wrote: false,
+        plan: null,
+        diff: null,
+        conflicts: Object.freeze(issues as MutationIssue[]),
+        recovery: null,
+        source: source.identity,
+        error: { code: outcome, message: "El comando no es válido.", path: null, details: null },
+      }),
+    };
   }
 
   // Candidato con reescritura de referencias (rename/move = update-all-affected).
@@ -90,8 +99,17 @@ export async function planTokenMutation(input: { readonly executionDir: string }
   });
   const baseDiff = calculateDiff(before, candidate, command.operations);
   const diff = enrichDiff(baseDiff.entries, before, command);
-  const { contentHash } = deps.serialize(candidate);
+  const { text, contentHash } = serialize(candidate);
 
   const plan = Object.freeze({ operations: command.operations, diff, candidateHash: contentHash, source: source.identity, writable: true });
-  return Object.freeze({ outcome: "planned", wrote: false, plan, diff, conflicts: [], recovery: null, source: source.identity, error: null });
+  return {
+    candidateText: text,
+    result: Object.freeze({ outcome: "planned", wrote: false, plan, diff, conflicts: [], recovery: null, source: source.identity, error: null }),
+  };
+}
+
+export async function planTokenMutation(input: { readonly executionDir: string }, command: TokenMutationCommandV1, deps: PlanTokenMutationDependencies): Promise<TokenMutationResultV1> {
+  const read = await deps.snapshot.read(input);
+  if (read.outcome !== "ready") return readFailure(read.outcome, read.reason);
+  return buildMutationPlanComputation(read.source, command, deps.serialize).result;
 }

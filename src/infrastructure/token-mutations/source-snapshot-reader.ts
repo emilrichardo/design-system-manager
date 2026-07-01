@@ -17,7 +17,7 @@ export function createTokenSourceSnapshotReader(): SourceSnapshotPort {
       }
       const snapshot = result.snapshot;
       const identity = { logicalPath: snapshot.logicalSourcePath, contentHash: snapshot.sourceHash };
-      return { outcome: "ready", source: analyzedTokenSource(snapshot.parsedDocument, identity) };
+      return { outcome: "ready", source: analyzedTokenSource(snapshot.parsedDocument, identity), rootDir: snapshot.analysis.host.root };
     },
   };
 }

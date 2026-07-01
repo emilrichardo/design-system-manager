@@ -33,7 +33,7 @@ export interface AnalyzedTokenSource {
 export type SourceSnapshotOutcome = "ready" | "not-found" | "read-error" | "invalid-design-system";
 
 export type SourceSnapshotResult =
-  | { readonly outcome: "ready"; readonly source: AnalyzedTokenSource }
+  | { readonly outcome: "ready"; readonly source: AnalyzedTokenSource; readonly rootDir: string }
   | { readonly outcome: Exclude<SourceSnapshotOutcome, "ready">; readonly source: null; readonly reason: string };
 
 /** Puerto: produce la vista analizada de la fuente a partir del directorio de ejecución del host. */
@@ -65,4 +65,9 @@ export interface TokenSourceWriteResult {
 /** Puerto: escritura transaccional single-file de la fuente de tokens (temp→identity→replace→backup→verify). */
 export interface TokenSourceWriterPort {
   write(request: TokenSourceWriteRequest): Promise<TokenSourceWriteResult>;
+}
+
+/** Construye el writer ligado a la raíz absoluta del host (T026); `rootDir` nunca se expone en resultados públicos. */
+export interface TokenSourceWriterFactory {
+  (rootDir: string): TokenSourceWriterPort;
 }

@@ -9,11 +9,11 @@ export function sourceFrom(document: unknown, contentHash = "a".repeat(64)): Ana
   return analyzedTokenSource(document, { logicalPath: "design-system/tokens/base.tokens.json", contentHash });
 }
 
-export function fakeSnapshot(source: AnalyzedTokenSource): SourceSnapshotPort {
-  return { read: () => Promise.resolve({ outcome: "ready", source }) };
+export function fakeSnapshot(source: AnalyzedTokenSource, rootDir = "/fake-root"): SourceSnapshotPort {
+  return { read: () => Promise.resolve({ outcome: "ready", source, rootDir }) };
 }
 
-export const stubSerialize = (): { contentHash: string } => ({ contentHash: "c".repeat(64) });
+export const stubSerialize = (): { text: string; contentHash: string } => ({ text: "{}\n", contentHash: "c".repeat(64) });
 
 export const command = (...operations: TokenMutationOperationV1[]) => createTokenMutationCommand(operations);
 

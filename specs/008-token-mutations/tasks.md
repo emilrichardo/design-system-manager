@@ -128,23 +128,23 @@ detección de cambio concurrente, verificación posterior y estados de recuperac
 
 ### Tasks
 
-- [ ] T026 [US2] Crear `src/infrastructure/token-mutations/token-source-writer.ts`: adapter del puerto de
+- [X] T026 [US2] Crear `src/infrastructure/token-mutations/token-source-writer.ts`: adapter del puerto de
   escritura sobre el `SingleFileAtomicWriter` de `005` (temp→identity check→replace→backup→restore→verify).
-- [ ] T027 [US2] Crear `src/application/token-mutations/apply-token-mutation.ts`: re-deriva el plan,
+- [X] T027 [US2] Crear `src/application/token-mutations/apply-token-mutation.ts`: re-deriva el plan,
   approval boundary, escribe solo si `writable` y sin cambio concurrente; mapea a `TokenMutationResultV1`.
-- [ ] T028 [US2] Añadir decisión de idempotencia: candidato == fuente actual ⇒ `unchanged`/`wrote:false`
+- [X] T028 [US2] Añadir decisión de idempotencia: candidato == fuente actual ⇒ `unchanged`/`wrote:false`
   sin escribir (antes de tocar el writer).
-- [ ] T029 [US11] Conectar la detección de concurrencia por snapshot identity (bytes/hash) →
+- [X] T029 [US11] Conectar la detección de concurrencia por snapshot identity (bytes/hash) →
   `conflict`/`concurrent-source-change` si la fuente cambió entre plan y apply.
-- [ ] T030 [US2] Definir semántica de recovery/verification: verificación posterior, `verification-error`
+- [X] T030 [US2] Definir semántica de recovery/verification: verificación posterior, `verification-error`
   con backup retenido y `recoveryRequired`, sin rollback automático tras el commit point.
-- [ ] T031 [P] [US2] Crear `tests/integration/token-mutations/apply.test.ts` (fs temporal): applied,
+- [X] T031 [P] [US2] Crear `tests/integration/token-mutations/apply.test.ts` (fs temporal): applied,
   unchanged, candidato válido tras apply, batch all-or-nothing.
-- [ ] T032 [P] [US11] Crear `tests/integration/token-mutations/apply-recovery.test.ts` (fault injection):
+- [X] T032 [P] [US11] Crear `tests/integration/token-mutations/apply-recovery.test.ts` (fault injection):
   fallo antes/después del reemplazo, restore ok/fallido, verificación posterior fallida, cambio concurrente.
-- [ ] T033 [P] [US14] Crear `tests/integration/token-mutations/preserve-untouched.test.ts`: assets/build/
+- [X] T033 [P] [US14] Crear `tests/integration/token-mutations/preserve-untouched.test.ts`: assets/build/
   manifests intactos; `$extensions` desconocidos preservados; sin aliases rotos.
-- [ ] T034 Gate D: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T034 Gate D: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: tokens/build/assets/manifests intactos; `001`–`007` byte-estables.
 **Suggested commit**: `feat: add transactional token mutation apply with recovery and idempotency`
