@@ -46,26 +46,26 @@ sin servidor, sin UI.
 
 ### Tasks
 
-- [ ] T001 [US2][US13] Crear `src/application/viewer/session.ts`: tipos `ViewerSessionV1`, `ViewerStateV1`
+- [X] T001 [US2][US13] Crear `src/application/viewer/session.ts`: tipos `ViewerSessionV1`, `ViewerStateV1`
   y la función pura `mapAnalysisOutcomeToViewerState` (tabla de `contracts/viewer-session-outcomes-v1.contract.md`).
-- [ ] T002 [US2] Crear `src/application/viewer/overview.ts` y `navigation.ts`: tipos `ViewerOverviewV1`,
+- [X] T002 [US2] Crear `src/application/viewer/overview.ts` y `navigation.ts`: tipos `ViewerOverviewV1`,
   `ViewerNavigationV1`, `ViewerSectionId`, `ViewerSectionSummary` (solo tipos, sin proyección aún).
-- [ ] T003 [US6][US9] Crear `src/application/viewer/token.ts` y `foundation.ts`: tipos `ViewerTokenV1`,
+- [X] T003 [US6][US9] Crear `src/application/viewer/token.ts` y `foundation.ts`: tipos `ViewerTokenV1`,
   `ViewerFoundationV1`, reutilizando literales de `002`/`004`/`006` (sin redefinir sus uniones).
-- [ ] T004 [US3][US4] Crear `src/application/viewer/color.ts` y `typography.ts`: tipos `ViewerColorV1`,
+- [X] T004 [US3][US4] Crear `src/application/viewer/color.ts` y `typography.ts`: tipos `ViewerColorV1`,
   `ViewerContrastResult`, `ViewerTypographyV1`, `ViewerLicenseState` (sin implementar la fórmula todavía).
-- [ ] T005 [US7][US8] Crear `src/application/viewer/alias.ts` y `asset.ts`: tipos `ViewerAliasV1`,
+- [X] T005 [US7][US8] Crear `src/application/viewer/alias.ts` y `asset.ts`: tipos `ViewerAliasV1`,
   `ViewerRenameMoveImpactV1`, `ViewerAssetV1`.
-- [ ] T006 [US9] Crear `src/application/viewer/issue.ts`: tipo `ViewerIssueV1` y las literales `source`
+- [X] T006 [US9] Crear `src/application/viewer/issue.ts`: tipo `ViewerIssueV1` y las literales `source`
   cerradas (`validation|foundations|assets|aliases|build`).
-- [ ] T007 [US13] Crear `src/application/viewer/ports.ts`: `ViewerSessionDependencies` (referencias a
+- [X] T007 [US13] Crear `src/application/viewer/ports.ts`: `ViewerSessionDependencies` (referencias a
   `AnalyzeUseCase` de `002`, `InspectFoundations`/`ProjectFoundationsUseCase` de `004`, `ListPresets` de
   `005`, un puerto de lectura de build/manifest de `006`, `listAssets`/`inspectAsset` de `007`,
   `AnalyzedTokenSource`/plan read-only de `008`); sin Node/Commander/infra concreta.
-- [ ] T008 [P] [US13][US14] Crear `tests/application/viewer/contract-shapes.test.ts`: cada `ViewerXxxV1`
+- [X] T008 [P] [US13][US14] Crear `tests/application/viewer/contract-shapes.test.ts`: cada `ViewerXxxV1`
   cumple la null policy y las exclusiones de `data-model.md` (sin bytes/rutas absolutas/`Error`/secrets),
   usando fixtures construidos a mano (sin sesión real todavía).
-- [ ] T009 Gate A: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T009 Gate A: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: ninguna (tipos nuevos aislados; `001`–`008` sin cambios).
 **Suggested commit**: `feat: add viewer contracts, projection types and session ports`
