@@ -16,6 +16,14 @@ interface ViewerJsonEnvelopeLike {
   readonly data: unknown;
 }
 
+interface EditorJsonEnvelopeLike {
+  readonly formatVersion: string;
+  readonly action: string;
+  readonly state: string;
+  readonly data: unknown;
+  readonly error: { readonly code: string; readonly message: string } | null;
+}
+
 function contentRegion(): HTMLElement | null {
   return document.getElementById("content");
 }
@@ -41,6 +49,21 @@ async function fetchJson(path: string): Promise<ViewerJsonEnvelopeLike | null> {
     const res = await fetch(path, { method: "GET" });
     if (!res.ok) return null;
     return (await res.json()) as ViewerJsonEnvelopeLike;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchEditorJson(path: string, method: "GET" | "POST" = "GET", body?: unknown): Promise<EditorJsonEnvelopeLike | null> {
+  try {
+    const init: RequestInit = { method };
+    if (body !== undefined) {
+      init.headers = { "content-type": "application/json" };
+      init.body = JSON.stringify(body);
+    }
+    const res = await fetch(path, init);
+    if (!res.ok) return null;
+    return (await res.json()) as EditorJsonEnvelopeLike;
   } catch {
     return null;
   }
@@ -167,6 +190,33 @@ function renderGeneric(el: HTMLElement, id: string, state: string, data: unknown
   el.append(pre);
 }
 
+function renderEditorEntry(el: HTMLElement): void {
+  const section = document.createElement("section");
+  section.setAttribute("aria-labelledby", "editor-entry-title");
+  const title = document.createElement("h2");
+  title.id = "editor-entry-title";
+  title.textContent = "Visual Token Editor";
+  const status = document.createElement("p");
+  status.id = "editor-entry-status";
+  status.setAttribute("aria-live", "polite");
+  status.textContent = "Editor idle. Viewer data remains read-only until you enter edit mode.";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = "Enter edit mode";
+  button.setAttribute("aria-describedby", status.id);
+  button.addEventListener("click", async () => {
+    status.textContent = "Loading editor session...";
+    const envelope = await fetchEditorJson("/api/editor/session");
+    if (envelope === null) {
+      status.textContent = "Could not load the editor session.";
+      return;
+    }
+    status.textContent = `Editor state: ${envelope.state}. Drafts are separate from the Viewer projection.`;
+  });
+  section.append(title, status, button);
+  el.append(section);
+}
+
 // T044 — mensaje explícito por estado (nunca solo el nombre crudo del estado; nunca pantalla en blanco
 // en `partial`, donde `data` SIGUE presente — ver invariantes de `contracts/viewer-session-outcomes-v1`).
 const STATE_MESSAGES: Readonly<Record<string, string>> = {
@@ -218,6 +268,7 @@ async function loadSession(): Promise<void> {
     pre.textContent = JSON.stringify(envelope.data, null, 2);
     el.append(pre);
   }
+  renderEditorEntry(el);
 }
 
 async function loadSection(id: string): Promise<void> {

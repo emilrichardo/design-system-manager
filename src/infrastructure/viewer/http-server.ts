@@ -1,13 +1,22 @@
-// T021 (009) — Servidor `node:http` PURO (sin Express/Fastify/framework): `127.0.0.1`, puerto efímero
-// por defecto (`0`), solo `GET`. Rutas: `GET /api/session`, `GET /api/section/:id`, y estáticos de la UI
-// compilada (`dist/infrastructure/viewer/ui/*.js`, mismo `tsc` del proyecto — sin bundler ni dependencia
-// runtime nueva, ADR-0026). El HTML del shell se genera inline (sin paso de copia de assets). Nunca
-// `POST`/`PUT`/`DELETE`; cualquier método no-GET → 405. Una excepción inesperada → 500 con un envelope
-// `internal-error` seguro (sin stack), nunca un estado de dominio.
+// T021 (009) / T012 (010) — Servidor `node:http` PURO (sin Express/Fastify/framework): `127.0.0.1`,
+// puerto efímero por defecto (`0`). El Viewer conserva GET/HEAD read-only; el Editor agrega rutas
+// loopback POST solo para plan/refresh, sin apply ni escrituras productivas.
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { TOKEN_MUTATION_FORMAT_VERSION, type TokenMutationCommandV1 } from "../../domain/token-mutations/command.js";
+import { isTokenMutationOperationKind, type TokenMutationOperationV1 } from "../../domain/token-mutations/operation.js";
+import { composeEditorSessionFromViewer } from "../../application/editor/editor-session.js";
+import {
+  toEditorInternalErrorJsonEnvelope,
+  toEditorInvalidRequestJsonEnvelope,
+  toEditorRefreshJsonEnvelope,
+  toEditorReviewJsonEnvelope,
+  toEditorSessionJsonEnvelope,
+} from "../../application/editor/json/map-editor.js";
+import { planEditorCommand } from "../../application/editor/plan-editor-command.js";
+import type { PlanTokenMutationDependencies } from "../../application/token-mutations/plan-token-mutation.js";
 import { buildViewerSession } from "../../application/viewer/build-session.js";
 import { buildViewerSectionDetail } from "../../application/viewer/build-section-detail.js";
 import type { ViewerSessionDependencies } from "../../application/viewer/ports.js";
@@ -21,10 +30,35 @@ import type { ViewerJsonEnvelopeV1 } from "../../application/viewer/json/dto.js"
 
 const UI_DIR = join(dirname(fileURLToPath(import.meta.url)), "ui");
 
-function writeJson(res: ServerResponse, statusCode: number, envelope: ViewerJsonEnvelopeV1<unknown>): void {
+function writeJson(res: ServerResponse, statusCode: number, envelope: ViewerJsonEnvelopeV1<unknown> | unknown): void {
   const body = `${JSON.stringify(envelope, null, 2)}\n`;
   res.writeHead(statusCode, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(body) });
   res.end(body);
+}
+
+async function readJsonBody(req: IncomingMessage, maxBytes = 128 * 1024): Promise<unknown> {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of req) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    size += buffer.byteLength;
+    if (size > maxBytes) throw new Error("body-too-large");
+    chunks.push(buffer);
+  }
+  if (chunks.length === 0) return null;
+  return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
+}
+
+function isTokenMutationOperation(value: unknown): value is TokenMutationOperationV1 {
+  if (typeof value !== "object" || value === null) return false;
+  const op = value as { readonly kind?: unknown };
+  return isTokenMutationOperationKind(op.kind);
+}
+
+function isTokenMutationCommand(value: unknown): value is TokenMutationCommandV1 {
+  if (typeof value !== "object" || value === null) return false;
+  const command = value as { readonly formatVersion?: unknown; readonly operations?: unknown };
+  return command.formatVersion === TOKEN_MUTATION_FORMAT_VERSION && Array.isArray(command.operations) && command.operations.every(isTokenMutationOperation);
 }
 
 // T045 — CSS de accesibilidad inline (sin CDN/hoja externa, offline-first): foco visible con contraste
@@ -79,6 +113,7 @@ async function serveStatic(req: IncomingMessage, res: ServerResponse, pathname: 
 
 export interface ViewerHttpServerOptions {
   readonly deps: ViewerSessionDependencies;
+  readonly editorPlanDeps?: PlanTokenMutationDependencies;
   readonly executionDir: string;
   /** Puerto efímero por defecto (`0`); el SO asigna uno libre. */
   readonly port?: number;
@@ -119,8 +154,53 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, options:
   const method = req.method ?? "GET";
   const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
 
-  if (method !== "GET" && method !== "HEAD") {
+  if (method !== "GET" && method !== "HEAD" && method !== "POST") {
+    res.writeHead(405, { allow: "GET, HEAD, POST" }).end();
+    return;
+  }
+
+  if (method === "POST" && !pathname.startsWith("/api/editor/")) {
     res.writeHead(405, { allow: "GET, HEAD" }).end();
+    return;
+  }
+
+  if ((method === "GET" || method === "HEAD") && pathname.startsWith("/api/editor/")) {
+    if (pathname === "/api/editor/session") {
+      const viewer = await buildViewerSession({ executionDir: options.executionDir }, options.deps);
+      writeJson(res, 200, toEditorSessionJsonEnvelope(composeEditorSessionFromViewer(viewer)));
+      return;
+    }
+    res.writeHead(405, { allow: "POST" }).end();
+    return;
+  }
+
+  if (method === "POST") {
+    if (pathname === "/api/editor/refresh") {
+      const viewer = await buildViewerSession({ executionDir: options.executionDir }, options.deps);
+      writeJson(res, 200, toEditorRefreshJsonEnvelope(composeEditorSessionFromViewer(viewer)));
+      return;
+    }
+    if (pathname === "/api/editor/plan") {
+      if (options.editorPlanDeps === undefined) {
+        writeJson(res, 500, toEditorInternalErrorJsonEnvelope());
+        return;
+      }
+      let body: unknown;
+      try {
+        body = await readJsonBody(req);
+      } catch {
+        writeJson(res, 400, toEditorInvalidRequestJsonEnvelope("Request body must be valid JSON."));
+        return;
+      }
+      if (!isTokenMutationCommand(body)) {
+        writeJson(res, 400, toEditorInvalidRequestJsonEnvelope("Request body must be a TokenMutationCommandV1."));
+        return;
+      }
+      const result = await planEditorCommand({ executionDir: options.executionDir }, body, options.editorPlanDeps);
+      writeJson(res, 200, toEditorReviewJsonEnvelope(result.review));
+      return;
+    }
+    res.writeHead(404).end();
     return;
   }
 

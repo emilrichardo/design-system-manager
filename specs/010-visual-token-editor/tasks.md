@@ -53,14 +53,14 @@ no UI controls, no productive write path.
 
 ### Tasks
 
-- [ ] T009 [US1][US6] Create `src/application/editor/editor-session.ts` to compose current Viewer session with editor draft/review/apply state without duplicating Viewer projections.
-- [ ] T010 [US1][US2][US3] Create `src/application/editor/plan-editor-command.ts` that calls `planTokenMutation` and maps the result to `EditorReviewV1`.
-- [ ] T011 [US1][US6] Create `src/application/editor/json/dto.ts` and `map-editor.ts` for `EditorJsonEnvelopeV1`, independent from `ViewerJsonEnvelopeV1`.
-- [ ] T012 [US1][US6] Extend `src/infrastructure/viewer/http-server.ts` with loopback-only editor plan/session/refresh routes as thin adapters over application/editor.
-- [ ] T013 [US1][US7] Connect initial UI editor mode in `src/infrastructure/viewer/ui/main.ts` or `ui/editor.ts`, reusing existing navigation and session loading states.
-- [ ] T014 [P] [US1] Create `tests/integration/editor/http-plan-route.test.ts` proving plan route accepts only structured commands, returns one editor envelope and writes nothing.
-- [ ] T015 [P] [US1][US6] Create `tests/application/editor/viewer-integration.test.ts` proving editor session reuses Viewer session data and does not duplicate projections/use-case calls.
-- [ ] T016 Gate B: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T009 [US1][US6] Create `src/application/editor/editor-session.ts` to compose current Viewer session with editor draft/review/apply state without duplicating Viewer projections.
+- [X] T010 [US1][US2][US3] Create `src/application/editor/plan-editor-command.ts` that calls `planTokenMutation` and maps the result to `EditorReviewV1`.
+- [X] T011 [US1][US6] Create `src/application/editor/json/dto.ts` and `map-editor.ts` for `EditorJsonEnvelopeV1`, independent from `ViewerJsonEnvelopeV1`.
+- [X] T012 [US1][US6] Extend `src/infrastructure/viewer/http-server.ts` with loopback-only editor plan/session/refresh routes as thin adapters over application/editor.
+- [X] T013 [US1][US7] Connect initial UI editor mode in `src/infrastructure/viewer/ui/main.ts` or `ui/editor.ts`, reusing existing navigation and session loading states.
+- [X] T014 [P] [US1] Create `tests/integration/editor/http-plan-route.test.ts` proving plan route accepts only structured commands, returns one editor envelope and writes nothing.
+- [X] T015 [P] [US1][US6] Create `tests/application/editor/viewer-integration.test.ts` proving editor session reuses Viewer session data and does not duplicate projections/use-case calls.
+- [X] T016 Gate B: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: Viewer read-only routes from `009` keep their behavior and JSON shapes.
 **Suggested commit**: `feat: integrate editor with viewer session`
