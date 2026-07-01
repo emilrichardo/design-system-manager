@@ -19,6 +19,8 @@ import { listPresets } from "../../application/presets/list-presets.js";
 import { inspectPreset } from "../../application/presets/inspect-preset.js";
 import { planPresetApplication } from "../../application/presets/plan-preset-application.js";
 import { applyPreset } from "../../application/presets/apply-preset.js";
+import { planPackApplication } from "../../application/presets/plan-pack-application.js";
+import { applyPack } from "../../application/presets/apply-pack.js";
 
 export function runPresetsList(deps: ListPresetsDependencies): Promise<PresetListResult> {
   return listPresets(deps);
@@ -43,4 +45,24 @@ export function runPresetsApply(
 ): Promise<PresetApplyResult> {
   const input: PresetApplyInput = { id: id as PresetId, executionDir };
   return applyPreset(input, deps);
+}
+
+// 011 T009 — `packs`: mismo motor add-only/atómico de `005`; solo añade la precondición de preset base
+// (contracts/preset-web-complete.md R2). Devuelve los MISMOS tipos que `presets plan/apply` (reutiliza
+// reporters/JSON existentes sin nuevas ramas de outcome).
+export function runPacksPlan(
+  id: string,
+  executionDir: string,
+  deps: PlanPresetApplicationDependencies,
+): Promise<PresetApplicationPlanResult> {
+  return planPackApplication({ id: id as PresetId, executionDir }, deps);
+}
+
+export function runPacksApply(
+  id: string,
+  executionDir: string,
+  deps: ApplyPresetDependencies,
+): Promise<PresetApplyResult> {
+  const input: PresetApplyInput = { id: id as PresetId, executionDir };
+  return applyPack(input, deps);
 }

@@ -13,3 +13,5 @@ export * from "./single-file-writer-port.js";
 export * from "./verify-preset-candidate.js";
 export * from "./verify-preset-application.js";
 export * from "./apply-preset.js";
+export * from "./plan-pack-application.js";
+export * from "./apply-pack.js";

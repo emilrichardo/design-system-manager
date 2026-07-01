@@ -45,7 +45,7 @@ import { runFoundations } from "./commands/foundations.js";
 import { runBuild } from "./commands/build.js";
 import { runExport } from "./commands/export.js";
 import { readImportSources, runAssetImportApply, runAssetImportPlan, runAssetInspect, runAssetList, runAssetRemove } from "./commands/asset.js";
-import { runPresetsApply, runPresetsInspect, runPresetsList, runPresetsPlan } from "./commands/presets.js";
+import { runPacksApply, runPacksPlan, runPresetsApply, runPresetsInspect, runPresetsList, runPresetsPlan } from "./commands/presets.js";
 import {
   parseValueFlag,
   readTokenMutationCommandFile,
@@ -80,6 +80,8 @@ export interface ProgramHandlers {
   onPresetsInspect: (id: string, opts: CommandModeOptions) => Promise<number>;
   onPresetsPlan: (id: string, opts: CommandModeOptions) => Promise<number>;
   onPresetsApply: (id: string, opts: CommandModeOptions) => Promise<number>;
+  onPacksPlan: (id: string, opts: CommandModeOptions) => Promise<number>;
+  onPacksApply: (id: string, opts: CommandModeOptions) => Promise<number>;
   onTokenPlan: (file: string, opts: CommandModeOptions) => Promise<number>;
   onTokenApply: (file: string, opts: CommandModeOptions) => Promise<number>;
   onTokenCreate: (path: string, opts: { readonly type: string; readonly value: string }) => Promise<number>;
@@ -245,6 +247,31 @@ export function createProgram(handlers: ProgramHandlers): {
   presetsApply.exitOverride();
   presetsApply.action(async (id: string, options: { json?: boolean }) => {
     state.code = await handlers.onPresetsApply(id, { json: options.json === true });
+  });
+
+  // 011 T009 — grupo `packs`: mismo motor add-only/atómico de `presets` (005); un pack solo se aplica
+  // sobre su preset base ya completamente aplicado (contracts/preset-web-complete.md R2).
+  const packs = program
+    .command("packs")
+    .description("Aplica packs opcionales (p. ej. commerce) sobre un preset base ya aplicado (add-only, atómico).");
+  packs.exitOverride();
+
+  const packsPlan = packs
+    .command("plan <id>")
+    .description("Previsualiza la aplicación de un pack contra el Design System (NO escribe).")
+    .option("--json", JSON_FLAG_DESCRIPTION, false);
+  packsPlan.exitOverride();
+  packsPlan.action(async (id: string, options: { json?: boolean }) => {
+    state.code = await handlers.onPacksPlan(id, { json: options.json === true });
+  });
+
+  const packsApply = packs
+    .command("apply <id>")
+    .description("Aplica un pack al Design System mediante escritura atómica (recalcula el plan).")
+    .option("--json", JSON_FLAG_DESCRIPTION, false);
+  packsApply.exitOverride();
+  packsApply.action(async (id: string, options: { json?: boolean }) => {
+    state.code = await handlers.onPacksApply(id, { json: options.json === true });
   });
 
   // T037 (008) — grupo `token`: `plan`/`apply` (archivo declarativo `--file`, `--json` local) +
@@ -641,6 +668,10 @@ export async function runCli(runtime: CliRuntime): Promise<number> {
       runPresetsMode(json, "preset-plan", (d) => runPresetsPlan(id, runtime.cwd, d.base), (d, r) => (json ? d.json : d.terminal).planCompleted(r)),
     onPresetsApply: (id, { json }) =>
       runPresetsMode(json, "preset-apply", (d) => runPresetsApply(id, runtime.cwd, d.base), (d, r) => (json ? d.json : d.terminal).applyCompleted(r)),
+    onPacksPlan: (id, { json }) =>
+      runPresetsMode(json, "preset-plan", (d) => runPacksPlan(id, runtime.cwd, d.base), (d, r) => (json ? d.json : d.terminal).planCompleted(r)),
+    onPacksApply: (id, { json }) =>
+      runPresetsMode(json, "preset-apply", (d) => runPacksApply(id, runtime.cwd, d.base), (d, r) => (json ? d.json : d.terminal).applyCompleted(r)),
     onTokenPlan: (file, { json }) =>
       runTokenReadMode(file, json, "token-plan", (d, cmd) => runTokenPlan(runtime.cwd, cmd, d.plan), (d, r) => (json ? d.json : d.terminal).planCompleted(r)),
     onTokenApply: (file, { json }) =>
