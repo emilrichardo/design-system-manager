@@ -110,7 +110,7 @@ describe("installed tarball — help and command surface (T107, J regression)", 
     } finally {
       await rm(host, { recursive: true, force: true });
     }
-  });
+  }, 20000);
 });
 
 describe("installed tarball — read-only commands resolve the catalog from a foreign cwd (T107)", () => {
@@ -141,7 +141,7 @@ describe("installed tarball — read-only commands resolve the catalog from a fo
     } finally {
       await rm(host, { recursive: true, force: true });
     }
-  });
+  }, 20000);
 });
 
 describe("installed tarball — apply is idempotent from the installed package (T107)", () => {

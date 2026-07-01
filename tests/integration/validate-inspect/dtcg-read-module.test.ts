@@ -32,7 +32,7 @@ describe("Integración del módulo de análisis DTCG", () => {
   it("tipos heredados + alias encadenado + estadísticas coherentes", () => {
     const r = traverseDtcgTree({
       color: { $type: "color", base: { $value: color, $description: "d" }, brand: { $value: "{color.base}", $description: "d" }, accent: { $value: "{color.brand}", $description: "d" } },
-      size: { $type: "dimension", sm: { $value: "8px", $description: "d" } },
+      size: { $type: "dimension", sm: { $value: { value: 8, unit: "px" }, $description: "d" } },
     });
     expect(r.valid).toBe(true);
     expect(r.statistics.total).toBe(4);

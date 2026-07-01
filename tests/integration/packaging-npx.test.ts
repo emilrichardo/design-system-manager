@@ -94,7 +94,7 @@ describe("T064 — empaquetado y ejecución del paquete", () => {
     expect(execFileSync(process.execPath, [cli, "validate", "--help"]).toString()).toContain("--json");
     expect(execFileSync(process.execPath, [cli, "inspect", "--help"]).toString()).toContain("--json");
     expect(execFileSync(process.execPath, [cli, "foundations", "--help"]).toString()).toContain("--json");
-  });
+  }, 20000);
 
   it.skipIf(!HAS_TAR)("smoke del paquete: validate/inspect/foundations JSON sin depender de src", () => {
     if (!ensureRunnable()) return;

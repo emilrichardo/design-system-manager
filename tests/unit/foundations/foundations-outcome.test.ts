@@ -124,21 +124,18 @@ describe("projectFoundations + classifyFoundationsOutcome (T023/T024/T026)", () 
     expect(classifyFoundationsOutcome(a, inspection)).toBe("complete-invalid");
   });
 
-  it("hereda issues de alias/DTCG de 002 sin duplicar los propios", () => {
+  it("hereda issues relevantes de 002 sin duplicar los propios", () => {
     const a = analysis({
       nodes: [node({ path: "color.alias", kind: "alias", aliasTarget: "color.missing", aliasState: "missing" })],
       errors: [analysisError("alias-missing", "Referencia inexistente", { document: "tokens", path: "color.alias" })],
-      warnings: [analysisWarning("dtcg-type-not-deeply-inspected", "surface", { document: "tokens", path: "color.alias" })],
+      warnings: [analysisWarning("token-layer-unclassified", "surface", { document: "tokens", path: "color.alias" })],
     });
     const inspection = projectFoundations(a, metadata([["color.alias", level()]]));
     const color = inspection.categories[0];
 
-    expect(color?.issues.map((issue) => issue.code)).toEqual([
-      "alias-missing",
-      "dtcg-type-not-deeply-inspected",
-    ]);
+    expect(color?.issues.map((issue) => issue.code)).toEqual(["alias-missing"]);
     expect(color?.state).toBe("invalid");
-    expect(inspection.summary).toMatchObject({ errors: 1, warnings: 1 });
+    expect(inspection.summary).toMatchObject({ errors: 1, warnings: 0 });
   });
 
   it("metadata inválida se emite una sola vez desde la pasada de metadata y marca invalid", () => {

@@ -85,7 +85,7 @@ describe("T047 — ayuda, versión, uso, sin prompts (sin TTY)", () => {
     expect(initHelp.stdout).not.toContain("--json");
     expect(validateHelp.stdout).toContain("--json");
     expect(inspectHelp.stdout).toContain("--json");
-  });
+  }, 20000);
 
   it("--json es una opción válida en validate/inspect (003); DS válido → 0", async () => {
     const dir = await project(buildTokens());

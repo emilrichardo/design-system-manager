@@ -26,7 +26,7 @@ describe("T028 — edge cases JSON", () => {
 
   it.each([
     ["tipo desconocido", { x: { $type: "elevation", $value: "v", $description: "d" } }, "complete-invalid"],
-    ["tipo reconocido superficial", { t: { $type: "dimension", $value: "16px", $description: "d" } }, "valid"],
+    ["tipo reconocido profundo", { t: { $type: "dimension", $value: { value: 16, unit: "px" }, $description: "d" } }, "valid"],
     ["alias roto", { color: { $type: "color", ref: { $value: "{color.missing}", $description: "d" } } }, "complete-invalid"],
     ["ciclo", { color: { $type: "color", a: { $value: "{color.a}", $description: "d" } } }, "complete-invalid"],
   ] as const)("%s → outcome correcto y JSON valido", async (_name, tokens, outcome) => {

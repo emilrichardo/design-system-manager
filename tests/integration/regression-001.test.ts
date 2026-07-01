@@ -96,10 +96,10 @@ describe("T048 — separación schema estricto (001) ≠ read-validator (002)", 
     expect(issues.length).toBeGreaterThan(0); // init solo genera/valida `color`
   });
 
-  it("el read-validator de 002 ACEPTA (con warning) un tipo reconocido no-color", () => {
-    const r = traverseDtcgTree({ s: { $type: "dimension", $value: "16px", $description: "d" } });
+  it("el read-validator de 002 ACEPTA un tipo reconocido profundo no-color sin warning genérico", () => {
+    const r = traverseDtcgTree({ s: { $type: "dimension", $value: { value: 16, unit: "px" }, $description: "d" } });
     expect(r.valid).toBe(true);
-    expect(r.warnings.some((w) => w.code === "dtcg-type-not-deeply-inspected")).toBe(true);
+    expect(r.warnings.some((w) => w.code === "dtcg-type-not-deeply-inspected")).toBe(false);
   });
 });
 

@@ -42,14 +42,14 @@ describe("RECOGNIZED_DTCG_TYPES", () => {
     expect(isRecognizedType("")).toBe(false);
   });
 
-  it("solo color tiene soporte profundo hoy", () => {
-    expect(DEEPLY_SUPPORTED_DTCG_TYPES).toEqual(["color"]);
+  it("los 13 tipos reconocidos tienen soporte profundo en 011", () => {
+    expect([...DEEPLY_SUPPORTED_DTCG_TYPES].sort()).toEqual([...RECOGNIZED_DTCG_TYPES].sort());
     expect(isDeeplySupportedType("color")).toBe(true);
-    expect(isDeeplySupportedType("dimension")).toBe(false);
+    expect(isDeeplySupportedType("dimension")).toBe(true);
   });
 
-  it("isRecognizedButShallow: reconocido pero no profundo (warning)", () => {
-    expect(isRecognizedButShallow("dimension")).toBe(true); // reconocido, no profundo
+  it("isRecognizedButShallow queda falso para tipos profundos y desconocidos", () => {
+    expect(isRecognizedButShallow("dimension")).toBe(false); // reconocido y profundo
     expect(isRecognizedButShallow("color")).toBe(false); // profundo
     expect(isRecognizedButShallow("elevation")).toBe(false); // no reconocido
   });

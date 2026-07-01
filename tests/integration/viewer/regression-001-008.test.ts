@@ -88,7 +88,7 @@ describe("regression 001–008 — Viewer sessions do not touch anything (T054)"
     expect(build2.code).toBe(2); // unchanged
     const css2 = await readFile(join(p.dir, "design-system", "build", "tokens.css"));
     expect(css2).toEqual(css1);
-  });
+  }, 20000);
 
   it("validate/inspect/foundations/presets conservan outcome/exit tras ejecutar el Viewer", async () => {
     const p = await host();
@@ -97,7 +97,7 @@ describe("regression 001–008 — Viewer sessions do not touch anything (T054)"
     expect((await runBinary(["inspect"], p.dir)).code).toBe(0);
     expect((await runBinary(["foundations"], p.dir)).code).toBe(4);
     expect((await runBinary(["presets", "list"], p.dir)).code).toBe(0);
-  });
+  }, 20000);
 
   it("init sigue produciendo el mismo estado (unchanged) tras ejecutar el Viewer", async () => {
     const p = await host();

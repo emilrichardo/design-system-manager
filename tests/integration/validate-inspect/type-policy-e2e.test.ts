@@ -22,6 +22,20 @@ function node(insp: DesignSystemInspection | null, path: string): TokenNodeSumma
   return insp?.tokens?.paths.find((n) => n.path === path);
 }
 const desc = { $description: "d" } as const;
+const VALID_BY_TYPE = {
+  dimension: { value: 16, unit: "px" },
+  fontFamily: "Inter",
+  fontWeight: 700,
+  duration: { value: 200, unit: "ms" },
+  cubicBezier: [0.4, 0, 0.2, 1],
+  number: 0.5,
+  strokeStyle: "solid",
+  border: { color: COLOR, width: { value: 1, unit: "px" }, style: "solid" },
+  transition: { duration: { value: 150, unit: "ms" }, delay: { value: 0, unit: "ms" }, timingFunction: [0.4, 0, 0.2, 1] },
+  shadow: { color: COLOR, offsetX: { value: 0, unit: "px" }, offsetY: { value: 4, unit: "px" }, blur: { value: 12, unit: "px" }, spread: { value: 0, unit: "px" } },
+  gradient: [{ color: COLOR, position: 0 }, { color: COLOR, position: 1 }],
+  typography: { fontFamily: "Inter", fontSize: { value: 16, unit: "px" }, fontWeight: 400, lineHeight: 1.5, letterSpacing: { value: 0, unit: "px" } },
+} as const;
 
 describe("T041 — política de $type (integración)", () => {
   it("tipo propio → own", async () => {
@@ -92,13 +106,13 @@ describe("§9 — tipos DTCG reconocidos", () => {
     expect(node(inspection, "c")?.trust).toBe("untrusted");
   });
 
-  it.each(["dimension", "fontFamily", "fontWeight", "duration", "cubicBezier", "number", "strokeStyle", "border", "transition", "shadow", "gradient", "typography"])(
-    "reconocido no profundo (%s) → valid + warning, cuenta en byType",
+  it.each(["dimension", "fontFamily", "fontWeight", "duration", "cubicBezier", "number", "strokeStyle", "border", "transition", "shadow", "gradient", "typography"] as const)(
+    "reconocido profundo (%s) → valid sin warning genérico, cuenta en byType",
     async (type) => {
-      const { outcome, inspection } = await inspectTokens({ t: { $type: type, $value: "v", ...desc } });
+      const { outcome, inspection } = await inspectTokens({ t: { $type: type, $value: VALID_BY_TYPE[type], ...desc } });
       expect(outcome).toBe("valid");
       expect(inspection?.tokens?.byType).toMatchObject({ [type]: 1 });
-      expect(inspection?.validation.warnings.some((w) => w.code === "dtcg-type-not-deeply-inspected")).toBe(true);
+      expect(inspection?.validation.warnings.some((w) => w.code === "dtcg-type-not-deeply-inspected")).toBe(false);
     },
   );
 

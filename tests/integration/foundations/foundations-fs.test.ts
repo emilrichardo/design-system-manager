@@ -148,7 +148,7 @@ describe("foundations filesystem outcomes (T045)", () => {
     }
   });
 
-  it("tipo desconocido no inventa foundation; tipo superficial reconocido deja partial", async () => {
+  it("tipo desconocido no inventa foundation; tipo profundo reconocido puede quedar complete", async () => {
     const unknown = await tmp();
     await seedDesignSystem(unknown, { color: { x: { $type: "weird", $value: "v", ...foundation("primitive") } } });
     const unknownResult = await runFoundationsJson(unknown);
@@ -159,9 +159,9 @@ describe("foundations filesystem outcomes (T045)", () => {
     const surface = await tmp();
     await seedDesignSystem(surface, { opacity: { alpha: { $type: "number", $value: 0.5, $description: "d", ...foundation("semantic") } } });
     const r = await runFoundationsJson(surface);
-    expect(r.code).toBe(4);
-    expect(issueCodes(r.json)).toContain("dtcg-type-not-deeply-inspected");
-    expect(category(r.json, "opacity").state).toBe("partial");
+    expect(r.code).toBe(0);
+    expect(issueCodes(r.json)).not.toContain("dtcg-type-not-deeply-inspected");
+    expect(category(r.json, "opacity").state).toBe("complete");
   });
 
   it("UTF-8 inválido -> read-error y structural partial -> partial", async () => {
