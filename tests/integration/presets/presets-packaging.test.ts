@@ -37,6 +37,8 @@ describe("preset asset resolution (T023)", () => {
     const base = bundledPresetsBaseUrl();
     expect(existsSync(fileURLToPath(new URL("catalog.json", base)))).toBe(true);
     expect(existsSync(fileURLToPath(new URL("neutral-base.preset.json", base)))).toBe(true);
+    expect(existsSync(fileURLToPath(new URL("web-complete.preset.json", base)))).toBe(true);
+    expect(existsSync(fileURLToPath(new URL("commerce.preset.json", base)))).toBe(true);
   });
 
   it("dist: the compiled catalog module resolves `../../../presets/` to the package assets", () => {
@@ -45,6 +47,7 @@ describe("preset asset resolution (T023)", () => {
     expect(existsSync(fileURLToPath(fromDist))).toBe(true);
     const envelope = new URL("../../../presets/neutral-base.preset.json", pathToFileURL(DIST_CATALOG_JS));
     expect(existsSync(fileURLToPath(envelope))).toBe(true);
+    expect(existsSync(fileURLToPath(new URL("../../../presets/web-complete.preset.json", pathToFileURL(DIST_CATALOG_JS))))).toBe(true);
   });
 
   it("npm pack --dry-run: tarball includes presets assets and excludes sources/tests/specs", () => {
@@ -52,6 +55,8 @@ describe("preset asset resolution (T023)", () => {
     const files: string[] = (JSON.parse(out)[0]?.files ?? []).map((f: { path: string }) => f.path);
     expect(files).toContain("presets/catalog.json");
     expect(files).toContain("presets/neutral-base.preset.json");
+    expect(files).toContain("presets/web-complete.preset.json");
+    expect(files).toContain("presets/commerce.preset.json");
     expect(files.some((p) => p.startsWith("dist/"))).toBe(true);
     expect(files.some((p) => p.startsWith("src/"))).toBe(false);
     expect(files.some((p) => p.startsWith("tests/"))).toBe(false);
@@ -68,6 +73,8 @@ describe("preset asset resolution (T023)", () => {
     const pkgDir = join(work, "package");
     expect(existsSync(join(pkgDir, "presets", "catalog.json"))).toBe(true);
     expect(existsSync(join(pkgDir, "presets", "neutral-base.preset.json"))).toBe(true);
+    expect(existsSync(join(pkgDir, "presets", "web-complete.preset.json"))).toBe(true);
+    expect(existsSync(join(pkgDir, "presets", "commerce.preset.json"))).toBe(true);
     const packedCatalogJs = join(pkgDir, "dist", "infrastructure", "presets", "bundled-preset-catalog.js");
     expect(existsSync(packedCatalogJs)).toBe(true);
     const resolved = new URL("../../../presets/catalog.json", pathToFileURL(packedCatalogJs));

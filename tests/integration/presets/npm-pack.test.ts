@@ -1,5 +1,6 @@
 // T106 (005) — Empaquetado formal. Analiza `npm pack --dry-run --json` de forma programática y prueba
 // que el tarball real incluye `dist/`, `presets/catalog.json`, `presets/neutral-base.preset.json`,
+// `presets/web-complete.preset.json`, `presets/commerce.preset.json`,
 // `package.json` y la documentación pública (`README.md`), y que excluye `src/`, `tests/`, `specs/`,
 // `.agents/`, `.specify/`, `node_modules/`, staging y backups. No publica; elimina el tarball al final.
 import { execFileSync } from "node:child_process";
@@ -54,6 +55,8 @@ describe("npm pack — dry run programmatic analysis (T106)", () => {
     // Assets contractuales del catálogo empaquetado.
     expect(paths).toContain("presets/catalog.json");
     expect(paths).toContain("presets/neutral-base.preset.json");
+    expect(paths).toContain("presets/web-complete.preset.json");
+    expect(paths).toContain("presets/commerce.preset.json");
     // Entrypoint compilado + binario CLI + exports públicos.
     expect(paths).toContain("dist/cli/index.js");
     expect(paths).toContain("dist/index.js");
@@ -101,6 +104,8 @@ describe("npm pack — real tarball contents (T106)", () => {
     const pkg = join(work, "package");
     expect(existsSync(join(pkg, "presets", "catalog.json"))).toBe(true);
     expect(existsSync(join(pkg, "presets", "neutral-base.preset.json"))).toBe(true);
+    expect(existsSync(join(pkg, "presets", "web-complete.preset.json"))).toBe(true);
+    expect(existsSync(join(pkg, "presets", "commerce.preset.json"))).toBe(true);
     expect(existsSync(join(pkg, "dist", "cli", "index.js"))).toBe(true);
     expect(existsSync(join(pkg, "package.json"))).toBe(true);
     expect(existsSync(join(pkg, "README.md"))).toBe(true);

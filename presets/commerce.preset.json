@@ -1,0 +1,1658 @@
+{
+  "id": "commerce",
+  "name": "Commerce Pack",
+  "description": "Optional commerce component-token pack for Web Complete.",
+  "version": "1.0.0",
+  "basePresetId": "web-complete",
+  "includedCategories": [
+    "color",
+    "spacing",
+    "typography",
+    "radius",
+    "border",
+    "shadow",
+    "sizing"
+  ],
+  "tokens": {
+    "color": {
+      "commerce": {
+        "product-card": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-card",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        },
+        "product-image": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-image",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        },
+        "product-title": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-title",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        },
+        "price": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "price",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        },
+        "previous-price": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "previous-price",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        },
+        "discount-badge": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "discount-badge",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.792,
+                0.541,
+                0.016
+              ],
+              "alpha": 1,
+              "hex": "#ca8a04"
+            }
+          }
+        },
+        "stock-status": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "stock-status",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        },
+        "quantity-selector": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "quantity-selector",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        },
+        "cart-item": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "cart-item",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        },
+        "category-card": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "category-card",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        },
+        "promotional-banner": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "promotional-banner",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        },
+        "product-gallery": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-gallery",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        },
+        "filter-control": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "filter-control",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        },
+        "sort-control": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "sort-control",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        },
+        "purchase-action": {
+          "accent": {
+            "$type": "color",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "purchase-action",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "background",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "colorSpace": "srgb",
+              "components": [
+                0.145,
+                0.388,
+                0.922
+              ],
+              "alpha": 1,
+              "hex": "#2563eb"
+            }
+          }
+        }
+      }
+    },
+    "spacing": {
+      "commerce": {
+        "product-card": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-card",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "product-image": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-image",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "product-title": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-title",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "price": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "price",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "previous-price": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "previous-price",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "discount-badge": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "discount-badge",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "stock-status": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "stock-status",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "quantity-selector": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "quantity-selector",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "cart-item": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "cart-item",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "category-card": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "category-card",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "promotional-banner": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "promotional-banner",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "product-gallery": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-gallery",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "filter-control": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "filter-control",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "sort-control": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "sort-control",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        },
+        "purchase-action": {
+          "gap": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "purchase-action",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "gap",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 12,
+              "unit": "px"
+            }
+          }
+        }
+      }
+    },
+    "typography": {
+      "commerce": {
+        "product-title": {
+          "text": {
+            "$type": "typography",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-title",
+                "part": "label",
+                "variant": "default",
+                "state": null,
+                "size": "md",
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "typography",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "fontFamily": [
+                "Space Grotesk",
+                "Inter",
+                "sans-serif"
+              ],
+              "fontSize": {
+                "value": 32,
+                "unit": "px"
+              },
+              "fontWeight": 700,
+              "lineHeight": 1.2,
+              "letterSpacing": {
+                "value": -0.32,
+                "unit": "px"
+              }
+            }
+          }
+        }
+      }
+    },
+    "radius": {
+      "commerce": {
+        "product-card": {
+          "corner": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-card",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "radius",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 16,
+              "unit": "px"
+            }
+          }
+        }
+      }
+    },
+    "border": {
+      "commerce": {
+        "filter-control": {
+          "outline": {
+            "$type": "border",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "filter-control",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "border",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "color": {
+                "colorSpace": "srgb",
+                "components": [
+                  0.886,
+                  0.91,
+                  0.941
+                ],
+                "alpha": 1,
+                "hex": "#e2e8f0"
+              },
+              "width": {
+                "value": 1,
+                "unit": "px"
+              },
+              "style": "solid"
+            }
+          }
+        }
+      }
+    },
+    "shadow": {
+      "commerce": {
+        "product-card": {
+          "elevation": {
+            "$type": "shadow",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-card",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "shadow",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": [
+              {
+                "color": {
+                  "colorSpace": "srgb",
+                  "components": [
+                    0.059,
+                    0.09,
+                    0.165
+                  ],
+                  "alpha": 1,
+                  "hex": "#0f172a"
+                },
+                "offsetX": {
+                  "value": 0,
+                  "unit": "px"
+                },
+                "offsetY": {
+                  "value": 4,
+                  "unit": "px"
+                },
+                "blur": {
+                  "value": 12,
+                  "unit": "px"
+                },
+                "spread": {
+                  "value": -2,
+                  "unit": "px"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "sizing": {
+      "commerce": {
+        "product-card": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-card",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "product-image": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-image",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "product-title": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-title",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "price": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "price",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "previous-price": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "previous-price",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "discount-badge": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "discount-badge",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "stock-status": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "stock-status",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "quantity-selector": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "quantity-selector",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "cart-item": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "cart-item",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "category-card": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "category-card",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "promotional-banner": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "promotional-banner",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "product-gallery": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "product-gallery",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "filter-control": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "filter-control",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "sort-control": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "sort-control",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        },
+        "purchase-action": {
+          "height": {
+            "$type": "dimension",
+            "$extensions": {
+              "ar.neuraz.design-system-manager": {
+                "foundation": {
+                  "level": "semantic"
+                }
+              },
+              "ar.neuraz.design-system": {
+                "schemaVersion": 1,
+                "brandRole": null,
+                "component": "purchase-action",
+                "part": "container",
+                "variant": "default",
+                "state": null,
+                "size": null,
+                "mode": null,
+                "responsiveCondition": null,
+                "property": "height",
+                "provenance": null,
+                "layer": "component"
+              }
+            },
+            "$value": {
+              "value": 40,
+              "unit": "px"
+            }
+          }
+        }
+      }
+    }
+  }
+}

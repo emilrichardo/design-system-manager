@@ -4,6 +4,7 @@ import type { PresetApplyResult } from "../../domain/presets/preset-apply-result
 import type { PresetApplicationPlan, PresetApplicationSummary } from "../../domain/presets/preset-application-plan.js";
 import type { PresetEnvelope, PresetMetadata } from "../../domain/presets/preset-envelope.js";
 import { presetConflict } from "../../domain/presets/preset-conflict.js";
+import { presetSupportDocuments } from "../../domain/presets/preset-support-documents.js";
 import type { ManagedNode } from "../../domain/changes/equivalence.js";
 import { projectFoundationMetadata } from "../foundations/metadata-pass.js";
 import { buildPresetCandidateDocument } from "./build-preset-candidate-document.js";
@@ -80,6 +81,24 @@ export const applyPreset: ApplyPreset = async (input, deps) => {
     return baseResult({ outcome: "read-error", preset: metadata(envelope), targetFile: PRESET_APPLICATION_TARGET_FILE });
   }
 
+  const supportDocuments = presetSupportDocuments(input.id);
+  const missingSupportDocuments: Array<(typeof supportDocuments)[number]> = [];
+  let conflictingSupportDocument: { readonly relativePath: string } | null = null;
+  for (const supportDocument of supportDocuments) {
+    const current = await deps.targetReader.read({ rootDir: host.host.root, relativePath: supportDocument.relativePath });
+    if (current.outcome === "read-error") {
+      return baseResult({ outcome: "read-error", preset: metadata(envelope), targetFile: PRESET_APPLICATION_TARGET_FILE });
+    }
+    if (current.outcome === "not-found") {
+      missingSupportDocuments.push(supportDocument);
+      continue;
+    }
+    if (current.content !== supportDocument.content) {
+      conflictingSupportDocument = { relativePath: supportDocument.relativePath };
+      break;
+    }
+  }
+
   const hostLevels = projectFoundationMetadata(parsed).levels;
   const hostFacts = new Map<string, ManagedNodeFacts>();
   for (const node of host.nodes) {
@@ -98,11 +117,72 @@ export const applyPreset: ApplyPreset = async (input, deps) => {
     notFoundResource: null,
   };
 
+  if (conflictingSupportDocument !== null) {
+    const conflict = presetConflict(
+      "preset-concurrent-modification",
+      conflictingSupportDocument.relativePath,
+    );
+    const blockedPlan = applicationPlan(plan.changeSet.changes, [...plan.conflicts, conflict]);
+    return baseResult({
+      outcome: "conflict",
+      preset: metadata(envelope),
+      targetFile: PRESET_APPLICATION_TARGET_FILE,
+      plan: { ...wrapped, plan: blockedPlan },
+      summary: blockedPlan.summary,
+      error: {
+        code: "preset-support-document-conflict",
+        message: `Support document already exists with different content: ${conflictingSupportDocument.relativePath}.`,
+      },
+    });
+  }
+
   if (!plan.writable) return baseResult({ outcome: "conflict", preset: metadata(envelope), targetFile: PRESET_APPLICATION_TARGET_FILE, plan: wrapped, summary: plan.summary });
-  if (!plan.summary.wouldWrite) return baseResult({ outcome: "unchanged", preset: metadata(envelope), targetFile: PRESET_APPLICATION_TARGET_FILE, plan: wrapped, summary: plan.summary });
+  if (!plan.summary.wouldWrite && missingSupportDocuments.length === 0) {
+    return baseResult({ outcome: "unchanged", preset: metadata(envelope), targetFile: PRESET_APPLICATION_TARGET_FILE, plan: wrapped, summary: plan.summary });
+  }
+
+  const createdSupportDocuments: string[] = [];
+  for (const supportDocument of missingSupportDocuments) {
+    const writeSupport = await deps.writer.write({
+      rootDir: host.host.root,
+      relativePath: supportDocument.relativePath,
+      content: supportDocument.content,
+      expectedContent: "",
+      createBackup: false,
+      allowCreate: true,
+    });
+    if (writeSupport.outcome !== "written") {
+      for (const created of createdSupportDocuments.reverse()) {
+        await deps.writer.removeFile(host.host.root, created);
+      }
+      return baseResult({
+        outcome: writeSupport.outcome === "concurrent-modification" ? "conflict" : "write-error",
+        preset: metadata(envelope),
+        targetFile: PRESET_APPLICATION_TARGET_FILE,
+        plan: wrapped,
+        summary: plan.summary,
+        error: writeSupport.error,
+      });
+    }
+    createdSupportDocuments.push(supportDocument.relativePath);
+  }
+
+  if (!plan.summary.wouldWrite) {
+    return baseResult({
+      outcome: "applied",
+      preset: metadata(envelope),
+      targetFile: PRESET_APPLICATION_TARGET_FILE,
+      plan: wrapped,
+      summary: plan.summary,
+      wrote: true,
+    });
+  }
 
   const candidate = buildPresetCandidateDocument({ hostDocument: parsed, originalBytes: originalContent, plan });
   if (candidate.status !== "built") {
+    for (const created of createdSupportDocuments.reverse()) {
+      await deps.writer.removeFile(host.host.root, created);
+    }
     return baseResult({
       outcome: "write-error",
       preset: metadata(envelope),
@@ -116,6 +196,9 @@ export const applyPreset: ApplyPreset = async (input, deps) => {
   const intended = appliedChanges(plan);
   const prewrite = verifyPresetCandidate({ candidateDocument: candidate.document, intendedChanges: intended, analyzeTokens: deps.analyzeTokens });
   if (!prewrite.valid) {
+    for (const created of createdSupportDocuments.reverse()) {
+      await deps.writer.removeFile(host.host.root, created);
+    }
     return baseResult({
       outcome: "write-error",
       preset: metadata(envelope),
@@ -135,6 +218,9 @@ export const applyPreset: ApplyPreset = async (input, deps) => {
     createBackup: true,
   });
   if (write.outcome === "concurrent-modification") {
+    for (const created of createdSupportDocuments.reverse()) {
+      await deps.writer.removeFile(host.host.root, created);
+    }
     const conflict = presetConflict("preset-concurrent-modification", PRESET_APPLICATION_TARGET_FILE);
     const blockedPlan = applicationPlan(plan.changeSet.changes, [...plan.conflicts, conflict]);
     return baseResult({
@@ -147,6 +233,9 @@ export const applyPreset: ApplyPreset = async (input, deps) => {
     });
   }
   if (write.outcome !== "written") {
+    for (const created of createdSupportDocuments.reverse()) {
+      await deps.writer.removeFile(host.host.root, created);
+    }
     return baseResult({
       outcome: "write-error",
       preset: metadata(envelope),

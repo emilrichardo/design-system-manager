@@ -79,6 +79,8 @@ describe("installed tarball — package integrity (T107)", () => {
     const pkgRoot = join(work!, "consumer", "node_modules", "@neuraz", "design-system-manager");
     expect(existsSync(join(pkgRoot, "presets", "catalog.json"))).toBe(true);
     expect(existsSync(join(pkgRoot, "presets", "neutral-base.preset.json"))).toBe(true);
+    expect(existsSync(join(pkgRoot, "presets", "web-complete.preset.json"))).toBe(true);
+    expect(existsSync(join(pkgRoot, "presets", "commerce.preset.json"))).toBe(true);
     // El paquete instalado no contiene rutas al repositorio original.
     expect(readFileSync(join(pkgRoot, "dist", "cli", "index.js"), "utf8")).not.toContain(REPO_ROOT);
   });
@@ -91,7 +93,7 @@ describe("installed tarball — help and command surface (T107, J regression)", 
     try {
       const help = await run(["--help"], host);
       expect(help.code).toBe(0);
-      for (const cmd of ["init", "validate", "inspect", "foundations", "presets"]) expect(help.stdout).toContain(cmd);
+      for (const cmd of ["init", "validate", "inspect", "foundations", "presets", "packs"]) expect(help.stdout).toContain(cmd);
 
       const presetsHelp = await run(["presets", "--help"], host);
       expect(presetsHelp.code).toBe(0);
@@ -121,6 +123,8 @@ describe("installed tarball — read-only commands resolve the catalog from a fo
       expect(list.stderr).toBe("");
       expect(JSON.parse(list.stdout)).toMatchObject({ formatVersion: "1.0.0", command: "preset-list", outcome: "success" });
       expect(list.stdout).toContain("neutral-base");
+      expect(list.stdout).toContain("web-complete");
+      expect(list.stdout).toContain("commerce");
       expect(list.stdout).not.toContain(REPO_ROOT);
 
       expect((await run(["presets", "list"], host)).code).toBe(0);

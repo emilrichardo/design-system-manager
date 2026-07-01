@@ -67,7 +67,7 @@ describe("catalog offline & deterministic (T024)", () => {
     cleanup.push(otherCwd);
     const script = `import(${JSON.stringify(pathToFileURL(DIST_CATALOG).href)}).then(async (m) => { const r = await m.loadBundledPresetCatalog(); process.stdout.write(JSON.stringify({ ok: r.ok, ids: r.ok ? r.entries.map((e) => e.id) : [] })); });`;
     const out = execFileSync(process.execPath, ["--input-type=module", "-e", script], { cwd: otherCwd }).toString();
-    expect(JSON.parse(out)).toEqual({ ok: true, ids: ["neutral-base"] });
+    expect(JSON.parse(out)).toEqual({ ok: true, ids: ["neutral-base", "web-complete", "commerce"] });
   });
 
   it("works from a base path containing spaces and Unicode", async () => {

@@ -4,6 +4,14 @@
     {
       "id": "neutral-base",
       "file": "neutral-base.preset.json"
+    },
+    {
+      "id": "web-complete",
+      "file": "web-complete.preset.json"
+    },
+    {
+      "id": "commerce",
+      "file": "commerce.preset.json"
     }
   ]
 }

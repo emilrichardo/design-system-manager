@@ -15,6 +15,7 @@ export interface SingleFileWriteRequest {
   readonly content: string;
   readonly expectedContent: string;
   readonly createBackup: boolean;
+  readonly allowCreate?: boolean;
 }
 
 export interface SingleFileWriteResult {
@@ -33,6 +34,7 @@ export interface SingleFileBackupCleanupResult {
 export interface SingleFileAtomicWriter {
   write(request: SingleFileWriteRequest): Promise<SingleFileWriteResult>;
   cleanupBackup(rootDir: string, backupRelativePath: string): Promise<SingleFileBackupCleanupResult>;
+  removeFile(rootDir: string, relativePath: string): Promise<SingleFileBackupCleanupResult>;
 }
 
 export type PresetTargetReadOutcome = "success" | "not-found" | "read-error";

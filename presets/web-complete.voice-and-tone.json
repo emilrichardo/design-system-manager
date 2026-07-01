@@ -1,0 +1,12 @@
+{
+  "formatVersion": "1.0.0",
+  "voicePrinciples": [],
+  "toneDimensions": [],
+  "terminology": {
+    "preferred": [],
+    "forbidden": []
+  },
+  "microcopyGuidance": null,
+  "errorMessageGuidance": null,
+  "ctaGuidance": null
+}

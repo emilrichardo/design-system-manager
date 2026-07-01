@@ -73,6 +73,26 @@ describe("single-file atomic writer", () => {
     }
   });
 
+  it("creates a missing file when allowCreate is enabled", async () => {
+    const root = await tmpRoot();
+    try {
+      const writer = createSingleFileAtomicWriter();
+      const result = await writer.write({
+        rootDir: root,
+        relativePath: "brand/brand.json",
+        content: "{\n  \"status\": \"placeholder\"\n}\n",
+        expectedContent: "",
+        createBackup: false,
+        allowCreate: true,
+      });
+
+      expect(result).toMatchObject({ outcome: "written", wrote: true, backupRelativePath: null });
+      expect(await readFile(path.join(root, "brand", "brand.json"), "utf8")).toBe("{\n  \"status\": \"placeholder\"\n}\n");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   it("target reader reads existing files and reports not-found without throwing", async () => {
     const root = await tmpRoot();
     try {

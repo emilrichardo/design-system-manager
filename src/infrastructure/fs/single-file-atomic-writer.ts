@@ -109,19 +109,33 @@ export function createSingleFileAtomicWriter(): SingleFileAtomicWriter {
         return fail(request, "temp-verify-error", "Could not verify temporary file.");
       }
 
-      let current: string;
+      let current: string | null = null;
       try {
         current = await readFile(target.absolutePath, "utf8");
-      } catch {
-        await rm(tmp, { force: true });
-        return fail(request, "before-rename-error", "Could not read target before rename.");
+      } catch (error) {
+        const code = typeof error === "object" && error !== null && "code" in error ? String(error.code) : "";
+        if (request.allowCreate === true && code === "ENOENT") {
+          current = null;
+        } else {
+          await rm(tmp, { force: true });
+          return fail(request, "before-rename-error", "Could not read target before rename.");
+        }
       }
-      if (digest(current) !== digest(request.expectedContent)) {
+
+      if (current !== null && digest(current) !== digest(request.expectedContent)) {
         await rm(tmp, { force: true });
         return fail(request, "concurrent-modification", "Target changed before replacement.");
       }
 
-      if (backupAbsolutePath !== null) {
+      if (current === null && request.allowCreate === true) {
+        const targetKind = await lstat(target.absolutePath).catch(() => null);
+        if (targetKind !== null) {
+          await rm(tmp, { force: true });
+          return fail(request, "concurrent-modification", "Target appeared before replacement.");
+        }
+      }
+
+      if (current !== null && backupAbsolutePath !== null) {
         try {
           await copyFile(target.absolutePath, backupAbsolutePath, constants.COPYFILE_EXCL);
         } catch {
@@ -148,6 +162,19 @@ export function createSingleFileAtomicWriter(): SingleFileAtomicWriter {
         return { ok: true, error: null };
       } catch {
         return { ok: false, error: { code: "cleanup-error", message: "Could not remove backup." } };
+      }
+    },
+
+    async removeFile(rootDir: string, relativePath: string): Promise<SingleFileBackupCleanupResult> {
+      const target = contained(rootDir, relativePath);
+      if (!target.ok) return { ok: false, error: { code: "path-error", message: target.message } };
+      const pathState = await assertNoSymlinkPath(rootDir, target.absolutePath);
+      if (!pathState.ok) return { ok: false, error: { code: "path-error", message: pathState.message } };
+      try {
+        await rm(target.absolutePath, { force: true });
+        return { ok: true, error: null };
+      } catch {
+        return { ok: false, error: { code: "cleanup-error", message: "Could not remove file." } };
       }
     },
   };

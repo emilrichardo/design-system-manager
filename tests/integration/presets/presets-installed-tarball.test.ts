@@ -78,6 +78,8 @@ describe("presets installed tarball (T103)", () => {
   it.skipIf(!HAS_TAR)("the tarball includes the bundled preset assets", () => {
     expect(existsSync(join(packageDir, "presets", "catalog.json"))).toBe(true);
     expect(existsSync(join(packageDir, "presets", "neutral-base.preset.json"))).toBe(true);
+    expect(existsSync(join(packageDir, "presets", "web-complete.preset.json"))).toBe(true);
+    expect(existsSync(join(packageDir, "presets", "commerce.preset.json"))).toBe(true);
     expect(existsSync(packedCli)).toBe(true);
   });
 
@@ -89,6 +91,8 @@ describe("presets installed tarball (T103)", () => {
       expect(list.code).toBe(0);
       expect(JSON.parse(list.stdout)).toMatchObject({ command: "preset-list", outcome: "success" });
       expect(list.stdout).toContain("neutral-base");
+      expect(list.stdout).toContain("web-complete");
+      expect(list.stdout).toContain("commerce");
     } finally {
       await rm(host, { recursive: true, force: true });
     }

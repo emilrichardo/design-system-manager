@@ -40,13 +40,15 @@ function makeCatalog(catalog: unknown, files: Record<string, string> = {}): URL 
 }
 
 describe("loadBundledPresetCatalog — productive bundled assets (T013)", () => {
-  it("loads the real bundled catalog: ok, one entry, neutral-base", async () => {
+  it("loads the real bundled catalog with base preset plus complete web preset and commerce pack", async () => {
     const r = await loadBundledPresetCatalog();
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(r.entries.map((e) => e.id)).toEqual(["neutral-base"]);
+    expect(r.entries.map((e) => e.id)).toEqual(["neutral-base", "web-complete", "commerce"]);
     expect(r.entries[0]?.includedCategories).toEqual(["color", "spacing"]);
+    expect(r.entries[1]?.includedCategories).toEqual(["color", "spacing", "typography", "radius", "border", "shadow", "opacity", "sizing", "motion"]);
     expect(r.envelopes.get("neutral-base" as never)?.name).toBe("Neutral Base");
+    expect(r.envelopes.get("web-complete" as never)?.name).toBe("Web Complete");
   });
 
   it("is deterministic: repeated loads are deeply equal entries", async () => {

@@ -51,22 +51,22 @@ filesystem/CLI. Nada de esto es visible aún para un usuario.
 **Goal**: El preset `web-complete` y el pack `commerce` existen en el catálogo empaquetado y son
 aplicables vía el motor de `005-presets` sin modificarlo.
 
-- [ ] T006 Crear el catálogo empaquetado `presets/web-complete/` (mismo formato que `presets/neutral-base/`
+- [x] T006 Crear el catálogo empaquetado `presets/web-complete/` (mismo formato que `presets/neutral-base/`
   de `005`) con foundations completas + roles semánticos + catálogo mínimo de component tokens, según
   `contracts/preset-web-complete.md`.
-- [ ] T007 [P] Crear `design-system/brand/` placeholders dentro del preset `web-complete` (brand.json,
+- [x] T007 [P] Crear `design-system/brand/` placeholders dentro del preset `web-complete` (brand.json,
   voice-and-tone.json, visual-language.json, usage-guidelines.json vacíos válidos, `status:
   "placeholder"`).
-- [ ] T008 [P] Crear el pack `presets/packs/commerce/` con los component tokens de comercio listados en
+- [x] T008 [P] Crear el pack `presets/packs/commerce/` con los component tokens de comercio listados en
   `contracts/preset-web-complete.md`, con `basePresetId: "web-complete"`.
-- [ ] T009 Extender `src/infrastructure/presets/preset-token-analyzer.ts` y el comando `presets` para
+- [x] T009 Extender `src/infrastructure/presets/preset-token-analyzer.ts` y el comando `presets` para
   reconocer `packs apply/plan <id>` reutilizando el mismo merge add-only/atómico de `005` (sin
   reescribir el writer transaccional).
-- [ ] T010 Tests de integración: aplicar `web-complete` sobre un Design System vacío y verificar `SC-001`
+- [x] T010 Tests de integración: aplicar `web-complete` sobre un Design System vacío y verificar `SC-001`
   (`0 unclassified/unresolved-alias/broken-alias/unknown-type/dtcg-type-not-deeply-inspected`); aplicar
   `commerce` sobre `web-complete` y verificar add-only + idempotencia (`tests/integration/presets/
   web-complete.test.ts`, `tests/integration/presets/packs-commerce.test.ts`).
-- [ ] T011 Test de regresión: `neutral-base` sigue aplicando exactamente igual que antes de `011`
+- [x] T011 Test de regresión: `neutral-base` sigue aplicando exactamente igual que antes de `011`
   (`tests/integration/presets/neutral-base-regression.test.ts`).
 
 **Checkpoint**: `npx neuraz-ds presets apply web-complete` y `npx neuraz-ds packs apply commerce`
