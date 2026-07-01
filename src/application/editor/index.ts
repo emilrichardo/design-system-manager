@@ -6,3 +6,4 @@ export * from "./plan-editor-command.js";
 export * from "./review.js";
 export * from "./session.js";
 export * from "./state-machine.js";
+export * from "./value-controls.js";

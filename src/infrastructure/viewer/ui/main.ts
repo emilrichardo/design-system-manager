@@ -190,6 +190,178 @@ function renderGeneric(el: HTMLElement, id: string, state: string, data: unknown
   el.append(pre);
 }
 
+const EDITOR_VALUE_TYPES = ["color", "number", "dimension", "fontFamily", "fontWeight", "duration", "cubicBezier", "string", "boolean"] as const;
+
+function labeledInput(id: string, labelText: string, type = "text", value = ""): HTMLInputElement {
+  const label = document.createElement("label");
+  label.htmlFor = id;
+  label.textContent = labelText;
+  const input = document.createElement("input");
+  input.id = id;
+  input.name = id;
+  input.type = type;
+  input.value = value;
+  label.append(input);
+  return input;
+}
+
+function labeledSelect(id: string, labelText: string, values: readonly string[]): HTMLSelectElement {
+  const label = document.createElement("label");
+  label.htmlFor = id;
+  label.textContent = labelText;
+  const select = document.createElement("select");
+  select.id = id;
+  select.name = id;
+  for (const value of values) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    select.append(option);
+  }
+  label.append(select);
+  return select;
+}
+
+function appendFormField(form: HTMLFormElement, control: HTMLElement): void {
+  form.append(control.parentElement ?? control);
+}
+
+function editorCommand(operations: readonly Record<string, unknown>[]): Record<string, unknown> {
+  return { formatVersion: "1.0.0", operations };
+}
+
+function renderDraftPreview(status: HTMLElement, output: HTMLPreElement, command: Record<string, unknown>): void {
+  status.textContent = "Draft ready. Use the plan route to review the diff before approval.";
+  output.textContent = JSON.stringify(command, null, 2);
+  output.focus();
+}
+
+function editorForm(titleText: string): HTMLFormElement {
+  const form = document.createElement("form");
+  const title = document.createElement("h3");
+  title.textContent = titleText;
+  form.append(title);
+  return form;
+}
+
+function parseTypedValue(valueType: string, value: string, unit: string, booleanValue: boolean): unknown {
+  if (valueType === "number" || valueType === "fontWeight") {
+    const number = Number(value);
+    return Number.isFinite(number) ? number : value;
+  }
+  if (valueType === "dimension" || valueType === "duration") {
+    const number = Number(value);
+    return { value: Number.isFinite(number) ? number : value, unit };
+  }
+  if (valueType === "cubicBezier") return value.split(",").map((part) => Number(part.trim()));
+  if (valueType === "boolean") return booleanValue;
+  return value;
+}
+
+function renderEditorDraftForms(section: HTMLElement): void {
+  const formStatus = document.createElement("p");
+  formStatus.id = "editor-form-status";
+  formStatus.setAttribute("aria-live", "polite");
+  formStatus.textContent = "Editor forms create drafts only; unsupported or composite values remain read-only in this checkpoint.";
+  const output = document.createElement("pre");
+  output.tabIndex = -1;
+  output.setAttribute("aria-label", "Editor draft JSON");
+
+  const valueForm = editorForm("Value editor");
+  const valuePath = labeledInput("editor-token-path", "Token path", "text", "color.brand.primary");
+  const valueType = labeledSelect("editor-value-type", "Value type", EDITOR_VALUE_TYPES);
+  const valueInput = labeledInput("editor-value-input", "Value");
+  const unitInput = labeledInput("editor-value-unit", "Unit for dimension or duration", "text", "px");
+  const boolInput = labeledInput("editor-value-boolean", "Boolean value", "checkbox");
+  appendFormField(valueForm, valuePath);
+  appendFormField(valueForm, valueType);
+  appendFormField(valueForm, valueInput);
+  appendFormField(valueForm, unitInput);
+  appendFormField(valueForm, boolInput);
+  const valueButton = document.createElement("button");
+  valueButton.type = "submit";
+  valueButton.textContent = "Preview update value";
+  valueForm.append(valueButton);
+  valueForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    renderDraftPreview(
+      formStatus,
+      output,
+      editorCommand([{ kind: "update-value", path: valuePath.value, value: parseTypedValue(valueType.value, valueInput.value, unitInput.value, boolInput.checked) }]),
+    );
+  });
+
+  const metaForm = editorForm("Type and metadata");
+  const metaPath = labeledInput("editor-meta-path", "Token path", "text", "color.brand.primary");
+  const metaType = labeledSelect("editor-meta-type", "Declared type", EDITOR_VALUE_TYPES);
+  const description = labeledInput("editor-description", "Description");
+  const category = labeledInput("editor-category", "Neuraz category metadata");
+  appendFormField(metaForm, metaPath);
+  appendFormField(metaForm, metaType);
+  appendFormField(metaForm, description);
+  appendFormField(metaForm, category);
+  for (const [label, kind, field] of [
+    ["Preview update type", "update-type", "type"],
+    ["Preview update description", "update-description", "description"],
+    ["Preview update category", "update-category", "category"],
+  ] as const) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.addEventListener("click", () => {
+      const value = field === "type" ? metaType.value : field === "description" ? description.value || null : category.value || null;
+      renderDraftPreview(formStatus, output, editorCommand([{ kind, path: metaPath.value, [field]: value }]));
+    });
+    metaForm.append(button);
+  }
+
+  const aliasForm = editorForm("Alias editor");
+  const aliasPath = labeledInput("editor-alias-path", "Alias token path", "text", "color.brand.primary");
+  const aliasTarget = labeledInput("editor-alias-target", "Alias target path", "text", "color.base.blue-500");
+  appendFormField(aliasForm, aliasPath);
+  appendFormField(aliasForm, aliasTarget);
+  for (const [label, operation] of [
+    ["Preview create alias", () => ({ kind: "set-alias", path: aliasPath.value, target: aliasTarget.value })],
+    ["Preview remove alias", () => ({ kind: "remove-alias", path: aliasPath.value })],
+  ] as const) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.addEventListener("click", () => renderDraftPreview(formStatus, output, editorCommand([operation()])));
+    aliasForm.append(button);
+  }
+
+  const adminForm = editorForm("Token and group administration");
+  const adminPath = labeledInput("editor-admin-path", "Token or group path", "text", "color.brand.primary");
+  const adminDestination = labeledInput("editor-admin-destination", "New name, parent or destination path");
+  const adminType = labeledSelect("editor-admin-type", "New token type", EDITOR_VALUE_TYPES);
+  const adminValue = labeledInput("editor-admin-value", "New token value");
+  appendFormField(adminForm, adminPath);
+  appendFormField(adminForm, adminDestination);
+  appendFormField(adminForm, adminType);
+  appendFormField(adminForm, adminValue);
+  const adminActions: readonly [string, () => Record<string, unknown>][] = [
+    ["Preview create token", () => ({ kind: "create-token", path: adminPath.value, type: adminType.value, value: adminValue.value })],
+    ["Preview rename token", () => ({ kind: "rename-token", path: adminPath.value, newName: adminDestination.value })],
+    ["Preview move token", () => ({ kind: "move-token", path: adminPath.value, newParent: adminDestination.value })],
+    ["Preview duplicate token", () => ({ kind: "duplicate-token", path: adminPath.value, destinationPath: adminDestination.value })],
+    ["Preview remove token", () => ({ kind: "remove-token", path: adminPath.value })],
+    ["Preview create group", () => ({ kind: "create-group", path: adminPath.value })],
+    ["Preview rename group", () => ({ kind: "rename-group", path: adminPath.value, newName: adminDestination.value })],
+    ["Preview move group", () => ({ kind: "move-group", path: adminPath.value, newParent: adminDestination.value })],
+    ["Preview remove empty group", () => ({ kind: "remove-empty-group", path: adminPath.value })],
+  ];
+  for (const [label, operation] of adminActions) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.addEventListener("click", () => renderDraftPreview(formStatus, output, editorCommand([operation()])));
+    adminForm.append(button);
+  }
+
+  section.append(formStatus, valueForm, metaForm, aliasForm, adminForm, output);
+}
+
 function renderEditorEntry(el: HTMLElement): void {
   const section = document.createElement("section");
   section.setAttribute("aria-labelledby", "editor-entry-title");
@@ -214,6 +386,7 @@ function renderEditorEntry(el: HTMLElement): void {
     status.textContent = `Editor state: ${envelope.state}. Drafts are separate from the Viewer projection.`;
   });
   section.append(title, status, button);
+  renderEditorDraftForms(section);
   el.append(section);
 }
 

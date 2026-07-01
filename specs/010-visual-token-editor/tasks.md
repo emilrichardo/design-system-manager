@@ -73,14 +73,14 @@ no UI controls, no productive write path.
 
 ### Tasks
 
-- [ ] T017 [US1][US5] Create `src/application/editor/value-controls.ts` for supported type-control models and read-only unsupported/composite states.
-- [ ] T018 [US1] Implement UI detail/value editor controls for `color`, `number`, `dimension`, `fontFamily`, `fontWeight`, `duration`, `cubicBezier`, `string` and `boolean`.
-- [ ] T019 [US5] Implement type selector and metadata editor UI, distinguishing declared/effective type, description and Neuraz category metadata.
-- [ ] T020 [US3] Implement alias selector UI for `set-alias` and `remove-alias`, showing current target, chain and resolved value.
-- [ ] T021 [US2][US4] Implement token/group create, duplicate, rename, move and remove forms with non-drag parent/path selectors.
-- [ ] T022 [P] [US1][US5] Create `tests/application/editor/value-controls.test.ts` covering valid/invalid supported type inputs and blocked unsupported/composite values.
-- [ ] T023 [P] [US7] Create `tests/integration/editor/form-accessibility.test.ts` for labels, control-associated errors, focus and keyboard-only operation in editor forms.
-- [ ] T024 Gate C: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
+- [X] T017 [US1][US5] Create `src/application/editor/value-controls.ts` for supported type-control models and read-only unsupported/composite states.
+- [X] T018 [US1] Implement UI detail/value editor controls for `color`, `number`, `dimension`, `fontFamily`, `fontWeight`, `duration`, `cubicBezier`, `string` and `boolean`.
+- [X] T019 [US5] Implement type selector and metadata editor UI, distinguishing declared/effective type, description and Neuraz category metadata.
+- [X] T020 [US3] Implement alias selector UI for `set-alias` and `remove-alias`, showing current target, chain and resolved value.
+- [X] T021 [US2][US4] Implement token/group create, duplicate, rename, move and remove forms with non-drag parent/path selectors.
+- [X] T022 [P] [US1][US5] Create `tests/application/editor/value-controls.test.ts` covering valid/invalid supported type inputs and blocked unsupported/composite values.
+- [X] T023 [P] [US7] Create `tests/integration/editor/form-accessibility.test.ts` for labels, control-associated errors, focus and keyboard-only operation in editor forms.
+- [X] T024 Gate C: `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `git diff --check`.
 
 **Regression**: current Viewer token/foundation/asset views stay usable without entering edit mode.
 **Suggested commit**: `feat: add visual token editor forms`
