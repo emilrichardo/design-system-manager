@@ -319,6 +319,45 @@ npx neuraz-ds token remove color.brand.500
 - Fuera de alcance: Figma, scraping, IA, editor visual, MCP y Studio (quedan como reuso futuro de la
   misma API headless).
 
+## `neuraz-ds view`
+
+Abre el **Design System Viewer** local: una vista **exclusivamente de solo lectura** (Overview, Colors,
+Typography, Spacing, Radius, Borders, Shadows, Motion, Aliases, Foundations, Assets, Presets, Issues,
+Build) sobre los casos de uso ya cerrados de `002`–`008`. Cero escrituras, cero parseo directo, cero
+acceso a filesystem desde la UI.
+
+```bash
+npx neuraz-ds view                 # arranca un servidor local (127.0.0.1, puerto efímero por defecto)
+npx neuraz-ds view --port 4000     # puerto fijo
+npx neuraz-ds view --json          # imprime la sesión (ViewerJsonEnvelopeV1) y sale; sin servidor, sin navegador
+```
+
+- **Arquitectura**: adapter `node:http` puro (`src/infrastructure/viewer/http-server.ts`) sirviendo una
+  API JSON de solo lectura (`GET /api/session`, `GET /api/section/:id`) y un bundle estático vanilla
+  TypeScript/DOM (`src/infrastructure/viewer/ui/`, compilado por el mismo `tsc` del proyecto — **sin
+  framework, sin bundler, sin dependencia runtime nueva**). El Core (`src/application/viewer/**`) nunca
+  importa `node:http`, DOM, Commander ni ningún puerto de escritura — un guard de arquitectura dedicado
+  (`scripts/arch-guard.mjs`) lo verifica.
+- **Una sola carga por sesión/refresh**: cada `GET` reutiliza el snapshot único de `006` (que ya embebe el
+  análisis de `002` y la proyección de foundations de `004`); ningún caso de uso reusado se invoca dos
+  veces para la misma petición.
+- **Estados soportados**: `loading` (solo en el cliente, antes de resolver) `| ready | empty |
+  invalid-design-system | not-found | read-error | partial` — siempre proyectados desde un outcome ya
+  devuelto por `002`/`004`/`005`/`006`/`007`, nunca inventados; `partial` conserva el contenido disponible
+  (nunca una pantalla en blanco).
+- **Aliases**: alias inmediato, cadena completa, dependientes y una previsualización de impacto de
+  rename/move que reusa el plan read-only de `008` (`planTokenMutation`) — nunca `applyTokenMutation`,
+  nunca persiste el comando/plan sintético.
+- **Assets**: proyección 1:1 de `007` (fonts, logos, SVG, icons, images: MIME, dimensiones, hash,
+  licencia, provenance, ownership); sin copiar archivos, sin reimplementar sanitización/validación.
+- **Accesibilidad**: navegación completa por teclado, foco visible con contraste ≥3:1, landmarks
+  semánticos (`header`/`nav`/`main`), `prefers-reduced-motion`, y ninguna información depende solo del
+  color (los swatches siempre van acompañados de texto).
+- **Offline**: funciona sin red — el servidor solo escucha en `127.0.0.1`; sin CDN, sin fuentes/scripts
+  externos.
+- Fuera de alcance: edición de tokens/assets/presets (eso es `008`/el futuro Visual Token Editor), MCP
+  server dedicado, Figma, scraping, IA.
+
 ### Comandos disponibles
 
 | Comando | Descripción |
@@ -345,6 +384,7 @@ npx neuraz-ds token remove color.brand.500
 | `neuraz-ds token rename <path> <newName>` | Renombra un token y reescribe sus referencias (shorthand). |
 | `neuraz-ds token move <path> <newParent>` | Mueve un token y reescribe sus referencias (shorthand). |
 | `neuraz-ds token remove <path>` | Elimina un token; bloquea si tiene dependientes (shorthand). |
+| `neuraz-ds view [--port <n>] [--json]` | Abre el Design System Viewer local **sin modificar archivos**. |
 | `neuraz-ds --help` / `<cmd> --help` | Ayuda. |
 | `neuraz-ds --version` | Versión del gestor. |
 
@@ -368,7 +408,10 @@ solo lectura). `presets list/inspect/plan` también son de solo lectura; `preset
 (verificación posterior tras escribir). `token plan` es de solo lectura; `token apply` y los shorthands
 usan la misma tabla: `2` (`unchanged`, idempotente), `3` (`invalid-command`/`invalid-design-system`), `4`
 (`conflict`: colisión, dependientes, grupo no vacío o cambio concurrente), `6` (`read-error`/`write-error`)
-y `7` (`verification-error`, con backup retenido y recuperación explícita).
+y `7` (`verification-error`, con backup retenido y recuperación explícita). `view --json` es de solo
+lectura y usa el mismo vocabulario: `0` (`ready`/`empty`), `3` (`invalid-design-system`), `4` (`partial`),
+`5` (`not-found`), `6` (`read-error`); nunca usa `1`, `2` ni `7` (no hay escritura ni cancelación
+interactiva).
 
 `build` usa `0` (built), `2` (unchanged), `3` (Design System inválido), `4` (valor no soportado o
 conflicto), `5` (no inicializado), `6` (error de lectura/escritura) y `7` (verificación posterior a la

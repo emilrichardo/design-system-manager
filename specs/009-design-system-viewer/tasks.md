@@ -236,24 +236,24 @@ granular `001`–`008`, documentación actualizada y cierre con auditoría.
 
 ### Tasks
 
-- [ ] T052 [US13] Crear `tests/integration/viewer/npm-pack.test.ts`: `npm pack --dry-run --json` incluye
+- [X] T052 [US13] Crear `tests/integration/viewer/npm-pack.test.ts`: `npm pack --dry-run --json` incluye
   `dist/cli/commands/view.js`, `dist/infrastructure/viewer/**` (incluido el bundle estático compilado) y
   `dist/application/viewer/**`; excluye `src/`, `tests/`, `specs/`, `.agents/`.
-- [ ] T053 [US13][US12] Crear `tests/integration/viewer/tarball-smoke.test.ts`: `npm pack` real + `npm
+- [X] T053 [US13][US12] Crear `tests/integration/viewer/tarball-smoke.test.ts`: `npm pack` real + `npm
   install <tgz>` (sin `npm link`); `view --json` desde un cwd ajeno, offline, sin referencias al repo.
-- [ ] T054 [P] [US14] Crear `tests/integration/viewer/regression-001-008.test.ts`: ninguna sesión del
+- [X] T054 [P] [US14] Crear `tests/integration/viewer/regression-001-008.test.ts`: ninguna sesión del
   Viewer modifica `design-system/build/**`, `design-system/assets/**`, el manifest del host, el manifest de
   assets ni el resultado de `token plan`/`token apply` de `008`; `001`–`008` byte-estables.
-- [ ] T055 [P] [US14] Crear `tests/integration/viewer/zero-write-full-session.test.ts`: sesión completa
+- [X] T055 [P] [US14] Crear `tests/integration/viewer/zero-write-full-session.test.ts`: sesión completa
   (cada vista + búsqueda + preview de alias) deja el host root byte-idéntico (SC-007).
-- [ ] T056 [US13] Actualizar `README.md` y `docs/product/capability-map.md`: comando `view`, arquitectura
+- [X] T056 [US13] Actualizar `README.md` y `docs/product/capability-map.md`: comando `view`, arquitectura
   del adapter (`node:http` + bundle estático), estados soportados, invariante de cero escrituras; marcar la
   capacidad "Visualizador del Design System" como implementada.
-- [ ] T057 [US1] Actualizar `specs/009-design-system-viewer/quickstart.md` con el flujo reproducible real y
+- [X] T057 [US1] Actualizar `specs/009-design-system-viewer/quickstart.md` con el flujo reproducible real y
   los estados/exit codes definitivos (reemplazando el marcador "planned — not yet implemented").
-- [ ] T058 Gate F (suite completa): `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`,
+- [X] T058 Gate F (suite completa): `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`,
   `npm pack --dry-run --json`, `git diff --check`.
-- [ ] T059 [US14] Crear `specs/009-design-system-viewer/audit.md` con trazabilidad (14/14 US, 26/26 FR,
+- [X] T059 [US14] Crear `specs/009-design-system-viewer/audit.md` con trazabilidad (14/14 US, 26/26 FR,
   11/11 SC, 17/17 Constitution), hallazgos (0 CRITICAL/HIGH/MEDIUM) y gates finales; cerrar la feature.
 
 **Regression**: T054/T055 prueban que `001`–`008` y el host root no cambian comportamiento, bytes, JSON ni
