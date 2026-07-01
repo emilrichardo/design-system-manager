@@ -23,24 +23,26 @@ la implementación que sigue.
 **Goal**: Existen en código los tipos/contratos de `data-model.md` y `contracts/` — sin UI, sin CLI
 nuevo todavía. Todo lo demás depende de esto.
 
-- [ ] T001 Crear `src/domain/brand/` con `BrandProfileV1`, `BrandAudienceV1`, `BrandPersonalityV1`,
+- [x] T001 Crear `src/domain/brand/` con `BrandProfileV1`, `BrandAudienceV1`, `BrandPersonalityV1`,
   `BrandPrincipleV1`, `BrandVoiceV1`, `BrandToneDimensionV1`, `BrandVisualLanguageV1`,
   `BrandAssetReferenceV1`, `BrandUsageRuleV1`, `BrandEvidenceV1` — dominio puro, sin `node:fs`, según
   `data-model.md`.
-- [ ] T002 [P] Crear `src/domain/token-mutations/token-layer.ts` con `TokenLayerV1`/`TokenProvenanceV1` y
+- [x] T002 [P] Crear `src/domain/token-mutations/token-layer.ts` con `TokenLayerV1`/`TokenProvenanceV1` y
   las reglas R1–R5 de `contracts/token-layer-policy.md` como funciones puras de validación.
-- [ ] T003 [P] Extender `src/domain/dtcg/recognized-types.ts` y crear `src/domain/dtcg/types/` con un
+- [x] T003 [P] Extender `src/domain/dtcg/recognized-types.ts` y crear `src/domain/dtcg/types/` con un
   módulo por tipo (parser/validación/normalización) para los 12 tipos que faltan según
   `contracts/dtcg-type-support.md`, reutilizando (no reimplementando) la forma ya escrita en
   `css-renderer.ts`.
-- [ ] T004 [P] Crear `src/domain/brand/candidate.ts` con `CandidateV1` (contrato puro, sin productor) y
+- [x] T004 [P] Crear `src/domain/brand/candidate.ts` con `CandidateV1` (contrato puro, sin productor) y
   su invariante de aprobación explícita.
-- [ ] T005 Tests unitarios de dominio para T001–T004 (`tests/domain/brand/**`,
+- [x] T005 Tests unitarios de dominio para T001–T004 (`tests/domain/brand/**`,
   `tests/domain/token-mutations/token-layer.test.ts`, `tests/domain/dtcg/types/**`) — cubrir cada regla
   R1–R5 y cada tipo de `dtcg-type-support.md` con casos válidos e inválidos.
 
 **Checkpoint**: Tipos y reglas de dominio compilan, están cubiertos por tests, y no dependen de
 filesystem/CLI. Nada de esto es visible aún para un usuario.
+
+**Commit**: `feat: add brand system, token layer and deep type domain models`
 
 ---
 
@@ -69,6 +71,8 @@ aplicables vía el motor de `005-presets` sin modificarlo.
 
 **Checkpoint**: `npx neuraz-ds presets apply web-complete` y `npx neuraz-ds packs apply commerce`
 funcionan de punta a punta sobre un Design System real, con los quality gates de `SC-001` verificados.
+
+**Commit**: `feat: add web-complete preset and commerce pack`
 
 ---
 
@@ -101,6 +105,8 @@ política de capas de T002, y detectan issues de referencia entre brand y assets
 completa devuelve `0` warnings genéricos y los issues específicos correctos; un Design System legado
 (`001`–`010`) no cambia su resultado.
 
+**Commit**: `feat: connect deep type validation and token layer policy`
+
 ---
 
 ### Checkpoint D — Build, export, brand storage y font matching
@@ -131,6 +137,8 @@ de brand documentation; el matching de fuentes (contracts/typography-projection.
 **Checkpoint**: Editar brand narrativo vía el caso de uso headless escribe transaccionalmente; `build`
 incluye brand cuando existe; la vista de tipografía del Viewer ya no muestra campos engañosos en tokens
 `dimension`.
+
+**Commit**: `feat: add brand writer, build artifact and font matching fix`
 
 ---
 
@@ -168,6 +176,8 @@ funcionan de punta a punta sobre el shell existente de `009`/`010`, sin reescrit
 **Checkpoint**: `neuraz-ds view` muestra `brand`/`components`/`quality` con datos reales; el modo editor
 permite completar brand y editar component tokens con el mismo boundary de aprobación que `010`.
 
+**Commit**: `feat: add brand, components and quality viewer/editor surfaces`
+
 ---
 
 ### Checkpoint F — Migración, empaquetado, regresión y cierre
@@ -188,6 +198,8 @@ permite completar brand y editar component tokens con el mismo boundary de aprob
 
 **Checkpoint**: Feature `011` cerrada — `agent:status` reporta `completed`, working tree limpio, sin
 regresión sobre `001`–`010`.
+
+**Commit**: `docs: close 011 with migration regression and agent status green`
 
 ---
 

@@ -26,10 +26,40 @@ export type RecognizedDtcgType = (typeof RECOGNIZED_DTCG_TYPES)[number];
 /**
  * Tipos con análisis semántico **profundo** en Neuraz hoy. Inicialmente solo `color` (plan).
  * Los demás reconocidos se inspeccionan de forma genérica (warning `dtcg-type-not-deeply-inspected`).
+ *
+ * NO modificar esta constante en `011` checkpoint A: cambiarla sin conectar los validadores de
+ * `src/domain/dtcg/types/` a `validate`/`inspect` produciría falsos negativos (se dejaría de avisar
+ * sin haber verificado realmente la forma). La conexión real es responsabilidad de checkpoint C
+ * (T012, `contracts/dtcg-type-support.md`); ver `DTCG_TYPES_WITH_DOMAIN_VALIDATOR` abajo para el
+ * inventario de módulos ya disponibles mientras tanto.
  */
 export const DEEPLY_SUPPORTED_DTCG_TYPES = ["color"] as const;
 
 export type DeeplySupportedDtcgType = (typeof DEEPLY_SUPPORTED_DTCG_TYPES)[number];
+
+/**
+ * Tipos para los que ya existe un validador puro de dominio en `src/domain/dtcg/types/`
+ * (`contracts/dtcg-type-support.md`, `011` T003). Puramente informativo: NO implica que
+ * `validate`/`inspect` ya los invoquen (eso es T012, checkpoint C) ni que reemplace
+ * `DEEPLY_SUPPORTED_DTCG_TYPES`. `color` no aparece aquí porque su validación profunda ya vive en
+ * `002` (`dtcg-validator.ts`), no en `src/domain/dtcg/types/`.
+ */
+export const DTCG_TYPES_WITH_DOMAIN_VALIDATOR = [
+  "dimension",
+  "fontFamily",
+  "fontWeight",
+  "duration",
+  "cubicBezier",
+  "number",
+  "strokeStyle",
+  "border",
+  "transition",
+  "shadow",
+  "gradient",
+  "typography",
+] as const;
+
+export type DtcgTypeWithDomainValidator = (typeof DTCG_TYPES_WITH_DOMAIN_VALIDATOR)[number];
 
 /** Categoría canónica para nodos sin tipo efectivo determinable (en `byType`). */
 export const UNTYPED_CATEGORY = "(untyped)";

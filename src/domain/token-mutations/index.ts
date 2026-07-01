@@ -57,3 +57,15 @@ export {
   isWithin,
   rewritePrefix,
 } from "./paths.js";
+
+// 011 T002 — metadata de capa de token (Neuraz extension) y reglas puras R1-R5.
+export type { TokenLayer, TokenLayerV1, TokenProvenanceV1 } from "./token-layer.js";
+export {
+  TOKEN_LAYERS,
+  TOKEN_LAYER_ISSUE_CODES,
+  isTokenLayer,
+  emptyTokenLayer,
+  validateTokenLayerShape,
+  unclassifiedLayerWarning,
+  evaluateAliasLayerTransition,
+} from "./token-layer.js";
