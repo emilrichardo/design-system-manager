@@ -8,6 +8,10 @@ export function isFiniteNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
 }
 
+export function isAliasReference(value: unknown): value is string {
+  return typeof value === "string" && /^\{[^{}]+\}$/.test(value);
+}
+
 /** Objeto de color sRGB concreto (mismo shape mínimo que `dtcg.schema.ts`/`css-renderer.ts`). Uso interno de tipos compuestos (shadow/border). */
 export function isConcreteSrgbColor(value: unknown): boolean {
   if (value === null || typeof value !== "object") return false;

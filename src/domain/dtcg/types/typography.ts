@@ -2,17 +2,17 @@
 // Subset composable: `fontFamily`/`fontSize` obligatorios; `fontWeight`/`lineHeight`/`letterSpacing`
 // opcionales (ausentes -> null), per contract "subset composable".
 import type { Issue } from "../../issue.js";
-import { isFiniteNumber, issueAt } from "./shape-utils.js";
+import { isAliasReference, isFiniteNumber, issueAt } from "./shape-utils.js";
 import { parseDimension, type DimensionValue } from "./dimension.js";
 import { parseFontFamily, type FontFamilyValue } from "./font-family.js";
 import { parseFontWeight, type FontWeightValue } from "./font-weight.js";
 
 export interface TypographyValue {
-  readonly fontFamily: FontFamilyValue;
-  readonly fontSize: DimensionValue;
-  readonly fontWeight: FontWeightValue | null;
-  readonly lineHeight: number | null;
-  readonly letterSpacing: DimensionValue | null;
+  readonly fontFamily: FontFamilyValue | string;
+  readonly fontSize: DimensionValue | string;
+  readonly fontWeight: FontWeightValue | string | null;
+  readonly lineHeight: number | string | null;
+  readonly letterSpacing: DimensionValue | string | null;
 }
 
 export type TypographyParseResult =
@@ -24,29 +24,32 @@ export function parseTypography(value: unknown, path: string): TypographyParseRe
     return { ok: false, issue: issueAt("typography-shape-invalid", path, `Typography no es un objeto en "${path}".`) };
   }
   const obj = value as Record<string, unknown>;
-  const fontFamily = parseFontFamily(obj.fontFamily, path);
+  const fontFamily = isAliasReference(obj.fontFamily) ? { ok: true as const, value: obj.fontFamily } : parseFontFamily(obj.fontFamily, path);
   if (!fontFamily.ok) return { ok: false, issue: fontFamily.issue };
-  const fontSize = parseDimension(obj.fontSize, path);
+  const fontSize = isAliasReference(obj.fontSize) ? { ok: true as const, value: obj.fontSize } : parseDimension(obj.fontSize, path);
   if (!fontSize.ok) return { ok: false, issue: fontSize.issue };
 
-  let fontWeight: FontWeightValue | null = null;
+  let fontWeight: FontWeightValue | string | null = null;
   if (obj.fontWeight !== undefined) {
-    const parsed = parseFontWeight(obj.fontWeight, path);
+    const parsed = isAliasReference(obj.fontWeight) ? { ok: true as const, value: obj.fontWeight } : parseFontWeight(obj.fontWeight, path);
     if (!parsed.ok) return { ok: false, issue: parsed.issue };
     fontWeight = parsed.value;
   }
 
-  let lineHeight: number | null = null;
+  let lineHeight: number | string | null = null;
   if (obj.lineHeight !== undefined) {
-    if (!isFiniteNumber(obj.lineHeight)) {
+    if (isAliasReference(obj.lineHeight)) {
+      lineHeight = obj.lineHeight;
+    } else if (!isFiniteNumber(obj.lineHeight)) {
       return { ok: false, issue: issueAt("typography-shape-invalid", path, `typography.lineHeight no es un número finito en "${path}".`) };
+    } else {
+      lineHeight = obj.lineHeight;
     }
-    lineHeight = obj.lineHeight;
   }
 
-  let letterSpacing: DimensionValue | null = null;
+  let letterSpacing: DimensionValue | string | null = null;
   if (obj.letterSpacing !== undefined) {
-    const parsed = parseDimension(obj.letterSpacing, path);
+    const parsed = isAliasReference(obj.letterSpacing) ? { ok: true as const, value: obj.letterSpacing } : parseDimension(obj.letterSpacing, path);
     if (!parsed.ok) return { ok: false, issue: parsed.issue };
     letterSpacing = parsed.value;
   }

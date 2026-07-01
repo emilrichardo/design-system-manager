@@ -81,19 +81,34 @@ describe("DTCG read — política de $type", () => {
     expect(r.nodes[0]?.trust).toBe("untrusted");
   });
 
-  it("reconocido no profundo (dimension) → warning, sigue válido, cuenta en byType", () => {
+  it("dimension inválido → error específico, sin warning genérico", () => {
     const r = traverseDtcgTree({ s: { $type: "dimension", $value: "16px", $description: "d" } });
-    expect(r.valid).toBe(true);
-    expect(codes(r).warnings).toContain("dtcg-type-not-deeply-inspected");
+    expect(r.valid).toBe(false);
+    expect(codes(r).errors).toContain("dimension-shape-invalid");
+    expect(codes(r).warnings).not.toContain("dtcg-type-not-deeply-inspected");
     expect(r.statistics.byType).toEqual({ dimension: 1 });
-    expect(r.nodes[0]?.trust).toBe("valid");
+    expect(r.nodes[0]?.trust).toBe("untrusted");
   });
 
-  it("los 13 tipos reconocidos no profundos no invalidan", () => {
-    const recognized = ["dimension", "fontFamily", "fontWeight", "duration", "cubicBezier", "number", "strokeStyle", "border", "transition", "shadow", "gradient", "typography"];
-    for (const t of recognized) {
-      const r = traverseDtcgTree({ x: { $type: t, $value: "v", $description: "d" } });
+  it("los 13 tipos reconocidos usan validación profunda y ya no emiten el warning genérico", () => {
+    const cases: Array<[string, unknown]> = [
+      ["dimension", { value: 16, unit: "px" }],
+      ["fontFamily", ["Inter", "sans-serif"]],
+      ["fontWeight", 700],
+      ["duration", { value: 200, unit: "ms" }],
+      ["cubicBezier", [0.4, 0, 0.2, 1]],
+      ["number", 8],
+      ["strokeStyle", "solid"],
+      ["border", { color: color("#ffffff"), width: { value: 1, unit: "px" }, style: "solid" }],
+      ["transition", { duration: { value: 200, unit: "ms" }, delay: { value: 0, unit: "ms" }, timingFunction: [0.4, 0, 0.2, 1] }],
+      ["shadow", { color: color("#ffffff"), offsetX: { value: 1, unit: "px" }, offsetY: { value: 1, unit: "px" } }],
+      ["gradient", [{ color: color("#ffffff"), position: 0 }]],
+      ["typography", { fontFamily: "Inter", fontSize: { value: 16, unit: "px" } }],
+    ];
+    for (const [t, value] of cases) {
+      const r = traverseDtcgTree({ x: { $type: t, $value: value, $description: "d" } });
       expect(r.valid).toBe(true);
+      expect(codes(r).warnings).not.toContain("dtcg-type-not-deeply-inspected");
     }
   });
 

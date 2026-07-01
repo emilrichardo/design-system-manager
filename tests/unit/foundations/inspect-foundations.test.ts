@@ -331,4 +331,85 @@ describe("inspectFoundations (T027/T028/T029)", () => {
     expect(first).toEqual(second);
     expect(a.documents[MANAGED_FILES.tokens]?.parsed).toEqual(parsed);
   });
+
+  it("emite token-layer-unclassified solo cuando el proyecto participa del modelo de capas", async () => {
+    const parsed = {
+      color: {
+        semantic: {
+          action: {
+            $type: "color",
+            $description: "action",
+            $value: "{color.base.primary}",
+            $extensions: {
+              "ar.neuraz.design-system": { layer: "semantic" },
+            },
+          },
+        },
+        base: {
+          primary: {
+            $type: "color",
+            $description: "primary",
+            $value: { colorSpace: "srgb", components: [0, 0, 0], hex: "#000000" },
+          },
+        },
+      },
+    };
+    const a = analysis({
+      documents: { [MANAGED_FILES.tokens]: tokenDoc(parsed) },
+      nodes: [
+        node({ path: "color.semantic.action", kind: "alias", aliasTarget: "color.base.primary", aliasState: "valid", typeOrigin: "own" }),
+        node({ path: "color.base.primary" }),
+      ],
+    });
+
+    const result = await inspectFoundations({ executionDir: "/repo" }, depsFor(a).deps);
+
+    if (result.outcome === "partial" || result.outcome === "complete-invalid") {
+      expect(result.inspection.validation.warnings.map((warning) => warning.code)).toContain("token-layer-unclassified");
+    } else {
+      expect.fail(`unexpected outcome ${result.outcome}`);
+    }
+  });
+
+  it("emite component-token-bypasses-semantic para component -> primitive directo", async () => {
+    const parsed = {
+      color: {
+        base: {
+          primary: {
+            $type: "color",
+            $description: "primary",
+            $value: { colorSpace: "srgb", components: [0, 0, 0], hex: "#000000" },
+            $extensions: {
+              "ar.neuraz.design-system": { layer: "primitive" },
+            },
+          },
+        },
+        component: {
+          button: {
+            $type: "color",
+            $description: "button",
+            $value: "{color.base.primary}",
+            $extensions: {
+              "ar.neuraz.design-system": { layer: "component", component: "button", part: "container", property: "background" },
+            },
+          },
+        },
+      },
+    };
+    const a = analysis({
+      documents: { [MANAGED_FILES.tokens]: tokenDoc(parsed) },
+      nodes: [
+        node({ path: "color.base.primary" }),
+        node({ path: "color.component.button", kind: "alias", aliasTarget: "color.base.primary", aliasState: "valid", typeOrigin: "own" }),
+      ],
+    });
+
+    const result = await inspectFoundations({ executionDir: "/repo" }, depsFor(a).deps);
+
+    if (result.outcome === "partial" || result.outcome === "complete-invalid") {
+      expect(result.inspection.validation.warnings.map((warning) => warning.code)).toContain("component-token-bypasses-semantic");
+    } else {
+      expect.fail(`unexpected outcome ${result.outcome}`);
+    }
+  });
 });

@@ -85,19 +85,19 @@ funcionan de punta a punta sobre un Design System real, con los quality gates de
 **Goal**: `validate`/`inspect`/`foundations` usan los parsers de T003 para los 13 tipos, aplican la
 política de capas de T002, y detectan issues de referencia entre brand y assets.
 
-- [ ] T012 Conectar `src/infrastructure/analysis/dtcg-read-validator.ts` (`traverseDtcgTree`) a los
+- [x] T012 Conectar `src/infrastructure/analysis/dtcg-read-validator.ts` (`traverseDtcgTree`) a los
   parsers de T003 — eliminar `dtcg-type-not-deeply-inspected` para los 13 tipos y emitir los códigos de
   error específicos de `contracts/dtcg-type-support.md`.
-- [ ] T013 [P] Aplicar la política de capas (T002) dentro de `foundations` (`004`) — nuevo warning
+- [x] T013 [P] Aplicar la política de capas (T002) dentro de `foundations` (`004`) — nuevo warning
   `token-layer-unclassified`, `component-token-bypasses-semantic`, `brand-token-bypasses-semantic`, sin
   romper la clasificación `primitive/semantic` existente.
-- [ ] T014 [P] Crear `src/application/brand/validate-brand.ts`: valida referencias
+- [x] T014 [P] Crear `src/application/brand/validate-brand.ts`: valida referencias
   `BrandAssetReferenceV1.logicalPath` contra `assets.json` real de `007` (código
   `brand-asset-reference-missing` cuando no existe), sin leer/escribir tokens ni assets.
-- [ ] T015 Tests de regresión de compatibilidad: un Design System `001`–`010` sin `brand/` y sin metadata
+- [x] T015 Tests de regresión de compatibilidad: un Design System `001`–`010` sin `brand/` y sin metadata
   de capa sigue reportando exactamente los mismos issues que antes de `011`
   (`tests/integration/compat/legacy-token-only.test.ts`, cubre `FR-017`/`SC-003`).
-- [ ] T016 Tests de los nuevos códigos de issue (T012–T014) con casos válidos/inválidos por tipo y por
+- [x] T016 Tests de los nuevos códigos de issue (T012–T014) con casos válidos/inválidos por tipo y por
   regla de capa (`tests/application/brand/validate-brand.test.ts`,
   `tests/infrastructure/analysis/dtcg-deep-types.test.ts`).
 

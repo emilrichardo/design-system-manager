@@ -12,6 +12,7 @@ import { ANALYSIS_LIMITS, analysisLimitsResult } from "../../domain/traversal/li
 import { resolveEffectiveType } from "../../domain/traversal/effective-type.js";
 import { tokenPath } from "../../domain/traversal/token-path.js";
 import { isRecognizedType, isDeeplySupportedType } from "../../domain/dtcg/recognized-types.js";
+import { validateDeepDtcgValue } from "./dtcg-deep-validator.js";
 
 /** Resultado del recorrido (consumible por T029 para construir DesignSystemAnalysis). */
 export interface DtcgTraversalResult {
@@ -57,17 +58,6 @@ interface TokenRecord {
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-
-function isValidSrgbColorValue(v: unknown): boolean {
-  if (!isPlainObject(v)) return false;
-  if (v.colorSpace !== "srgb") return false;
-  const c = v.components;
-  if (!Array.isArray(c) || c.length !== 3) return false;
-  if (!c.every((n) => typeof n === "number" && n >= 0 && n <= 1)) return false;
-  if ("alpha" in v && !(typeof v.alpha === "number" && v.alpha >= 0 && v.alpha <= 1)) return false;
-  if ("hex" in v && !(typeof v.hex === "string" && /^#[0-9a-fA-F]{6}$/.test(v.hex))) return false;
-  return true;
 }
 
 interface Frame {
@@ -354,14 +344,15 @@ function classifyAndReport(
     return "untrusted";
   }
   if (isDeeplySupportedType(effectiveType)) {
-    // color: validar valor concreto (no alias).
-    if (!rec.isAlias && !isValidSrgbColorValue(rec.rawValue)) {
-      addError(analysisError("dtcg-color-value-invalid", `Valor de color inválido en "${path}": debe ser un objeto sRGB.`, { document: "tokens", path }));
-      return "untrusted";
+    if (!rec.isAlias) {
+      const validationIssue = validateDeepDtcgValue(effectiveType, rec.rawValue, path);
+      if (validationIssue !== null) {
+        addError(validationIssue);
+        return "untrusted";
+      }
     }
     return "valid";
   }
-  // reconocido pero no profundo
   addWarning(analysisWarning("dtcg-type-not-deeply-inspected", `Tipo "${effectiveType}" reconocido pero sin inspección profunda en "${path}".`, { document: "tokens", path }));
   return "valid";
 }

@@ -23,6 +23,8 @@ import {
   computeFoundationsSummary,
   computeFoundationsValidation,
 } from "./summary.js";
+import { projectTokenLayers } from "./token-layer-pass.js";
+import { MANAGED_FILES } from "../../domain/plan/managed-files.js";
 
 const FALLBACK_LEVEL: FoundationLevelResolution = Object.freeze({
   level: "unclassified",
@@ -37,7 +39,6 @@ const REUSED_ANALYSIS_CODES: ReadonlySet<string> = new Set([
   "alias-cyclic",
   "alias-malformed",
   "alias-too-long",
-  "dtcg-type-not-deeply-inspected",
 ]);
 
 const CATEGORY_INVALID_WARNING_CODES: ReadonlySet<string> = new Set([
@@ -130,11 +131,16 @@ export function projectFoundations(
     ...analysis.errors.filter(reusedFoundationIssue),
     ...analysis.warnings.filter(reusedFoundationIssue),
   ];
+  const tokenLayerProjection = projectTokenLayers(
+    analysis.documents[MANAGED_FILES.tokens]?.parsed,
+    analysis.nodes,
+  );
   const ownIssues = tokenIssues(tokens);
   const dependencyIssues = validateFoundationDependencies(tokens);
   const allIssues = uniqueIssues([
     ...inheritedIssues,
     ...metadata.issues,
+    ...tokenLayerProjection.issues,
     ...ownIssues,
     ...dependencyIssues,
   ]);
